@@ -31,4 +31,9 @@ docker exec -it jly_postgres psql -U jly_admin -d jly
 ```
 
 ## Production deploy (Cloud SQL)
-Update `flyway.conf` with the Cloud SQL connection string and run `flyway migrate`. The migrations are environment-agnostic.
+
+The `db/migrations/` SQL files are environment-agnostic and apply cleanly to any PostgreSQL 16 instance. For Cloud SQL:
+
+1. Override Flyway connection details at invocation time — do NOT edit `flyway.conf`. Use environment variables (`FLYWAY_URL`, `FLYWAY_USER`, `FLYWAY_PASSWORD`) or CLI flags (`-url=`, `-user=`, `-password=`).
+2. Skip the `pgtap_installer` service entirely. It mounts the host Docker socket and `apt-get install`s the pgtap package inside the local postgres container — neither is possible against managed Cloud SQL. Cloud SQL's pgTAP support (or lack thereof) is governed by the [Cloud SQL extensions allow-list](https://cloud.google.com/sql/docs/postgres/extensions); if pgTAP is unavailable there, the migrations still apply, but tests must be run against the local Docker stack only.
+3. The `docker-compose.yml` in this directory is for local development only.

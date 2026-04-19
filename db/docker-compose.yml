@@ -1,3 +1,5 @@
+name: jly-church-db
+
 services:
   postgres:
     image: postgres:16
