@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: jly_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: jly
+      POSTGRES_USER: jly_admin
+      POSTGRES_PASSWORD: localdevpassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - jly_pg_data:/var/lib/postgresql/data
+      - ./tests:/tests:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jly_admin -d jly"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  pgtap_installer:
+    image: docker:cli
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    entrypoint: >
+      sh -c "
+        docker exec -u root jly_postgres bash -c 'apt-get update && apt-get install -y postgresql-16-pgtap' &&
+        docker exec jly_postgres psql -U jly_admin -d jly -c 'CREATE EXTENSION IF NOT EXISTS pgtap;'
+      "
+
+  flyway:
+    image: flyway/flyway:10
+    depends_on:
+      pgtap_installer:
+        condition: service_completed_successfully
+    volumes:
+      - ./migrations:/flyway/sql
+      - ./flyway.conf:/flyway/conf/flyway.conf
+    command: migrate
+
+volumes:
+  jly_pg_data:
