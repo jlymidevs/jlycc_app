@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(8);
+SELECT plan(12);
 
 SELECT has_table('core', 'person', 'core.person exists');
 SELECT has_pk('core', 'person', 'PK exists');
@@ -7,10 +7,22 @@ SELECT col_not_null('core', 'person', 'first_name', 'first_name NOT NULL');
 SELECT col_not_null('core', 'person', 'last_name', 'last_name NOT NULL');
 SELECT col_has_default('core', 'person', 'created_at', 'created_at has default');
 SELECT col_is_null('core', 'person', 'deleted_at', 'deleted_at is nullable');
+SELECT has_index('core', 'person', 'idx_person_active', 'partial active index exists');
+SELECT has_index('core', 'person', 'idx_person_name_trgm', 'trigram name search index exists');
 
 INSERT INTO core.person (first_name, last_name, gender)
   VALUES ('Juan', 'Dela Cruz', 'MALE');
 SELECT pass('insert succeeds');
+
+SELECT throws_ok(
+  $$INSERT INTO core.person (first_name, last_name, gender) VALUES ('X','Y','BOGUS')$$,
+  '22P02', NULL, 'invalid gender rejected'
+);
+
+SELECT throws_ok(
+  $$INSERT INTO core.person (first_name, last_name, date_of_birth) VALUES ('X','Y','2099-01-01')$$,
+  '23514', NULL, 'future date_of_birth rejected by CHECK'
+);
 
 -- Backdate created_at so the trigger's now() on UPDATE is verifiably newer.
 -- (Within a single transaction now() is frozen to transaction_timestamp(),
