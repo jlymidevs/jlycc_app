@@ -1,2 +1,15 @@
 db/.flyway/
 .superpowers/
+
+# OS noise
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editor swap/backup
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.iml
