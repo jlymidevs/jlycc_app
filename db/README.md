@@ -30,6 +30,27 @@ docker compose run --rm flyway migrate
 docker exec -it jly_postgres psql -U jly_admin -d jly
 ```
 
+## Foundation status
+
+The foundation schema (Plan 1) is complete. 25 versioned migrations + 2 repeatable seeds, verified by 106 pgTAP tests across 23 test files.
+
+### Schemas
+- **core** — region, branch, address, person, contact_info, person_address, household, household_member, kinship (+ bidirectional view)
+- **membership** — lifecycle_stage, role, member, lifecycle_stage_history, branch_membership_history, member_role, regular_member_application, pastoral_care_assignment
+
+### Key features
+- Soft-delete (`deleted_at`) on person, household, member with `_active` views
+- Generic `record_history()` trigger auto-populates lifecycle and branch transfer history
+- PII column grants via `app_general` / `app_pastoral` / `app_full` database roles
+- Repeatable seed migrations for lifecycle stages (FTV→OGV→RA→REGULAR_MEMBER, DFL) and roles
+- Bidirectional kinship view (auto-flips PARENT_OF↔CHILD_OF)
+- PCM assignment with partial unique index (one active carer per member)
+
+### Tagged at
+`git tag plan-1-foundation-complete`
+
+---
+
 ## Production deploy (Cloud SQL)
 
 The `db/migrations/` SQL files are environment-agnostic and apply cleanly to any PostgreSQL 16 instance. For Cloud SQL:
