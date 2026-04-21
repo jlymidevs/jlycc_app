@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(8);
+SELECT plan(13);
 
 -- Set up region, branch
 INSERT INTO core.region (code, name, type) VALUES ('NCR','National Capital Region','LOCAL_CLUSTER') RETURNING region_id \gset
@@ -107,6 +107,88 @@ SELECT is(
    WHERE member_id = :jdc_member),
   'true'::jsonb,
   'JSONB criteria_checklist queryable by key'
+);
+
+-- ==================== Plan 2: Operational Layer ====================
+
+-- Create a ministry chapter and assign Juan as leader
+INSERT INTO ministries.ministry_chapter (ministry_id, branch_id)
+  VALUES ((SELECT ministry_id FROM ministries.ministry WHERE code='MOVE'), :branch_id)
+  RETURNING chapter_id \gset
+
+INSERT INTO ministries.ministry_membership (chapter_id, member_id, joined_at, is_leader, leader_role)
+  VALUES (:chapter_id, :jdc_member, now(), true, 'HEAD');
+
+SELECT is(
+  (SELECT count(*)::int FROM ministries.ministry_membership
+   WHERE chapter_id = :chapter_id AND is_leader = true),
+  1,
+  'Juan is leader of Move chapter'
+);
+
+-- Create an event and check in
+INSERT INTO events.event (event_type_id, name, starts_at, branch_id, status)
+  VALUES ((SELECT event_type_id FROM events.event_type WHERE code='SUNDAY_SERVICE'),
+          'Sunday Service Apr 20', '2026-04-20 09:00:00+08', :branch_id, 'SCHEDULED')
+  RETURNING event_id AS svc_event_id \gset
+
+INSERT INTO attendance.check_in (event_id, person_id, branch_id, checked_in_at, check_in_method)
+  VALUES (:svc_event_id, :jdc_id, :branch_id, '2026-04-20 09:10:00+08', 'SELF');
+INSERT INTO attendance.check_in (event_id, person_id, branch_id, checked_in_at, check_in_method)
+  VALUES (:svc_event_id, :mdc_id, :branch_id, '2026-04-20 09:12:00+08', 'USHER');
+
+SELECT is(
+  (SELECT total_check_ins::int FROM attendance.attendance_summary
+   WHERE event_id = :svc_event_id),
+  2,
+  'attendance summary shows 2 check-ins'
+);
+
+-- FTV capture: new visitor at the service
+INSERT INTO core.person (first_name, last_name) VALUES ('New', 'Visitor')
+  RETURNING person_id AS ftv_pid \gset
+
+INSERT INTO attendance.visitor_capture (person_id, event_id, branch_id, consent_to_contact, intake_notes)
+  VALUES (:ftv_pid, :svc_event_id, :branch_id, true, 'Friend of Juan')
+  RETURNING ftv_capture_id \gset
+
+INSERT INTO attendance.check_in (event_id, person_id, branch_id, checked_in_at, ftv_capture_id)
+  VALUES (:svc_event_id, :ftv_pid, :branch_id, '2026-04-20 09:20:00+08', :ftv_capture_id);
+
+SELECT is(
+  (SELECT ftv_count::int FROM attendance.attendance_summary
+   WHERE event_id = :svc_event_id),
+  1,
+  'summary counts 1 FTV check-in'
+);
+
+-- Child check-in with pickup code
+INSERT INTO core.person (first_name, last_name) VALUES ('Kid', 'Dela Cruz')
+  RETURNING person_id AS kid_pid \gset
+
+INSERT INTO attendance.check_in (event_id, person_id, branch_id, checked_in_at)
+  VALUES (:svc_event_id, :kid_pid, :branch_id, '2026-04-20 09:05:00+08')
+  RETURNING check_in_id AS kid_ci_id, checked_in_at AS kid_ci_at \gset
+
+INSERT INTO attendance.child_check_in
+  (check_in_id, checked_in_at, event_id, pickup_code, allergies)
+  VALUES (:kid_ci_id, :'kid_ci_at', :svc_event_id, 'MNL-K-9472', 'None');
+
+SELECT pass('child check-in with pickup code succeeds');
+
+-- Event registration for a big event
+INSERT INTO events.event (event_type_id, name, starts_at, status)
+  VALUES ((SELECT event_type_id FROM events.event_type WHERE code='CAMP_MEETING'),
+          'Camp Meeting 2026', '2026-07-01 08:00:00+08', 'SCHEDULED')
+  RETURNING event_id AS cm_event_id \gset
+
+INSERT INTO events.event_registration (event_id, person_id, status, group_size, accommodation_required)
+  VALUES (:cm_event_id, :jdc_id, 'CONFIRMED', 3, true);
+
+SELECT is(
+  (SELECT group_size FROM events.event_registration WHERE event_id = :cm_event_id AND person_id = :jdc_id),
+  3,
+  'Camp Meeting registration with group_size=3'
 );
 
 SELECT * FROM finish();
