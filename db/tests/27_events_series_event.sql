@@ -5,7 +5,7 @@ SELECT has_table('events', 'event_series', 'event_series exists');
 SELECT has_table('events', 'event', 'event exists');
 SELECT has_fk('events', 'event', 'event has FK');
 
-INSERT INTO events.event_category (category_code, name) VALUES ('REGULAR', 'Regular');
+INSERT INTO events.event_category (category_code, name) VALUES ('REGULAR', 'Regular') ON CONFLICT DO NOTHING;
 INSERT INTO events.event_type (code, name, category_code) VALUES ('SVC', 'Service', 'REGULAR')
   RETURNING event_type_id \gset
 

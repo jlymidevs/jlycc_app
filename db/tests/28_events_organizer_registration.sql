@@ -4,7 +4,7 @@ SELECT plan(7);
 SELECT has_table('events', 'event_organizer', 'organizer table exists');
 SELECT has_table('events', 'event_registration', 'registration table exists');
 
-INSERT INTO events.event_category (category_code, name) VALUES ('SEASONAL', 'Seasonal');
+INSERT INTO events.event_category (category_code, name) VALUES ('SEASONAL', 'Seasonal') ON CONFLICT DO NOTHING;
 INSERT INTO events.event_type (code, name, category_code) VALUES ('CM', 'Camp Meeting', 'SEASONAL')
   RETURNING event_type_id \gset
 INSERT INTO events.event (event_type_id, name, starts_at)
