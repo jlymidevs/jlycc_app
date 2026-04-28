@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(17);
+SELECT plan(21);
 
 -- Set up region, branch
 INSERT INTO core.region (code, name, type) VALUES ('NCR','National Capital Region','LOCAL_CLUSTER') RETURNING region_id \gset
@@ -246,6 +246,82 @@ SELECT is(
 );
 
 SELECT pass('programs + missions end-to-end complete');
+
+-- ==================== Plan 3b: Education ====================
+
+-- Bible College: program -> cohort -> semester -> course -> offering
+INSERT INTO education.bc_program (code, name, degree_level)
+  VALUES ('BT', 'Bachelor of Theology', 'Bachelor')
+  RETURNING program_id AS bt_prog \gset
+
+INSERT INTO education.bc_cohort (program_id, name, starts_on)
+  VALUES (:bt_prog, 'BT Class of 2028', '2024-06-01')
+  RETURNING cohort_id AS bt_cohort \gset
+
+INSERT INTO education.bc_semester (name, academic_year, term_number, status)
+  VALUES ('1st Sem AY 2024-2025', '2024-2025', 1, 'ACTIVE')
+  RETURNING semester_id AS bt_sem \gset
+
+INSERT INTO education.bc_course (code, title, credits)
+  VALUES ('THE101', 'Introduction to Theology', 3)
+  RETURNING course_id AS bt_course \gset
+
+INSERT INTO education.bc_course_offering (course_id, semester_id, instructor_member_id, max_seats)
+  VALUES (:bt_course, :bt_sem, :jdc_member, 40)
+  RETURNING offering_id AS bt_offering \gset
+
+-- Enroll Juan as BC student, enroll in offering, track attendance, complete
+INSERT INTO education.bc_student (person_id, cohort_id, student_number, enrolled_on)
+  VALUES (:jdc_id, :bt_cohort, 'BC-2024-0001', '2024-06-01')
+  RETURNING student_id AS jdc_bc_student \gset
+
+INSERT INTO education.bc_enrollment (student_id, offering_id, enrolled_on)
+  VALUES (:jdc_bc_student, :bt_offering, '2024-06-15')
+  RETURNING enrollment_id AS jdc_bc_enrollment \gset
+
+INSERT INTO education.bc_class_attendance (offering_id, student_id, class_date, attended)
+  VALUES (:bt_offering, :jdc_bc_student, '2024-07-01', true);
+
+INSERT INTO education.bc_completion (enrollment_id, status, completed_on, attendance_rate)
+  VALUES (:jdc_bc_enrollment, 'COMPLETED', '2024-10-31', 0.95);
+
+SELECT is(
+  (SELECT attendance_rate FROM education.bc_completion WHERE enrollment_id = :jdc_bc_enrollment),
+  0.95::numeric,
+  'Bible College completion with attendance_rate'
+);
+
+-- ISU: track -> student -> session -> attendance
+INSERT INTO education.isu_track (code, name, order_index)
+  VALUES ('FOUND', 'Foundations', 1)
+  RETURNING track_id AS isu_found \gset
+
+INSERT INTO education.isu_student (person_id, current_track_id, enrolled_on)
+  VALUES (:ftv_pid, :isu_found, CURRENT_DATE)
+  RETURNING student_id AS ftv_isu_student \gset
+
+INSERT INTO education.isu_session (branch_id, track_id, topic, scheduled_at)
+  VALUES (:branch_id, :isu_found, 'Who is Jesus?', '2024-07-01 09:00:00+08')
+  RETURNING session_id AS isu_sess \gset
+
+INSERT INTO education.isu_session_attendance (session_id, person_id, attended)
+  VALUES (:isu_sess, :ftv_pid, true);
+
+SELECT is(
+  (SELECT count(*)::int FROM education.isu_session_attendance
+   WHERE session_id = :isu_sess AND attended = true),
+  1,
+  'ISU session attendance recorded'
+);
+
+-- School lookup
+SELECT is(
+  (SELECT count(*)::int FROM education.school WHERE status = 'ACTIVE'),
+  2,
+  'two active schools seeded'
+);
+
+SELECT pass('education end-to-end complete');
 
 SELECT * FROM finish();
 ROLLBACK;
