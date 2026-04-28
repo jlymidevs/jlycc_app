@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(13);
+SELECT plan(17);
 
 -- Set up region, branch
 INSERT INTO core.region (code, name, type) VALUES ('NCR','National Capital Region','LOCAL_CLUSTER') RETURNING region_id \gset
@@ -190,6 +190,62 @@ SELECT is(
   3,
   'Camp Meeting registration with group_size=3'
 );
+
+-- ==================== Plan 3a: Programs + Missions ====================
+
+-- Heartlink: create cohort, enroll Juan, record session attendance
+INSERT INTO programs.heartlink_cohort (branch_id, name, facilitator_member_id, status)
+  VALUES (:branch_id, 'Manila Heartlink Q1 2026', :jdc_member, 'ACTIVE')
+  RETURNING cohort_id AS hl_cohort \gset
+
+INSERT INTO programs.heartlink_enrollment (cohort_id, person_id)
+  VALUES (:hl_cohort, :jdc_id) RETURNING enrollment_id AS hl_enroll \gset
+
+INSERT INTO programs.heartlink_session (cohort_id, session_number, topic)
+  VALUES (:hl_cohort, 1, 'Identity in Christ') RETURNING session_id AS hl_session \gset
+
+INSERT INTO programs.heartlink_session_attendance (session_id, enrollment_id, attended)
+  VALUES (:hl_session, :hl_enroll, true);
+
+SELECT is(
+  (SELECT count(*)::int FROM programs.heartlink_session_attendance
+   WHERE session_id = :hl_session AND attended = true),
+  1,
+  'Heartlink session attendance recorded'
+);
+
+-- Scholar: award a scholarship to Juan
+INSERT INTO missions.scholar_program (name, status) VALUES ('2026 Scholars', 'ACTIVE')
+  RETURNING program_id AS scholar_prog \gset
+
+INSERT INTO missions.scholarship_award (program_id, member_id, school_name, amount, status)
+  VALUES (:scholar_prog, :jdc_member, 'UP Diliman', 25000, 'ACTIVE');
+
+SELECT is(
+  (SELECT school_name FROM missions.scholarship_award WHERE member_id = :jdc_member),
+  'UP Diliman',
+  'scholarship award with school_name'
+);
+
+-- BAC: create initiative, add walk-in attendance
+INSERT INTO missions.bac_initiative (branch_id, name, target_community, status)
+  VALUES (:branch_id, 'Bless Tondo 2026', 'Tondo, Manila', 'ACTIVE')
+  RETURNING initiative_id AS bac_init \gset
+
+INSERT INTO missions.bac_session (initiative_id, session_number, topic)
+  VALUES (:bac_init, 1, 'Who is Jesus?') RETURNING session_id AS bac_sess \gset
+
+INSERT INTO missions.bac_session_attendance (session_id, person_id, attended, attended_as)
+  VALUES (:bac_sess, :ftv_pid, true, 'WALK_IN');
+
+SELECT is(
+  (SELECT attended_as::text FROM missions.bac_session_attendance
+   WHERE session_id = :bac_sess AND person_id = :ftv_pid),
+  'WALK_IN',
+  'BAC walk-in attendance recorded'
+);
+
+SELECT pass('programs + missions end-to-end complete');
 
 SELECT * FROM finish();
 ROLLBACK;
