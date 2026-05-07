@@ -14,6 +14,7 @@ services:
     volumes:
       - jly_pg_data:/var/lib/postgresql/data
       - ./tests:/tests:ro
+      - ./staging:/staging:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U jly_admin -d jly"]
       interval: 5s

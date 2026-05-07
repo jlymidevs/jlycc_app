@@ -1,5 +1,5 @@
 BEGIN;
-SELECT plan(21);
+SELECT plan(24);
 
 -- Set up region, branch
 INSERT INTO core.region (code, name, type) VALUES ('NCR','National Capital Region','LOCAL_CLUSTER') RETURNING region_id \gset
@@ -322,6 +322,45 @@ SELECT is(
 );
 
 SELECT pass('education end-to-end complete');
+
+-- ==================== Plan 4: Staging ====================
+
+-- Create a batch, load a raw row, verify tracking
+INSERT INTO staging.import_batch (source_name)
+  VALUES ('Smoke Test Sheet')
+  RETURNING batch_id AS stg_batch \gset
+
+INSERT INTO staging.stg_person
+  (batch_id, source_row_number, raw_first_name, raw_last_name, raw_gender, raw_branch_code)
+VALUES
+  (:'stg_batch', 1, 'Staging', 'Test', 'MALE', 'MNL-HQ');
+
+SELECT is(
+  (SELECT row_status::text FROM staging.stg_person
+   WHERE batch_id = :'stg_batch' AND source_row_number = 1),
+  'RAW',
+  'staging row starts as RAW'
+);
+
+-- Dedup infrastructure: create run + candidate
+INSERT INTO staging.dedup_run (batch_id, candidates_found)
+  VALUES (:'stg_batch', 1)
+  RETURNING run_id AS stg_run \gset
+
+INSERT INTO staging.person_candidate
+  (run_id, staging_id, first_name, last_name, blocking_key)
+VALUES
+  (:stg_run,
+   (SELECT staging_id FROM staging.stg_person WHERE batch_id = :'stg_batch' LIMIT 1),
+   'Staging', 'Test', 'TEST-S');
+
+SELECT is(
+  (SELECT count(*)::int FROM staging.person_candidate WHERE run_id = :stg_run),
+  1,
+  'dedup candidate created'
+);
+
+SELECT pass('staging end-to-end complete');
 
 SELECT * FROM finish();
 ROLLBACK;
