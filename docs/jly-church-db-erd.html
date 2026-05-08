@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JLY Church Database - Schema Reference</title>
-<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 <style>
   :root {
     --bg: #0f1117; --surface: #1a1d27; --surface2: #242836;
@@ -15,71 +15,76 @@
     --missions: #f472b6; --education: #34d399; --staging: #94a3b8;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); }
-  .header { background: linear-gradient(135deg, #1a1d27 0%, #242836 100%); border-bottom: 1px solid var(--border); padding: 2rem 3rem; }
-  .header h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.25rem; }
-  .header .sub { color: var(--text2); font-size: 0.95rem; }
-  .header .badges { display: flex; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); }
+
+  .header { background: linear-gradient(135deg, #1a1d27, #242836); border-bottom: 1px solid var(--border); padding: 2rem 3rem; }
+  .header h1 { font-size: 1.8rem; font-weight: 700; }
+  .header .sub { color: var(--text2); font-size: 0.95rem; margin-top: 0.25rem; }
+  .badges { display: flex; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap; }
   .badge { background: var(--surface2); border: 1px solid var(--border); border-radius: 20px; padding: 0.35rem 0.85rem; font-size: 0.8rem; color: var(--text2); }
   .badge strong { color: var(--text); margin-right: 0.25rem; }
 
   .layout { display: flex; min-height: calc(100vh - 120px); }
-  .sidebar { width: 240px; min-width: 240px; background: var(--surface); border-right: 1px solid var(--border); padding: 1.5rem 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
-  .sidebar a { display: flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.5rem; color: var(--text2); text-decoration: none; font-size: 0.85rem; transition: all 0.15s; }
+  nav.sidebar { width: 220px; min-width: 220px; background: var(--surface); border-right: 1px solid var(--border); padding: 1rem 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .sidebar a { display: flex; align-items: center; gap: 0.5rem; padding: 0.55rem 1.25rem; color: var(--text2); text-decoration: none; font-size: 0.85rem; transition: all 0.15s; }
   .sidebar a:hover { background: var(--surface2); color: var(--text); }
   .sidebar a.active { color: var(--text); background: var(--surface2); border-right: 2px solid var(--accent); }
-  .sidebar .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .sidebar .section-label { padding: 1rem 1.5rem 0.4rem; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text2); }
-  .sidebar .count { margin-left: auto; background: var(--surface2); border-radius: 10px; padding: 0.1rem 0.5rem; font-size: 0.7rem; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; display: inline-block; }
+  .sidebar .lbl { padding: 0.75rem 1.25rem 0.3rem; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text2); }
+  .cnt { margin-left: auto; background: var(--surface2); border-radius: 10px; padding: 0.1rem 0.45rem; font-size: 0.7rem; }
 
-  .main { flex: 1; padding: 2rem 3rem; max-width: 1200px; }
-  .section { display: none; animation: fadeIn 0.3s; }
-  .section.active { display: block; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  main { flex: 1; padding: 2rem 3rem; max-width: 1100px; }
+  .sec { display: none; animation: fadeIn 0.25s; }
+  .sec.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-  .section-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1.5rem; }
-  .section-header .schema-dot { width: 12px; height: 12px; border-radius: 50%; }
-  .section-header h2 { font-size: 1.5rem; font-weight: 600; }
-  .section-header .desc { color: var(--text2); font-size: 0.9rem; margin-left: 0.5rem; }
+  h2 { font-size: 1.4rem; margin-bottom: 0.25rem; }
+  .desc { color: var(--text2); font-size: 0.9rem; margin-bottom: 1.5rem; }
 
-  .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; }
-  .stat-card .label { font-size: 0.75rem; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; }
-  .stat-card .value { font-size: 2rem; font-weight: 700; margin-top: 0.25rem; }
-  .stat-card .detail { font-size: 0.8rem; color: var(--text2); margin-top: 0.25rem; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.1rem; }
+  .stat .l { font-size: 0.7rem; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat .v { font-size: 1.8rem; font-weight: 700; margin-top: 0.15rem; }
+  .stat .d { font-size: 0.75rem; color: var(--text2); }
 
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
-  .card h3 { font-size: 1.1rem; margin-bottom: 1rem; }
-  .card .mermaid { background: var(--surface2); border-radius: 8px; padding: 1rem; overflow-x: auto; }
+  .card h3 { font-size: 1rem; margin-bottom: 1rem; }
 
-  .table-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.75rem; margin-bottom: 1.5rem; }
-  .table-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 0.75rem 1rem; }
-  .table-item .name { font-weight: 600; font-size: 0.9rem; font-family: 'Cascadia Code', 'Fira Code', monospace; }
-  .table-item .info { font-size: 0.75rem; color: var(--text2); margin-top: 0.25rem; }
-  .table-item .tag { display: inline-block; font-size: 0.65rem; padding: 0.1rem 0.4rem; border-radius: 4px; margin-right: 0.25rem; }
-  .tag-pk { background: #6c8cff22; color: #6c8cff; border: 1px solid #6c8cff44; }
-  .tag-fk { background: #ff6b9d22; color: #ff6b9d; border: 1px solid #ff6b9d44; }
-  .tag-enum { background: #ffd93d22; color: #ffd93d; border: 1px solid #ffd93d44; }
-  .tag-view { background: #4ecdc422; color: #4ecdc4; border: 1px solid #4ecdc444; }
-  .tag-part { background: #ff8c4222; color: #ff8c42; border: 1px solid #ff8c4244; }
+  .schema-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+  .sc { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.1rem; cursor: pointer; transition: all 0.15s; border-left: 3px solid transparent; }
+  .sc:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .sc h4 { font-size: 0.95rem; margin-bottom: 0.2rem; }
+  .sc p { font-size: 0.8rem; color: var(--text2); }
+  .sc .m { display: flex; gap: 1rem; margin-top: 0.6rem; font-size: 0.72rem; color: var(--text2); }
 
-  .dep-legend { display: flex; gap: 1.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
-  .dep-legend-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--text2); }
+  /* ERD entity cards */
+  .erd { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+  .ent { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .ent-h { padding: 0.6rem 0.8rem; font-weight: 700; font-size: 0.85rem; font-family: 'Cascadia Code','Fira Code',monospace; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.5rem; }
+  .ent-h .ico { font-size: 0.7rem; opacity: 0.6; }
+  .ent-body { padding: 0.4rem 0; }
+  .col { display: flex; align-items: center; padding: 0.2rem 0.8rem; font-size: 0.78rem; font-family: 'Cascadia Code','Fira Code',monospace; gap: 0.5rem; }
+  .col:hover { background: #ffffff08; }
+  .col .ctype { color: var(--text2); min-width: 55px; font-size: 0.72rem; }
+  .col .cname { flex: 1; }
+  .pk { color: #6c8cff; font-weight: 600; }
+  .fk { color: #ff6b9d; }
+  .ct { font-size: 0.6rem; padding: 0.05rem 0.35rem; border-radius: 3px; font-weight: 600; letter-spacing: 0.03em; }
+  .ct-pk { background: #6c8cff22; color: #6c8cff; border: 1px solid #6c8cff44; }
+  .ct-fk { background: #ff6b9d22; color: #ff6b9d; border: 1px solid #ff6b9d44; }
+  .ct-uk { background: #ffd93d22; color: #ffd93d; border: 1px solid #ffd93d44; }
 
-  .schema-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
-  .schema-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; cursor: pointer; transition: all 0.15s; border-left: 3px solid transparent; }
-  .schema-card:hover { border-color: var(--accent); transform: translateY(-2px); }
-  .schema-card h4 { font-size: 1rem; margin-bottom: 0.3rem; }
-  .schema-card p { font-size: 0.8rem; color: var(--text2); }
-  .schema-card .meta { display: flex; gap: 1rem; margin-top: 0.75rem; font-size: 0.75rem; color: var(--text2); }
+  .rels { margin-top: 0.5rem; }
+  .rel { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0; font-size: 0.8rem; color: var(--text2); }
+  .rel .arrow { color: var(--accent); font-weight: 700; }
+
+  .mm { background: var(--surface2); border-radius: 8px; padding: 1rem; overflow-x: auto; }
+  .mm .mermaid { min-height: 100px; }
 
   @media print {
-    .sidebar { display: none; }
-    .section { display: block !important; page-break-inside: avoid; margin-bottom: 2rem; }
-    .header { padding: 1rem; }
-    .main { padding: 1rem; max-width: 100%; }
-    body { background: white; color: #111; }
-    .card, .stat-card, .table-item, .schema-card { border-color: #ccc; background: #f9f9f9; }
+    .sidebar { display: none; } .sec { display: block !important; page-break-inside: avoid; margin-bottom: 2rem; }
+    body { background: #fff; color: #111; } .card,.stat,.ent,.sc { background: #f5f5f5; border-color: #ddd; }
+    .ent-h { background: #eee; } .col .ctype { color: #666; }
   }
 </style>
 </head>
@@ -92,814 +97,622 @@
     <div class="badge"><strong>9</strong> schemas</div>
     <div class="badge"><strong>55+</strong> tables</div>
     <div class="badge"><strong>30+</strong> enums</div>
-    <div class="badge"><strong>3</strong> views</div>
     <div class="badge"><strong>63</strong> migrations</div>
-    <div class="badge"><strong>V063</strong> current version</div>
   </div>
 </div>
 
 <div class="layout">
 <nav class="sidebar">
-  <div class="section-label">Overview</div>
-  <a href="#" data-section="overview" class="active"><span class="dot" style="background:var(--accent)"></span> Dashboard <span class="count">9</span></a>
-  <a href="#" data-section="dependencies"><span class="dot" style="background:var(--accent2)"></span> Dependencies</a>
-  <div class="section-label">Schemas</div>
-  <a href="#" data-section="core"><span class="dot" style="background:var(--core)"></span> core <span class="count">9</span></a>
-  <a href="#" data-section="membership"><span class="dot" style="background:var(--membership)"></span> membership <span class="count">8</span></a>
-  <a href="#" data-section="ministries"><span class="dot" style="background:var(--ministries)"></span> ministries <span class="count">4</span></a>
-  <a href="#" data-section="events"><span class="dot" style="background:var(--events)"></span> events <span class="count">6</span></a>
-  <a href="#" data-section="attendance"><span class="dot" style="background:var(--attendance)"></span> attendance <span class="count">3+</span></a>
-  <a href="#" data-section="programs"><span class="dot" style="background:var(--programs)"></span> programs <span class="count">4</span></a>
-  <a href="#" data-section="missions"><span class="dot" style="background:var(--missions)"></span> missions <span class="count">6</span></a>
-  <a href="#" data-section="education"><span class="dot" style="background:var(--education)"></span> education <span class="count">15</span></a>
-  <a href="#" data-section="staging"><span class="dot" style="background:var(--staging)"></span> staging <span class="count">5</span></a>
+  <div class="lbl">Overview</div>
+  <a href="#" data-s="overview" class="active"><span class="dot" style="background:var(--accent)"></span> Dashboard</a>
+  <a href="#" data-s="deps"><span class="dot" style="background:var(--accent2)"></span> Dependencies</a>
+  <div class="lbl">Schemas</div>
+  <a href="#" data-s="core"><span class="dot" style="background:var(--core)"></span> core <span class="cnt">9</span></a>
+  <a href="#" data-s="membership"><span class="dot" style="background:var(--membership)"></span> membership <span class="cnt">8</span></a>
+  <a href="#" data-s="ministries"><span class="dot" style="background:var(--ministries)"></span> ministries <span class="cnt">4</span></a>
+  <a href="#" data-s="events"><span class="dot" style="background:var(--events)"></span> events <span class="cnt">6</span></a>
+  <a href="#" data-s="attendance"><span class="dot" style="background:var(--attendance)"></span> attendance <span class="cnt">3</span></a>
+  <a href="#" data-s="programs"><span class="dot" style="background:var(--programs)"></span> programs <span class="cnt">4</span></a>
+  <a href="#" data-s="missions"><span class="dot" style="background:var(--missions)"></span> missions <span class="cnt">6</span></a>
+  <a href="#" data-s="education"><span class="dot" style="background:var(--education)"></span> education <span class="cnt">15</span></a>
+  <a href="#" data-s="staging"><span class="dot" style="background:var(--staging)"></span> staging <span class="cnt">5</span></a>
 </nav>
 
-<main class="main">
+<main>
 
-<!-- ==================== OVERVIEW ==================== -->
-<div id="overview" class="section active">
-  <div class="section-header">
-    <h2>Dashboard</h2>
+<!-- ===== OVERVIEW ===== -->
+<div id="overview" class="sec active">
+  <h2>Dashboard</h2>
+  <div class="desc">JLY Church Database at a glance</div>
+  <div class="stats">
+    <div class="stat"><div class="l">Schemas</div><div class="v" style="color:var(--accent)">9</div><div class="d">Bounded contexts</div></div>
+    <div class="stat"><div class="l">Tables</div><div class="v" style="color:var(--accent2)">55+</div><div class="d">Including partitions</div></div>
+    <div class="stat"><div class="l">Enums</div><div class="v" style="color:var(--events)">30+</div><div class="d">Type-safe constraints</div></div>
+    <div class="stat"><div class="l">Flyway</div><div class="v" style="color:var(--education)">V063</div><div class="d">+ 5 repeatable seeds</div></div>
+    <div class="stat"><div class="l">Tests</div><div class="v" style="color:var(--programs)">57</div><div class="d">pgTAP files (250+ asserts)</div></div>
+    <div class="stat"><div class="l">Plans</div><div class="v" style="color:var(--missions)">4</div><div class="d">All complete</div></div>
   </div>
-
-  <div class="stats-grid">
-    <div class="stat-card"><div class="label">Schemas</div><div class="value" style="color:var(--accent)">9</div><div class="detail">Bounded contexts</div></div>
-    <div class="stat-card"><div class="label">Tables</div><div class="value" style="color:var(--accent2)">55+</div><div class="detail">Including partitions</div></div>
-    <div class="stat-card"><div class="label">Enums</div><div class="value" style="color:var(--events)">30+</div><div class="detail">Type-safe constraints</div></div>
-    <div class="stat-card"><div class="label">Flyway Version</div><div class="value" style="color:var(--education)">V063</div><div class="detail">+ 5 repeatable seeds</div></div>
-    <div class="stat-card"><div class="label">pgTAP Tests</div><div class="value" style="color:var(--programs)">57</div><div class="detail">Test files (250+ assertions)</div></div>
-    <div class="stat-card"><div class="label">Implementation</div><div class="value" style="color:var(--missions)">4</div><div class="detail">Completed plans</div></div>
-  </div>
-
-  <h3 style="margin-bottom:1rem;">Schema Overview</h3>
   <div class="schema-cards">
-    <div class="schema-card" style="border-left-color:var(--core)" onclick="nav('core')">
-      <h4 style="color:var(--core)">core</h4>
-      <p>People, branches, regions, households, addresses, kinship</p>
-      <div class="meta"><span>9 tables</span><span>3 views</span><span>9 enums</span></div>
-    </div>
-    <div class="schema-card" style="border-left-color:var(--membership)" onclick="nav('membership')">
-      <h4 style="color:var(--membership)">membership</h4>
-      <p>Member lifecycle, roles, pastoral care, applications</p>
-      <div class="meta"><span>8 tables</span><span>1 view</span><span>3 enums</span></div>
-    </div>
-    <div class="schema-card" style="border-left-color:var(--ministries)" onclick="nav('ministries')">
-      <h4 style="color:var(--ministries)">ministries</h4>
-      <p>Network &rarr; Ministry &rarr; Chapter &rarr; Membership hierarchy</p>
-      <div class="meta"><span>4 tables</span><span>2 enums</span></div>
-    </div>
-    <div class="schema-card" style="border-left-color:var(--events)" onclick="nav('events')">
-      <h4 style="color:var(--events)">events</h4>
-      <p>Event types, series, instances, organizers, registrations</p>
-      <div class="meta"><span>6 tables</span><span>4 enums</span></div>
-    </div>
-    <div class="schema-card" style="border-left-color:var(--attendance)" onclick="nav('attendance')">
-      <h4 style="color:var(--attendance)">attendance</h4>
-      <p>Check-ins (partitioned), FTV capture, child safety</p>
-      <div class="meta"><span>3 tables</span><span>1 view</span><span>Partitioned</span></div>
-    </div>
-    <div class="schema-card" style="border-left-color:var(--programs)" onclick="nav('programs')">
-      <h4 style="color:var(--programs)">programs</h4>
-      <p>Heartlink discipleship cohorts, sessions, attendance</p>
-      <div class="meta"><span>4 tables</span><span>2 enums</span></div>
-    </div>
-    <div class="schema-card" style="border-left-color:var(--missions)" onclick="nav('missions')">
-      <h4 style="color:var(--missions)">missions</h4>
-      <p>Scholars program, BAC outreach initiatives</p>
-      <div class="meta"><span>6 tables</span><span>5 enums</span></div>
-    </div>
-    <div class="schema-card" style="border-left-color:var(--education)" onclick="nav('education')">
-      <h4 style="color:var(--education)">education</h4>
-      <p>Bible College (formal) + ISU (track-based discipleship)</p>
-      <div class="meta"><span>15 tables</span><span>6 enums</span></div>
-    </div>
-    <div class="schema-card" style="border-left-color:var(--staging)" onclick="nav('staging')">
-      <h4 style="color:var(--staging)">staging</h4>
-      <p>Migration ETL: batch tracking, person import, deduplication</p>
-      <div class="meta"><span>5 tables</span><span>3 enums</span><span>Pipeline scripts</span></div>
-    </div>
+    <div class="sc" style="border-left-color:var(--core)" onclick="go('core')"><h4 style="color:var(--core)">core</h4><p>People, branches, regions, households, addresses, kinship</p><div class="m"><span>9 tables</span><span>3 views</span><span>9 enums</span></div></div>
+    <div class="sc" style="border-left-color:var(--membership)" onclick="go('membership')"><h4 style="color:var(--membership)">membership</h4><p>Member lifecycle, roles, pastoral care, applications</p><div class="m"><span>8 tables</span><span>1 view</span><span>3 enums</span></div></div>
+    <div class="sc" style="border-left-color:var(--ministries)" onclick="go('ministries')"><h4 style="color:var(--ministries)">ministries</h4><p>Network &rarr; Ministry &rarr; Chapter hierarchy</p><div class="m"><span>4 tables</span><span>2 enums</span></div></div>
+    <div class="sc" style="border-left-color:var(--events)" onclick="go('events')"><h4 style="color:var(--events)">events</h4><p>Event types, series, instances, registrations</p><div class="m"><span>6 tables</span><span>4 enums</span></div></div>
+    <div class="sc" style="border-left-color:var(--attendance)" onclick="go('attendance')"><h4 style="color:var(--attendance)">attendance</h4><p>Check-ins (partitioned), FTV capture, child safety</p><div class="m"><span>3 tables</span><span>1 view</span><span>Partitioned</span></div></div>
+    <div class="sc" style="border-left-color:var(--programs)" onclick="go('programs')"><h4 style="color:var(--programs)">programs</h4><p>Heartlink discipleship cohorts, sessions, attendance</p><div class="m"><span>4 tables</span><span>2 enums</span></div></div>
+    <div class="sc" style="border-left-color:var(--missions)" onclick="go('missions')"><h4 style="color:var(--missions)">missions</h4><p>Scholars program, BAC outreach initiatives</p><div class="m"><span>6 tables</span><span>5 enums</span></div></div>
+    <div class="sc" style="border-left-color:var(--education)" onclick="go('education')"><h4 style="color:var(--education)">education</h4><p>Bible College (formal) + ISU (track-based)</p><div class="m"><span>15 tables</span><span>6 enums</span></div></div>
+    <div class="sc" style="border-left-color:var(--staging)" onclick="go('staging')"><h4 style="color:var(--staging)">staging</h4><p>Migration ETL: batch tracking, deduplication</p><div class="m"><span>5 tables</span><span>3 enums</span></div></div>
   </div>
 </div>
 
-<!-- ==================== DEPENDENCIES ==================== -->
-<div id="dependencies" class="section">
-  <div class="section-header"><h2>Schema Dependencies</h2></div>
+<!-- ===== DEPENDENCIES ===== -->
+<div id="deps" class="sec">
+  <h2>Schema Dependencies</h2>
+  <div class="desc">Arrows show FK dependencies. core and membership are the foundation.</div>
   <div class="card">
     <h3>Cross-Schema Dependency Graph</h3>
-    <p style="color:var(--text2);font-size:0.85rem;margin-bottom:1rem;">Arrows show FK dependencies. core and membership are the foundation layer referenced by all operational schemas.</p>
-    <div class="mermaid">
+    <div class="mm"><div class="mermaid">
 graph TD
   subgraph Foundation
-    core["core\n9 tables\nperson, branch, region"]
-    membership["membership\n8 tables\nmember, roles, lifecycle"]
+    C[core - 9 tables]
+    M[membership - 8 tables]
   end
   subgraph Operational
-    ministries["ministries\n4 tables\nnetwork, ministry, chapter"]
-    events["events\n6 tables\nevent types, series, registration"]
-    attendance["attendance\n3 tables\ncheck-in, FTV, child safety"]
+    MI[ministries - 4 tables]
+    E[events - 6 tables]
+    A[attendance - 3 tables]
   end
   subgraph Specialized
-    programs["programs\n4 tables\nHeartlink cohorts"]
-    missions["missions\n6 tables\nScholars, BAC"]
-    education["education\n15 tables\nBible College, ISU"]
+    P[programs - 4 tables]
+    MS[missions - 6 tables]
+    ED[education - 15 tables]
   end
   subgraph Migration
-    staging["staging\n5 tables\nETL pipeline, dedup"]
+    S[staging - 5 tables]
   end
-
-  membership -->|person, branch| core
-  ministries -->|branch| core
-  ministries -->|member| membership
-  events -->|branch| core
-  events -->|member| membership
-  events -->|network, ministry| ministries
-  attendance -->|person, branch| core
-  attendance -->|member| membership
-  attendance -->|event| events
-  programs -->|person, branch| core
-  programs -->|member| membership
-  missions -->|person, branch| core
-  missions -->|member| membership
-  education -->|person, branch| core
-  education -->|member| membership
-  staging -.->|promotes to| core
-  staging -.->|promotes to| membership
-
-  style core fill:#1e2a4a,stroke:#6c8cff,color:#e1e4ed
-  style membership fill:#2a1e3a,stroke:#ff6b9d,color:#e1e4ed
-  style ministries fill:#2a2a1e,stroke:#ffd93d,color:#e1e4ed
-  style events fill:#2a221e,stroke:#ff8c42,color:#e1e4ed
-  style attendance fill:#1e2a2a,stroke:#4ecdc4,color:#e1e4ed
-  style programs fill:#251e3a,stroke:#a78bfa,color:#e1e4ed
-  style missions fill:#2a1e2a,stroke:#f472b6,color:#e1e4ed
-  style education fill:#1e2a22,stroke:#34d399,color:#e1e4ed
-  style staging fill:#1e2228,stroke:#94a3b8,color:#e1e4ed
-    </div>
+  M -->|person, branch| C
+  MI -->|branch| C
+  MI -->|member| M
+  E -->|branch| C
+  E -->|member| M
+  E -->|network| MI
+  A -->|person, branch| C
+  A -->|member| M
+  A -->|event| E
+  P -->|person, branch| C
+  P -->|member| M
+  MS -->|person, branch| C
+  MS -->|member| M
+  ED -->|person, branch| C
+  ED -->|member| M
+  S -.->|promotes to| C
+  S -.->|promotes to| M
+  style C fill:#1e2a4a,stroke:#6c8cff,color:#e1e4ed
+  style M fill:#2a1e3a,stroke:#ff6b9d,color:#e1e4ed
+  style MI fill:#2a2a1e,stroke:#ffd93d,color:#e1e4ed
+  style E fill:#2a221e,stroke:#ff8c42,color:#e1e4ed
+  style A fill:#1e2a2a,stroke:#4ecdc4,color:#e1e4ed
+  style P fill:#251e3a,stroke:#a78bfa,color:#e1e4ed
+  style MS fill:#2a1e2a,stroke:#f472b6,color:#e1e4ed
+  style ED fill:#1e2a22,stroke:#34d399,color:#e1e4ed
+  style S fill:#1e2228,stroke:#94a3b8,color:#e1e4ed
+    </div></div>
   </div>
-
   <div class="card">
     <h3>Implementation Timeline</h3>
-    <p style="color:var(--text2);font-size:0.85rem;margin-bottom:1rem;">Four plans executed sequentially, each building on the previous.</p>
-    <div class="mermaid">
+    <div class="mm"><div class="mermaid">
 gantt
-  title JLY Church Database Implementation
+  title Implementation Plans
   dateFormat YYYY-MM-DD
   axisFormat %b %d
-  section Plan 1 Foundation
-    core + membership (V001-V027)       :done, p1, 2026-04-19, 2d
-  section Plan 2 Operational
-    ministries + events + attendance (V028-V042) :done, p2, after p1, 2d
-  section Plan 3a Programs
-    programs + missions (V043-V049)     :done, p3a, after p2, 1d
-  section Plan 3b Education
-    education schema (V050-V059)        :done, p3b, after p3a, 1d
-  section Plan 4 Staging
-    staging + ETL pipeline (V060-V063)  :done, p4, after p3b, 1d
-    </div>
+  section Plan 1
+    core + membership V001-V027 :done, p1, 2026-04-19, 2d
+  section Plan 2
+    ministries + events + attendance V028-V042 :done, p2, after p1, 2d
+  section Plan 3a
+    programs + missions V043-V049 :done, p3a, after p2, 1d
+  section Plan 3b
+    education V050-V059 :done, p3b, after p3a, 1d
+  section Plan 4
+    staging + ETL V060-V063 :done, p4, after p3b, 1d
+    </div></div>
   </div>
 </div>
 
-<!-- ==================== CORE ==================== -->
-<div id="core" class="section">
-  <div class="section-header">
-    <div class="schema-dot" style="background:var(--core)"></div>
-    <h2>core</h2>
-    <span class="desc">People, branches, regions, households, addresses, kinship</span>
+<!-- ===== CORE ===== -->
+<div id="core" class="sec">
+  <h2><span class="dot" style="background:var(--core)"></span> core</h2>
+  <div class="desc">People, branches, regions, households, addresses, kinship &mdash; 9 tables, 3 views, 9 enums</div>
+  <div class="erd">
+    <div class="ent" style="border-top:2px solid var(--core)"><div class="ent-h">region</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">region_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">code</span><span class="ct ct-uk">UQ</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">name</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">type</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">parent_region_id</span><span class="ct ct-fk">FK</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--core)"><div class="ent-h">branch</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">branch_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">code</span><span class="ct ct-uk">UQ</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">name</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">region_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">type, status</span></div>
+      <div class="col"><span class="ctype">char(2)</span><span class="cname">country_code</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--core)"><div class="ent-h">address</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">address_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">line1, line2</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">city, province</span></div>
+      <div class="col"><span class="ctype">char(2)</span><span class="cname">country_code</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--core)"><div class="ent-h">person <span class="ico">soft-delete</span></div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">person_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">first_name, last_name</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">gender</span></div>
+      <div class="col"><span class="ctype">date</span><span class="cname">date_of_birth</span></div>
+      <div class="col"><span class="ctype">tstz</span><span class="cname">deleted_at</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--core)"><div class="ent-h">contact_info</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">contact_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">person_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">type</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">value</span></div>
+      <div class="col"><span class="ctype">bool</span><span class="cname">is_primary</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--core)"><div class="ent-h">person_address</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk fk">person_id</span><span class="ct ct-pk">PK</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk fk">address_id</span><span class="ct ct-pk">PK</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">type</span></div>
+      <div class="col"><span class="ctype">date</span><span class="cname pk">valid_from</span><span class="ct ct-pk">PK</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--core)"><div class="ent-h">household <span class="ico">soft-delete</span></div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">household_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">branch_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">name</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">head_of_household_id</span><span class="ct ct-fk">FK</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--core)"><div class="ent-h">household_member</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk fk">household_id</span><span class="ct ct-pk">PK</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk fk">person_id</span><span class="ct ct-pk">PK</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">role_in_household</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--core)"><div class="ent-h">kinship</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">kinship_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">person_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">related_person_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">relationship</span></div>
+    </div></div>
   </div>
-  <div class="table-list">
-    <div class="table-item"><div class="name">region</div><div class="info"><span class="tag tag-pk">PK region_id</span> code, name, type (self-referencing parent)</div></div>
-    <div class="table-item"><div class="name">branch</div><div class="info"><span class="tag tag-pk">PK branch_id</span><span class="tag tag-fk">FK region</span> code, name, type, country_code</div></div>
-    <div class="table-item"><div class="name">address</div><div class="info"><span class="tag tag-pk">PK address_id</span> line1, city, province, country_code</div></div>
-    <div class="table-item"><div class="name">person</div><div class="info"><span class="tag tag-pk">PK person_id</span> first_name, last_name, gender, soft-delete</div></div>
-    <div class="table-item"><div class="name">contact_info</div><div class="info"><span class="tag tag-pk">PK contact_id</span><span class="tag tag-fk">FK person</span> type (MOBILE/EMAIL), value, is_primary</div></div>
-    <div class="table-item"><div class="name">person_address</div><div class="info"><span class="tag tag-pk">PK composite</span><span class="tag tag-fk">FK person, address</span> type, valid_from/to</div></div>
-    <div class="table-item"><div class="name">household</div><div class="info"><span class="tag tag-pk">PK household_id</span><span class="tag tag-fk">FK branch, address, person</span> name, soft-delete</div></div>
-    <div class="table-item"><div class="name">household_member</div><div class="info"><span class="tag tag-pk">PK composite</span><span class="tag tag-fk">FK household, person</span> role (HEAD/SPOUSE/CHILD)</div></div>
-    <div class="table-item"><div class="name">kinship</div><div class="info"><span class="tag tag-pk">PK kinship_id</span><span class="tag tag-fk">FK person x2</span> relationship (SPOUSE/PARENT/CHILD)</div></div>
-    <div class="table-item"><div class="name">person_active</div><div class="info"><span class="tag tag-view">VIEW</span> Active persons (deleted_at IS NULL)</div></div>
-    <div class="table-item"><div class="name">kinship_bidirectional</div><div class="info"><span class="tag tag-view">VIEW</span> Both directions of kinship links</div></div>
-  </div>
-  <div class="card">
-    <h3>Entity Relationships</h3>
-    <div class="mermaid">
-erDiagram
-  region ||--o{ branch : "contains"
-  branch ||--o{ household : "has"
-  person ||--o{ contact_info : "has"
-  person ||--o{ person_address : "lives at"
-  address ||--o{ person_address : "used by"
-  household ||--o{ household_member : "includes"
-  person ||--o{ household_member : "belongs to"
-  person ||--o{ kinship : "related"
+  <div class="card"><h3>Relationships</h3><div class="rels">
+    <div class="rel">region <span class="arrow">1 &mdash;&mdash;* </span> branch</div>
+    <div class="rel">region <span class="arrow">1 &mdash;&mdash;? </span> region (self-ref parent)</div>
+    <div class="rel">branch <span class="arrow">1 &mdash;&mdash;* </span> household</div>
+    <div class="rel">person <span class="arrow">1 &mdash;&mdash;* </span> contact_info, person_address, household_member, kinship</div>
+    <div class="rel">address <span class="arrow">1 &mdash;&mdash;* </span> person_address</div>
+    <div class="rel">household <span class="arrow">1 &mdash;&mdash;* </span> household_member</div>
+  </div></div>
+  <div class="card"><h3>Views</h3><div class="rels">
+    <div class="rel"><strong>person_active</strong> &mdash; person WHERE deleted_at IS NULL</div>
+    <div class="rel"><strong>household_active</strong> &mdash; household WHERE deleted_at IS NULL</div>
+    <div class="rel"><strong>kinship_bidirectional</strong> &mdash; both directions of kinship (SPOUSE, PARENT/CHILD flip)</div>
+  </div></div>
+</div>
 
-  region {
-    bigint region_id PK
-    text code UK
-    text region_name
-    enum region_type
-    bigint parent_region_id FK
-  }
-  branch {
-    bigint branch_id PK
-    text code UK
-    text branch_name
-    bigint region_id FK
-    enum branch_type
-    enum branch_status
-  }
-  person {
-    bigint person_id PK
-    text first_name
-    text last_name
-    enum gender
-    date date_of_birth
-    timestamptz deleted_at
-  }
-  contact_info {
-    bigint contact_id PK
-    bigint person_id FK
-    enum contact_type
-    text contact_value
-    boolean is_primary
-  }
-  address {
-    bigint address_id PK
-    text line1
-    text city
-    text country_code
-  }
-  household {
-    bigint household_id PK
-    bigint branch_id FK
-    text household_name
-    bigint head_person_id FK
-  }
-  household_member {
-    bigint household_id PK
-    bigint person_id PK
-    enum role_in_household
-  }
-  person_address {
-    bigint person_id PK
-    bigint address_id PK
-    enum address_type
-    date valid_from PK
-  }
-  kinship {
-    bigint kinship_id PK
-    bigint person_id FK
-    bigint related_person_id FK
-    enum relationship
-  }
-    </div>
+<!-- ===== MEMBERSHIP ===== -->
+<div id="membership" class="sec">
+  <h2><span class="dot" style="background:var(--membership)"></span> membership</h2>
+  <div class="desc">Member lifecycle (FTV &rarr; OGV &rarr; RA &rarr; Regular Member), stackable roles, pastoral care &mdash; 8 tables, 3 enums</div>
+  <div class="erd">
+    <div class="ent" style="border-top:2px solid var(--membership)"><div class="ent-h">lifecycle_stage</div><div class="ent-body">
+      <div class="col"><span class="ctype">text</span><span class="cname pk">stage_code</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">name</span></div>
+      <div class="col"><span class="ctype">int</span><span class="cname">order_index</span></div>
+      <div class="col"><span class="ctype">bool</span><span class="cname">is_terminal</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--membership)"><div class="ent-h">role</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">role_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">code</span><span class="ct ct-uk">UQ</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">name</span></div>
+      <div class="col"><span class="ctype">bool</span><span class="cname">is_pastoral</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--membership)"><div class="ent-h">member <span class="ico">soft-delete</span></div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">member_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">person_id</span><span class="ct ct-fk">FK</span><span class="ct ct-uk">UQ</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">branch_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">member_code</span><span class="ct ct-uk">UQ</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname fk">current_stage</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">status</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--membership)"><div class="ent-h">member_role</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">member_role_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">member_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">role_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">tstz</span><span class="cname">assigned_at / ended_at</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--membership)"><div class="ent-h">lifecycle_stage_history <span class="ico">auto-trigger</span></div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">history_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">member_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname fk">from_stage / to_stage</span><span class="ct ct-fk">FK</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--membership)"><div class="ent-h">branch_membership_history <span class="ico">auto-trigger</span></div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">history_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">member_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">from_branch / to_branch</span><span class="ct ct-fk">FK</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--membership)"><div class="ent-h">regular_member_application</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">application_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">member_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">status</span></div>
+      <div class="col"><span class="ctype">jsonb</span><span class="cname">criteria_checklist</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--membership)"><div class="ent-h">pastoral_care_assignment</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">assignment_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">carer_member_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">assigned_member_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">status</span></div>
+    </div></div>
+  </div>
+  <div class="card"><h3>Relationships</h3><div class="rels">
+    <div class="rel">core.person <span class="arrow">1 &mdash;&mdash;1 </span> member (person_id UNIQUE)</div>
+    <div class="rel">core.branch <span class="arrow">1 &mdash;&mdash;* </span> member (home branch)</div>
+    <div class="rel">lifecycle_stage <span class="arrow">1 &mdash;&mdash;* </span> member (current_stage)</div>
+    <div class="rel">member <span class="arrow">1 &mdash;&mdash;* </span> member_role (stackable roles)</div>
+    <div class="rel">member <span class="arrow">1 &mdash;&mdash;* </span> lifecycle_stage_history, branch_membership_history</div>
+    <div class="rel">member <span class="arrow">1 &mdash;&mdash;* </span> pastoral_care_assignment (both sides)</div>
+  </div></div>
+</div>
+
+<!-- ===== MINISTRIES ===== -->
+<div id="ministries" class="sec">
+  <h2><span class="dot" style="background:var(--ministries)"></span> ministries</h2>
+  <div class="desc">3-level hierarchy: Network &rarr; Ministry &rarr; Branch Chapter &mdash; 4 tables, 2 enums</div>
+  <div class="erd">
+    <div class="ent" style="border-top:2px solid var(--ministries)"><div class="ent-h">network</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">network_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">code</span><span class="ct ct-uk">UQ</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">name</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--ministries)"><div class="ent-h">ministry</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">ministry_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">network_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">code</span><span class="ct ct-uk">UQ</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">name, target_demographic</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--ministries)"><div class="ent-h">ministry_chapter</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">chapter_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">ministry_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">branch_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">status</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--ministries)"><div class="ent-h">ministry_membership</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">membership_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">chapter_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">member_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bool</span><span class="cname">is_leader</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">leader_role</span></div>
+    </div></div>
+  </div>
+  <div class="card"><h3>Relationships</h3><div class="rels">
+    <div class="rel">network <span class="arrow">1 &mdash;&mdash;* </span> ministry <span class="arrow">&mdash;&mdash;* </span> ministry_chapter <span class="arrow">&mdash;&mdash;* </span> ministry_membership</div>
+    <div class="rel">core.branch <span class="arrow">1 &mdash;&mdash;* </span> ministry_chapter</div>
+    <div class="rel">membership.member <span class="arrow">1 &mdash;&mdash;* </span> ministry_membership</div>
+  </div></div>
+</div>
+
+<!-- ===== EVENTS ===== -->
+<div id="events" class="sec">
+  <h2><span class="dot" style="background:var(--events)"></span> events</h2>
+  <div class="desc">Event management: categories, types, series, instances, organizers, registrations &mdash; 6 tables, 4 enums</div>
+  <div class="erd">
+    <div class="ent" style="border-top:2px solid var(--events)"><div class="ent-h">event_category</div><div class="ent-body">
+      <div class="col"><span class="ctype">text</span><span class="cname pk">category_code</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">name</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--events)"><div class="ent-h">event_type</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">event_type_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname fk">category_code</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">code</span><span class="ct ct-uk">UQ</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">name</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--events)"><div class="ent-h">event_series</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">series_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">event_type_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">recurrence_pattern</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">status</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--events)"><div class="ent-h">event</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">event_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">event_type_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">series_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">name</span></div>
+      <div class="col"><span class="ctype">tstz</span><span class="cname">starts_at</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">status</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--events)"><div class="ent-h">event_organizer</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk fk">event_id</span><span class="ct ct-pk">PK</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk fk">member_id</span><span class="ct ct-pk">PK</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">role</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--events)"><div class="ent-h">event_registration</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">registration_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">event_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">person_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">status</span></div>
+      <div class="col"><span class="ctype">int</span><span class="cname">group_size</span></div>
+    </div></div>
+  </div>
+  <div class="card"><h3>Relationships</h3><div class="rels">
+    <div class="rel">event_category <span class="arrow">1 &mdash;&mdash;* </span> event_type <span class="arrow">&mdash;&mdash;* </span> event_series, event</div>
+    <div class="rel">event <span class="arrow">1 &mdash;&mdash;* </span> event_organizer, event_registration</div>
+  </div></div>
+</div>
+
+<!-- ===== ATTENDANCE ===== -->
+<div id="attendance" class="sec">
+  <h2><span class="dot" style="background:var(--attendance)"></span> attendance</h2>
+  <div class="desc">Check-ins (monthly partitioned), FTV intake, child safety &mdash; 3 tables, 1 view</div>
+  <div class="erd">
+    <div class="ent" style="border-top:2px solid var(--attendance)"><div class="ent-h">check_in <span class="ico">PARTITIONED by month</span></div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">check_in_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">tstz</span><span class="cname pk">checked_in_at</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">event_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">person_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">branch_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">check_in_method</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--attendance)"><div class="ent-h">visitor_capture</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">ftv_capture_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">person_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">event_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bool</span><span class="cname">consent_to_contact</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">intake_notes</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--attendance)"><div class="ent-h">child_check_in</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk fk">check_in_id</span><span class="ct ct-pk">PK</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">tstz</span><span class="cname pk">checked_in_at</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">pickup_code</span><span class="ct ct-uk">UQ</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">allergies</span></div>
+    </div></div>
+  </div>
+  <div class="card"><h3>View: attendance_summary</h3><div class="rels">
+    <div class="rel">Aggregates total_check_ins, ftv_count, child_count per event</div>
+  </div></div>
+</div>
+
+<!-- ===== PROGRAMS ===== -->
+<div id="programs" class="sec">
+  <h2><span class="dot" style="background:var(--programs)"></span> programs</h2>
+  <div class="desc">Heartlink discipleship: cohort &rarr; enrollment &rarr; sessions &rarr; attendance &mdash; 4 tables, 2 enums</div>
+  <div class="erd">
+    <div class="ent" style="border-top:2px solid var(--programs)"><div class="ent-h">heartlink_cohort</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">cohort_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">branch_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">name</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">facilitator_member_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">status</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--programs)"><div class="ent-h">heartlink_enrollment</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">enrollment_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">cohort_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">person_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">status</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--programs)"><div class="ent-h">heartlink_session</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">session_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">cohort_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">int</span><span class="cname">session_number</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">topic</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--programs)"><div class="ent-h">heartlink_session_attendance</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">attendance_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">session_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">enrollment_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bool</span><span class="cname">attended</span></div>
+    </div></div>
   </div>
 </div>
 
-<!-- ==================== MEMBERSHIP ==================== -->
-<div id="membership" class="section">
-  <div class="section-header">
-    <div class="schema-dot" style="background:var(--membership)"></div>
-    <h2>membership</h2>
-    <span class="desc">Member lifecycle, roles, pastoral care, applications</span>
-  </div>
-  <div class="table-list">
-    <div class="table-item"><div class="name">lifecycle_stage</div><div class="info"><span class="tag tag-pk">PK stage_code</span> Seeded: FTV, OGV, RA, REGULAR_MEMBER, DFL</div></div>
-    <div class="table-item"><div class="name">role</div><div class="info"><span class="tag tag-pk">PK role_id</span> Seeded: PASTOR, REGIONAL_DIRECTOR, ADMIN_STAFF, PCM</div></div>
-    <div class="table-item"><div class="name">member</div><div class="info"><span class="tag tag-pk">PK member_id</span><span class="tag tag-fk">FK person, branch, stage</span> member_code, status</div></div>
-    <div class="table-item"><div class="name">member_role</div><div class="info"><span class="tag tag-pk">PK member_role_id</span><span class="tag tag-fk">FK member, role, branch</span> assigned_at/ended_at</div></div>
-    <div class="table-item"><div class="name">lifecycle_stage_history</div><div class="info"><span class="tag tag-pk">PK history_id</span><span class="tag tag-fk">FK member</span> from_stage, to_stage (auto-trigger)</div></div>
-    <div class="table-item"><div class="name">branch_membership_history</div><div class="info"><span class="tag tag-pk">PK history_id</span><span class="tag tag-fk">FK member</span> from_branch, to_branch (auto-trigger)</div></div>
-    <div class="table-item"><div class="name">regular_member_application</div><div class="info"><span class="tag tag-pk">PK application_id</span><span class="tag tag-fk">FK member</span> status, criteria_checklist JSONB</div></div>
-    <div class="table-item"><div class="name">pastoral_care_assignment</div><div class="info"><span class="tag tag-pk">PK assignment_id</span><span class="tag tag-fk">FK member x2</span> carer &harr; assigned member</div></div>
-  </div>
-  <div class="card">
-    <h3>Entity Relationships</h3>
-    <div class="mermaid">
-erDiagram
-  person ||--o| member : "becomes"
-  branch ||--o{ member : "home branch"
-  lifecycle_stage ||--o{ member : "current stage"
-  member ||--o{ member_role : "has roles"
-  role ||--o{ member_role : "assigned as"
-  member ||--o{ lifecycle_stage_history : "transitions"
-  member ||--o{ branch_membership_history : "transfers"
-  member ||--o| regular_member_application : "applies"
-  member ||--o{ pastoral_care_assignment : "cares for / cared by"
-
-  member {
-    bigint member_id PK
-    bigint person_id FK
-    bigint branch_id FK
-    text member_code UK
-    text current_stage FK
-    enum member_status
-  }
-  lifecycle_stage {
-    text stage_code PK
-    text stage_name
-    int order_index
-    boolean is_terminal
-  }
-  role {
-    bigint role_id PK
-    text code UK
-    text role_name
-    boolean is_pastoral
-  }
-  member_role {
-    bigint member_role_id PK
-    bigint member_id FK
-    bigint role_id FK
-    timestamptz assigned_at
-    timestamptz ended_at
-  }
-  lifecycle_stage_history {
-    bigint history_id PK
-    bigint member_id FK
-    text from_stage FK
-    text to_stage FK
-  }
-  branch_membership_history {
-    bigint history_id PK
-    bigint member_id FK
-    bigint from_branch_id FK
-    bigint to_branch_id FK
-  }
-  regular_member_application {
-    bigint application_id PK
-    bigint member_id FK
-    enum application_status
-    jsonb criteria_checklist
-  }
-  pastoral_care_assignment {
-    bigint assignment_id PK
-    bigint carer_member_id FK
-    bigint assigned_member_id FK
-    enum pcm_status
-  }
-    </div>
+<!-- ===== MISSIONS ===== -->
+<div id="missions" class="sec">
+  <h2><span class="dot" style="background:var(--missions)"></span> missions</h2>
+  <div class="desc">Scholars program + BAC (Bless A Community) outreach &mdash; 6 tables, 5 enums</div>
+  <div class="erd">
+    <div class="ent" style="border-top:2px solid var(--missions)"><div class="ent-h">scholar_program</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">program_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">name</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">status</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--missions)"><div class="ent-h">scholarship_award</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">award_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">program_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">member_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">numeric</span><span class="cname">amount</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">school_name</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--missions)"><div class="ent-h">bac_initiative</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">initiative_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">branch_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">name, target_community</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">status</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--missions)"><div class="ent-h">bac_session</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">session_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">initiative_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">int</span><span class="cname">session_number</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">topic</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--missions)"><div class="ent-h">bac_participant</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">participant_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">initiative_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">person_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">role</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--missions)"><div class="ent-h">bac_session_attendance</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">attendance_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">session_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">person_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bool</span><span class="cname">attended</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">attended_as</span></div>
+    </div></div>
   </div>
 </div>
 
-<!-- ==================== MINISTRIES ==================== -->
-<div id="ministries" class="section">
-  <div class="section-header">
-    <div class="schema-dot" style="background:var(--ministries)"></div>
-    <h2>ministries</h2>
-    <span class="desc">3-level hierarchy: Network &rarr; Ministry &rarr; Branch Chapter</span>
-  </div>
-  <div class="card">
-    <h3>Entity Relationships</h3>
-    <div class="mermaid">
-erDiagram
-  network ||--o{ ministry : "contains"
-  ministry ||--o{ ministry_chapter : "branch instance"
-  ministry_chapter ||--o{ ministry_membership : "has members"
-  member ||--o{ ministry_membership : "serves in"
-  branch ||--o{ ministry_chapter : "hosts"
+<!-- ===== EDUCATION ===== -->
+<div id="education" class="sec">
+  <h2><span class="dot" style="background:var(--education)"></span> education</h2>
+  <div class="desc">Bible College (formal academic, 10 tables) + ISU (continuous track-based, 5 tables) + school lookup &mdash; 15 tables, 6 enums</div>
 
-  network {
-    bigint network_id PK
-    text code UK
-    text network_name
-  }
-  ministry {
-    bigint ministry_id PK
-    bigint network_id FK
-    text code UK
-    text ministry_name
-    text target_demographic
-  }
-  ministry_chapter {
-    bigint chapter_id PK
-    bigint ministry_id FK
-    bigint branch_id FK
-    enum chapter_status
-  }
-  ministry_membership {
-    bigint membership_id PK
-    bigint chapter_id FK
-    bigint member_id FK
-    boolean is_leader
-    enum leader_role
-  }
-    </div>
-  </div>
+  <div class="card"><h3>Bible College (bc_*)</h3>
+  <div class="erd">
+    <div class="ent" style="border-top:2px solid var(--education)"><div class="ent-h">school</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">school_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">code</span><span class="ct ct-uk">UQ</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">name</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">status</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--education)"><div class="ent-h">bc_program</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">program_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">code</span><span class="ct ct-uk">UQ</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">name, degree_level</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--education)"><div class="ent-h">bc_cohort</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">cohort_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">program_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">name</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--education)"><div class="ent-h">bc_semester</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">semester_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">name, academic_year</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">status</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--education)"><div class="ent-h">bc_course</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">course_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">code</span><span class="ct ct-uk">UQ</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">title</span></div>
+      <div class="col"><span class="ctype">int</span><span class="cname">credits</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--education)"><div class="ent-h">bc_course_offering</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">offering_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">course_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">semester_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">jsonb</span><span class="cname">schedule</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--education)"><div class="ent-h">bc_student</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">student_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">person_id</span><span class="ct ct-fk">FK</span><span class="ct ct-uk">UQ</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">cohort_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">student_number</span><span class="ct ct-uk">UQ</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">status</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--education)"><div class="ent-h">bc_enrollment</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">enrollment_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">student_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">offering_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">status</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--education)"><div class="ent-h">bc_completion <span class="ico">1:1 with enrollment</span></div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk fk">enrollment_id</span><span class="ct ct-pk">PK</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">status</span></div>
+      <div class="col"><span class="ctype">numeric</span><span class="cname">attendance_rate</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--education)"><div class="ent-h">bc_class_attendance</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">attendance_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">offering_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">student_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">date</span><span class="cname">class_date</span></div>
+      <div class="col"><span class="ctype">bool</span><span class="cname">attended</span></div>
+    </div></div>
+  </div></div>
+
+  <div class="card"><h3>ISU (isu_*)</h3>
+  <div class="erd">
+    <div class="ent" style="border-top:2px solid var(--education)"><div class="ent-h">isu_track</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">track_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">code</span><span class="ct ct-uk">UQ</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">name</span></div>
+      <div class="col"><span class="ctype">int</span><span class="cname">order_index</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--education)"><div class="ent-h">isu_student</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">student_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">person_id</span><span class="ct ct-fk">FK</span><span class="ct ct-uk">UQ</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">current_track_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">status</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--education)"><div class="ent-h">isu_track_progression</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">progression_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">student_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">from_track_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">to_track_id</span><span class="ct ct-fk">FK</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--education)"><div class="ent-h">isu_session</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">session_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">branch_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">track_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">topic</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--education)"><div class="ent-h">isu_session_attendance</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">attendance_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">session_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">person_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bool</span><span class="cname">attended</span></div>
+    </div></div>
+  </div></div>
 </div>
 
-<!-- ==================== EVENTS ==================== -->
-<div id="events" class="section">
-  <div class="section-header">
-    <div class="schema-dot" style="background:var(--events)"></div>
-    <h2>events</h2>
-    <span class="desc">Event management: types, series, instances, registrations</span>
-  </div>
-  <div class="card">
-    <h3>Entity Relationships</h3>
-    <div class="mermaid">
-erDiagram
-  event_category ||--o{ event_type : "groups"
-  event_type ||--o{ event_series : "recurring"
-  event_type ||--o{ event : "instance of"
-  event_series ||--o{ event : "generates"
-  event ||--o{ event_organizer : "organized by"
-  event ||--o{ event_registration : "registers"
-  member ||--o{ event_organizer : "organizes"
-  person ||--o{ event_registration : "registers for"
+<!-- ===== STAGING ===== -->
+<div id="staging" class="sec">
+  <h2><span class="dot" style="background:var(--staging)"></span> staging</h2>
+  <div class="desc">Migration ETL pipeline: load &rarr; cleanse &rarr; validate &rarr; promote &mdash; 5 tables, 3 enums</div>
 
-  event_category {
-    text category_code PK
-    text category_name
-  }
-  event_type {
-    bigint event_type_id PK
-    text category_code FK
-    text code UK
-    text type_name
-  }
-  event_series {
-    bigint series_id PK
-    bigint event_type_id FK
-    enum recurrence_pattern
-    enum series_status
-  }
-  event {
-    bigint event_id PK
-    bigint event_type_id FK
-    bigint series_id FK
-    text event_name
-    timestamptz starts_at
-    enum event_status
-  }
-  event_organizer {
-    bigint event_id PK
-    bigint member_id PK
-    text organizer_role
-  }
-  event_registration {
-    bigint registration_id PK
-    bigint event_id FK
-    bigint person_id FK
-    enum reg_status
-    int group_size
-  }
-    </div>
-  </div>
-</div>
-
-<!-- ==================== ATTENDANCE ==================== -->
-<div id="attendance" class="section">
-  <div class="section-header">
-    <div class="schema-dot" style="background:var(--attendance)"></div>
-    <h2>attendance</h2>
-    <span class="desc">Check-ins (monthly partitioned), FTV capture, child safety</span>
-  </div>
-  <div class="table-list">
-    <div class="table-item"><div class="name">check_in</div><div class="info"><span class="tag tag-part">PARTITIONED</span><span class="tag tag-fk">FK event, person, branch</span> Monthly by checked_in_at</div></div>
-    <div class="table-item"><div class="name">visitor_capture</div><div class="info"><span class="tag tag-pk">PK ftv_capture_id</span><span class="tag tag-fk">FK person, event, branch</span> FTV intake form</div></div>
-    <div class="table-item"><div class="name">child_check_in</div><div class="info"><span class="tag tag-pk">PK composite</span><span class="tag tag-fk">FK check_in</span> pickup_code, allergies</div></div>
-    <div class="table-item"><div class="name">attendance_summary</div><div class="info"><span class="tag tag-view">VIEW</span> Aggregate check-ins by event</div></div>
-  </div>
-  <div class="card">
-    <h3>Entity Relationships</h3>
-    <div class="mermaid">
-erDiagram
-  event ||--o{ check_in : "attendance at"
-  person ||--o{ check_in : "checked in"
-  check_in ||--o| child_check_in : "child safety"
-  check_in ||--o| visitor_capture : "FTV intake"
-  person ||--o{ visitor_capture : "first visit"
-  event ||--o{ visitor_capture : "captured at"
-
-  check_in {
-    bigint check_in_id PK
-    timestamptz checked_in_at PK
-    bigint event_id FK
-    bigint person_id FK
-    bigint branch_id FK
-    enum check_in_method
-  }
-  visitor_capture {
-    bigint ftv_capture_id PK
-    bigint person_id FK
-    bigint event_id FK
-    boolean consent_to_contact
-    text intake_notes
-  }
-  child_check_in {
-    bigint check_in_id PK
-    timestamptz checked_in_at PK
-    text pickup_code UK
-    text allergies
-  }
-    </div>
-  </div>
-</div>
-
-<!-- ==================== PROGRAMS ==================== -->
-<div id="programs" class="section">
-  <div class="section-header">
-    <div class="schema-dot" style="background:var(--programs)"></div>
-    <h2>programs</h2>
-    <span class="desc">Heartlink discipleship cohorts, sessions, attendance</span>
-  </div>
-  <div class="card">
-    <h3>Entity Relationships</h3>
-    <div class="mermaid">
-erDiagram
-  heartlink_cohort ||--o{ heartlink_enrollment : "enrolls"
-  heartlink_cohort ||--o{ heartlink_session : "has sessions"
-  heartlink_session ||--o{ heartlink_session_attendance : "tracks"
-  heartlink_enrollment ||--o{ heartlink_session_attendance : "attends"
-  person ||--o{ heartlink_enrollment : "participates"
-
-  heartlink_cohort {
-    bigint cohort_id PK
-    bigint branch_id FK
-    text cohort_name
-    enum cohort_status
-    bigint facilitator_member_id FK
-  }
-  heartlink_enrollment {
-    bigint enrollment_id PK
-    bigint cohort_id FK
-    bigint person_id FK
-    enum enrollment_status
-  }
-  heartlink_session {
-    bigint session_id PK
-    bigint cohort_id FK
-    int session_number
-    text topic
-  }
-  heartlink_session_attendance {
-    bigint attendance_id PK
-    bigint session_id FK
-    bigint enrollment_id FK
-    boolean attended
-  }
-    </div>
-  </div>
-</div>
-
-<!-- ==================== MISSIONS ==================== -->
-<div id="missions" class="section">
-  <div class="section-header">
-    <div class="schema-dot" style="background:var(--missions)"></div>
-    <h2>missions</h2>
-    <span class="desc">Scholars program + BAC (Bless A Community) outreach</span>
-  </div>
-  <div class="card">
-    <h3>Entity Relationships</h3>
-    <div class="mermaid">
-erDiagram
-  scholar_program ||--o{ scholarship_award : "awards"
-  member ||--o{ scholarship_award : "receives"
-  bac_initiative ||--o{ bac_session : "has sessions"
-  bac_initiative ||--o{ bac_participant : "involves"
-  bac_session ||--o{ bac_session_attendance : "tracks"
-  person ||--o{ bac_participant : "participates"
-  person ||--o{ bac_session_attendance : "attends"
-
-  scholar_program {
-    bigint program_id PK
-    text program_name
-    enum program_status
-  }
-  scholarship_award {
-    bigint award_id PK
-    bigint program_id FK
-    bigint member_id FK
-    numeric amount
-    text school_name
-    enum award_status
-  }
-  bac_initiative {
-    bigint initiative_id PK
-    bigint branch_id FK
-    text initiative_name
-    text target_community
-    enum initiative_status
-  }
-  bac_session {
-    bigint session_id PK
-    bigint initiative_id FK
-    int session_number
-    text topic
-  }
-  bac_participant {
-    bigint participant_id PK
-    bigint initiative_id FK
-    bigint person_id FK
-    enum participant_role
-  }
-  bac_session_attendance {
-    bigint attendance_id PK
-    bigint session_id FK
-    bigint person_id FK
-    boolean attended
-    enum attended_as
-  }
-    </div>
-  </div>
-</div>
-
-<!-- ==================== EDUCATION ==================== -->
-<div id="education" class="section">
-  <div class="section-header">
-    <div class="schema-dot" style="background:var(--education)"></div>
-    <h2>education</h2>
-    <span class="desc">Bible College (formal academic) + ISU (continuous track-based)</span>
-  </div>
-  <div class="card">
-    <h3>Bible College (bc_*)</h3>
-    <div class="mermaid">
-erDiagram
-  bc_program ||--o{ bc_cohort : "has cohorts"
-  bc_cohort ||--o{ bc_student : "enrolls"
-  bc_semester ||--o{ bc_course_offering : "hosts"
-  bc_course ||--o{ bc_course_offering : "offered in"
-  bc_course_offering ||--o{ bc_enrollment : "students enroll"
-  bc_student ||--o{ bc_enrollment : "takes"
-  bc_enrollment ||--o| bc_completion : "completes"
-  bc_course_offering ||--o{ bc_class_attendance : "tracked per class"
-  bc_student ||--o{ bc_class_attendance : "attends"
-  person ||--o| bc_student : "is student"
-
-  bc_program {
-    bigint program_id PK
-    text code UK
-    text program_name
-    text degree_level
-  }
-  bc_cohort {
-    bigint cohort_id PK
-    bigint program_id FK
-    text cohort_name
-    date starts_on
-  }
-  bc_semester {
-    bigint semester_id PK
-    text semester_name
-    text academic_year
-    enum semester_status
-  }
-  bc_course {
-    bigint course_id PK
-    text code UK
-    text title
-    int credits
-  }
-  bc_course_offering {
-    bigint offering_id PK
-    bigint course_id FK
-    bigint semester_id FK
-    jsonb schedule
-  }
-  bc_student {
-    bigint student_id PK
-    bigint person_id FK
-    bigint cohort_id FK
-    text student_number UK
-    enum student_status
-  }
-  bc_enrollment {
-    bigint enrollment_id PK
-    bigint student_id FK
-    bigint offering_id FK
-    enum enrollment_status
-  }
-  bc_completion {
-    bigint enrollment_id PK
-    enum completion_status
-    numeric attendance_rate
-  }
-  bc_class_attendance {
-    bigint attendance_id PK
-    bigint offering_id FK
-    bigint student_id FK
-    date class_date
-    boolean attended
-  }
-    </div>
-  </div>
-  <div class="card">
-    <h3>ISU (isu_*)</h3>
-    <div class="mermaid">
-erDiagram
-  isu_track ||--o{ isu_student : "current track"
-  isu_student ||--o{ isu_track_progression : "progresses"
-  isu_track ||--o{ isu_track_progression : "from/to"
-  isu_track ||--o{ isu_session : "topic within"
-  isu_session ||--o{ isu_session_attendance : "tracks"
-  person ||--o| isu_student : "is student"
-  person ||--o{ isu_session_attendance : "attends"
-  branch ||--o{ isu_session : "hosts"
-
-  isu_track {
-    bigint track_id PK
-    text code UK
-    text track_name
-    int order_index
-  }
-  isu_student {
-    bigint student_id PK
-    bigint person_id FK
-    bigint current_track_id FK
-    enum student_status
-  }
-  isu_track_progression {
-    bigint progression_id PK
-    bigint student_id FK
-    bigint from_track_id FK
-    bigint to_track_id FK
-  }
-  isu_session {
-    bigint session_id PK
-    bigint branch_id FK
-    bigint track_id FK
-    text topic
-  }
-  isu_session_attendance {
-    bigint attendance_id PK
-    bigint session_id FK
-    bigint person_id FK
-    boolean attended
-  }
-    </div>
-  </div>
-</div>
-
-<!-- ==================== STAGING ==================== -->
-<div id="staging" class="section">
-  <div class="section-header">
-    <div class="schema-dot" style="background:var(--staging)"></div>
-    <h2>staging</h2>
-    <span class="desc">Migration ETL pipeline: load, cleanse, validate, promote</span>
-  </div>
-  <div class="card">
-    <h3>ETL Pipeline Flow</h3>
-    <div class="mermaid">
+  <div class="card"><h3>ETL Pipeline Flow</h3>
+  <div class="mm"><div class="mermaid">
 graph LR
-  CSV["CSV / Google Sheet"] -->|"Python loader"| LOAD["LOAD\nstg_person\nrow_status = RAW"]
-  LOAD -->|"cleanse_person.sql"| CLEANSE["CLEANSE\ntrim, normalize\nrow_status = CLEANSED"]
-  CLEANSE -->|"validate_person.sql"| VALIDATE["VALIDATE\ncheck rules\nrow_status = VALID / INVALID"]
-  VALIDATE -->|"promote_person.sql"| PROMOTE["PROMOTE\nINSERT into\ncore + membership"]
-
+  CSV[CSV / Google Sheet] -->|Python loader| LOAD[LOAD - stg_person - RAW]
+  LOAD -->|cleanse_person.sql| CLEANSE[CLEANSE - normalize - CLEANSED]
+  CLEANSE -->|validate_person.sql| VALIDATE[VALIDATE - check rules - VALID/INVALID]
+  VALIDATE -->|promote_person.sql| PROMOTE[PROMOTE - INSERT into core + membership]
   style CSV fill:#2a2a1e,stroke:#ffd93d,color:#e1e4ed
   style LOAD fill:#1e2228,stroke:#94a3b8,color:#e1e4ed
   style CLEANSE fill:#1e2228,stroke:#6c8cff,color:#e1e4ed
   style VALIDATE fill:#1e2228,stroke:#ff8c42,color:#e1e4ed
   style PROMOTE fill:#1e2a22,stroke:#34d399,color:#e1e4ed
-    </div>
-  </div>
-  <div class="card">
-    <h3>Entity Relationships</h3>
-    <div class="mermaid">
-erDiagram
-  import_batch ||--o{ stg_person : "contains rows"
-  import_batch ||--o{ dedup_run : "dedup pass"
-  dedup_run ||--o{ person_candidate : "candidates"
-  stg_person ||--o{ person_candidate : "normalized from"
-  person_candidate ||--o{ person_merge_review : "pair A or B"
+  </div></div></div>
 
-  import_batch {
-    uuid batch_id PK
-    text source_name
-    enum batch_status
-    int row_count
-  }
-  stg_person {
-    bigint staging_id PK
-    uuid batch_id FK
-    enum row_status
-    text raw_first_name
-    text raw_last_name
-    jsonb validation_errors
-    bigint promoted_to_person_id
-  }
-  dedup_run {
-    bigint run_id PK
-    uuid batch_id FK
-    int candidates_found
-    int auto_merged
-  }
-  person_candidate {
-    bigint candidate_id PK
-    bigint run_id FK
-    bigint staging_id FK
-    text blocking_key
-    bigint resolved_person_id
-  }
-  person_merge_review {
-    bigint review_id PK
-    bigint candidate_a_id FK
-    bigint candidate_b_id FK
-    numeric confidence_score
-    enum review_status
-  }
-    </div>
+  <div class="erd">
+    <div class="ent" style="border-top:2px solid var(--staging)"><div class="ent-h">import_batch</div><div class="ent-body">
+      <div class="col"><span class="ctype">uuid</span><span class="cname pk">batch_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">source_name</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">status</span></div>
+      <div class="col"><span class="ctype">int</span><span class="cname">row_count</span></div>
+      <div class="col"><span class="ctype">jsonb</span><span class="cname">metadata</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--staging)"><div class="ent-h">stg_person <span class="ico">all raw_ cols TEXT</span></div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">staging_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">uuid</span><span class="cname fk">batch_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">row_status</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">raw_first_name, raw_last_name, ...</span></div>
+      <div class="col"><span class="ctype">jsonb</span><span class="cname">validation_errors</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname">promoted_to_person_id</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--staging)"><div class="ent-h">dedup_run</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">run_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">uuid</span><span class="cname fk">batch_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">int</span><span class="cname">candidates_found</span></div>
+      <div class="col"><span class="ctype">int</span><span class="cname">auto_merged</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--staging)"><div class="ent-h">person_candidate</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">candidate_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">run_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">staging_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">text</span><span class="cname">blocking_key</span></div>
+    </div></div>
+    <div class="ent" style="border-top:2px solid var(--staging)"><div class="ent-h">person_merge_review</div><div class="ent-body">
+      <div class="col"><span class="ctype">bigint</span><span class="cname pk">review_id</span><span class="ct ct-pk">PK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">candidate_a_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">bigint</span><span class="cname fk">candidate_b_id</span><span class="ct ct-fk">FK</span></div>
+      <div class="col"><span class="ctype">numeric</span><span class="cname">confidence_score</span></div>
+      <div class="col"><span class="ctype">enum</span><span class="cname">status</span></div>
+    </div></div>
   </div>
 </div>
 
@@ -907,36 +720,23 @@ erDiagram
 </div>
 
 <script>
-  mermaid.initialize({
-    startOnLoad: true,
-    theme: 'dark',
-    themeVariables: {
-      primaryColor: '#242836',
-      primaryTextColor: '#e1e4ed',
-      primaryBorderColor: '#2e3348',
-      lineColor: '#6c8cff',
-      secondaryColor: '#1a1d27',
-      tertiaryColor: '#242836',
-      fontSize: '13px'
-    },
-    er: { useMaxWidth: true, layoutDirection: 'TB' },
-    flowchart: { useMaxWidth: true, curve: 'basis' },
-    gantt: { useMaxWidth: true }
-  });
-
-  function nav(section) {
-    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-    document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
-    document.getElementById(section).classList.add('active');
-    document.querySelector(`[data-section="${section}"]`).classList.add('active');
-  }
-
-  document.querySelectorAll('.sidebar a').forEach(a => {
-    a.addEventListener('click', e => {
-      e.preventDefault();
-      nav(a.dataset.section);
-    });
-  });
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: { primaryColor:'#242836', primaryTextColor:'#e1e4ed', primaryBorderColor:'#2e3348', lineColor:'#6c8cff', secondaryColor:'#1a1d27', tertiaryColor:'#242836', fontSize:'13px' },
+  flowchart: { useMaxWidth: true, curve: 'basis' },
+  gantt: { useMaxWidth: true }
+});
+function go(s) {
+  document.querySelectorAll('.sec').forEach(x => x.classList.remove('active'));
+  document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+  document.getElementById(s).classList.add('active');
+  var el = document.querySelector('[data-s="'+s+'"]');
+  if(el) el.classList.add('active');
+}
+document.querySelectorAll('.sidebar a').forEach(a => {
+  a.addEventListener('click', e => { e.preventDefault(); go(a.dataset.s); });
+});
 </script>
 </body>
 </html>
