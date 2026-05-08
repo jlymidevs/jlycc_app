@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>JLY Church Database - Schema Reference</title>
-<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
 <style>
   :root {
     --bg: #0f1117; --surface: #1a1d27; --surface2: #242836;
@@ -78,8 +77,20 @@
   .rel { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0; font-size: 0.8rem; color: var(--text2); }
   .rel .arrow { color: var(--accent); font-weight: 700; }
 
-  .mm { background: var(--surface2); border-radius: 8px; padding: 1rem; overflow-x: auto; }
-  .mm .mermaid { min-height: 100px; }
+  .dep-grid { display: flex; flex-direction: column; gap: 1.5rem; align-items: center; }
+  .dep-row { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
+  .dep-row-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text2); margin-bottom: 0.25rem; text-align: center; }
+  .dep-node { padding: 0.6rem 1rem; border-radius: 8px; font-size: 0.82rem; font-weight: 600; text-align: center; min-width: 130px; border: 1.5px solid; }
+  .dep-node small { display: block; font-weight: 400; font-size: 0.7rem; opacity: 0.7; margin-top: 0.15rem; }
+  .dep-arrow { text-align: center; color: var(--text2); font-size: 1.2rem; line-height: 1; }
+  .dep-arrow small { font-size: 0.65rem; display: block; }
+
+  .timeline { display: flex; flex-direction: column; gap: 0; }
+  .tl-item { display: flex; align-items: stretch; gap: 1rem; }
+  .tl-bar { width: 8px; border-radius: 4px; flex-shrink: 0; }
+  .tl-content { padding: 0.6rem 0; flex: 1; }
+  .tl-content h4 { font-size: 0.85rem; margin-bottom: 0.15rem; }
+  .tl-content p { font-size: 0.75rem; color: var(--text2); }
 
   @media print {
     .sidebar { display: none; } .sec { display: block !important; page-break-inside: avoid; margin-bottom: 2rem; }
@@ -151,71 +162,50 @@
   <div class="desc">Arrows show FK dependencies. core and membership are the foundation.</div>
   <div class="card">
     <h3>Cross-Schema Dependency Graph</h3>
-    <div class="mm"><div class="mermaid">
-graph TD
-  subgraph Foundation
-    C[core - 9 tables]
-    M[membership - 8 tables]
-  end
-  subgraph Operational
-    MI[ministries - 4 tables]
-    E[events - 6 tables]
-    A[attendance - 3 tables]
-  end
-  subgraph Specialized
-    P[programs - 4 tables]
-    MS[missions - 6 tables]
-    ED[education - 15 tables]
-  end
-  subgraph Migration
-    S[staging - 5 tables]
-  end
-  M -->|person, branch| C
-  MI -->|branch| C
-  MI -->|member| M
-  E -->|branch| C
-  E -->|member| M
-  E -->|network| MI
-  A -->|person, branch| C
-  A -->|member| M
-  A -->|event| E
-  P -->|person, branch| C
-  P -->|member| M
-  MS -->|person, branch| C
-  MS -->|member| M
-  ED -->|person, branch| C
-  ED -->|member| M
-  S -.->|promotes to| C
-  S -.->|promotes to| M
-  style C fill:#1e2a4a,stroke:#6c8cff,color:#e1e4ed
-  style M fill:#2a1e3a,stroke:#ff6b9d,color:#e1e4ed
-  style MI fill:#2a2a1e,stroke:#ffd93d,color:#e1e4ed
-  style E fill:#2a221e,stroke:#ff8c42,color:#e1e4ed
-  style A fill:#1e2a2a,stroke:#4ecdc4,color:#e1e4ed
-  style P fill:#251e3a,stroke:#a78bfa,color:#e1e4ed
-  style MS fill:#2a1e2a,stroke:#f472b6,color:#e1e4ed
-  style ED fill:#1e2a22,stroke:#34d399,color:#e1e4ed
-  style S fill:#1e2228,stroke:#94a3b8,color:#e1e4ed
-    </div></div>
+    <div class="dep-grid">
+      <div>
+        <div class="dep-row-label">Foundation Layer</div>
+        <div class="dep-row">
+          <div class="dep-node" style="border-color:var(--core);background:#1e2a4a">core<small>9 tables &middot; person, branch, region</small></div>
+          <div class="dep-node" style="border-color:var(--membership);background:#2a1e3a">membership<small>8 tables &middot; member, roles, lifecycle</small></div>
+        </div>
+      </div>
+      <div class="dep-arrow">&darr; <small>person, branch, member FKs</small></div>
+      <div>
+        <div class="dep-row-label">Operational Layer</div>
+        <div class="dep-row">
+          <div class="dep-node" style="border-color:var(--ministries);background:#2a2a1e">ministries<small>4 tables &middot; network, ministry, chapter</small></div>
+          <div class="dep-node" style="border-color:var(--events);background:#2a221e">events<small>6 tables &middot; types, series, event</small></div>
+          <div class="dep-node" style="border-color:var(--attendance);background:#1e2a2a">attendance<small>3 tables &middot; check-in, FTV, child</small></div>
+        </div>
+      </div>
+      <div class="dep-arrow">&darr; <small>person, branch, member FKs</small></div>
+      <div>
+        <div class="dep-row-label">Specialized Layer</div>
+        <div class="dep-row">
+          <div class="dep-node" style="border-color:var(--programs);background:#251e3a">programs<small>4 tables &middot; Heartlink cohorts</small></div>
+          <div class="dep-node" style="border-color:var(--missions);background:#2a1e2a">missions<small>6 tables &middot; Scholars, BAC</small></div>
+          <div class="dep-node" style="border-color:var(--education);background:#1e2a22">education<small>15 tables &middot; Bible College, ISU</small></div>
+        </div>
+      </div>
+      <div class="dep-arrow" style="opacity:0.5">&uarr; <small>promotes data to core + membership</small></div>
+      <div>
+        <div class="dep-row-label">Migration Layer</div>
+        <div class="dep-row">
+          <div class="dep-node" style="border-color:var(--staging);background:#1e2228">staging<small>5 tables &middot; ETL pipeline, dedup</small></div>
+        </div>
+      </div>
+    </div>
   </div>
   <div class="card">
     <h3>Implementation Timeline</h3>
-    <div class="mm"><div class="mermaid">
-gantt
-  title Implementation Plans
-  dateFormat YYYY-MM-DD
-  axisFormat %b %d
-  section Plan 1
-    core + membership V001-V027 :done, p1, 2026-04-19, 2d
-  section Plan 2
-    ministries + events + attendance V028-V042 :done, p2, after p1, 2d
-  section Plan 3a
-    programs + missions V043-V049 :done, p3a, after p2, 1d
-  section Plan 3b
-    education V050-V059 :done, p3b, after p3a, 1d
-  section Plan 4
-    staging + ETL V060-V063 :done, p4, after p3b, 1d
-    </div></div>
+    <div class="timeline">
+      <div class="tl-item"><div class="tl-bar" style="background:var(--core)"></div><div class="tl-content"><h4 style="color:var(--core)">Plan 1: Foundation</h4><p>core + membership &mdash; V001&ndash;V027 &mdash; 27 migrations, 22 test files</p></div></div>
+      <div class="tl-item"><div class="tl-bar" style="background:var(--events)"></div><div class="tl-content"><h4 style="color:var(--events)">Plan 2: Operational</h4><p>ministries + events + attendance &mdash; V028&ndash;V042 &mdash; 15 migrations, 12 test files</p></div></div>
+      <div class="tl-item"><div class="tl-bar" style="background:var(--programs)"></div><div class="tl-content"><h4 style="color:var(--programs)">Plan 3a: Programs + Missions</h4><p>programs + missions &mdash; V043&ndash;V049 &mdash; 7 migrations, 6 test files</p></div></div>
+      <div class="tl-item"><div class="tl-bar" style="background:var(--education)"></div><div class="tl-content"><h4 style="color:var(--education)">Plan 3b: Education</h4><p>education (Bible College + ISU) &mdash; V050&ndash;V059 &mdash; 10 migrations, 10 test files</p></div></div>
+      <div class="tl-item"><div class="tl-bar" style="background:var(--staging)"></div><div class="tl-content"><h4 style="color:var(--staging)">Plan 4: Staging</h4><p>staging + ETL pipeline &mdash; V060&ndash;V063 &mdash; 4 migrations, 7 test files, Python loader</p></div></div>
+    </div>
   </div>
 </div>
 
@@ -665,18 +655,17 @@ gantt
   <div class="desc">Migration ETL pipeline: load &rarr; cleanse &rarr; validate &rarr; promote &mdash; 5 tables, 3 enums</div>
 
   <div class="card"><h3>ETL Pipeline Flow</h3>
-  <div class="mm"><div class="mermaid">
-graph LR
-  CSV[CSV / Google Sheet] -->|Python loader| LOAD[LOAD - stg_person - RAW]
-  LOAD -->|cleanse_person.sql| CLEANSE[CLEANSE - normalize - CLEANSED]
-  CLEANSE -->|validate_person.sql| VALIDATE[VALIDATE - check rules - VALID/INVALID]
-  VALIDATE -->|promote_person.sql| PROMOTE[PROMOTE - INSERT into core + membership]
-  style CSV fill:#2a2a1e,stroke:#ffd93d,color:#e1e4ed
-  style LOAD fill:#1e2228,stroke:#94a3b8,color:#e1e4ed
-  style CLEANSE fill:#1e2228,stroke:#6c8cff,color:#e1e4ed
-  style VALIDATE fill:#1e2228,stroke:#ff8c42,color:#e1e4ed
-  style PROMOTE fill:#1e2a22,stroke:#34d399,color:#e1e4ed
-  </div></div></div>
+  <div style="display:flex;gap:0;align-items:center;flex-wrap:wrap;justify-content:center">
+    <div class="dep-node" style="border-color:var(--ministries);background:#2a2a1e">CSV / Sheet<small>Source data</small></div>
+    <div style="color:var(--text2);padding:0 0.5rem;font-size:0.8rem">&rarr;<br><small>loader.py</small></div>
+    <div class="dep-node" style="border-color:var(--staging);background:#1e2228">LOAD<small>row_status = RAW</small></div>
+    <div style="color:var(--text2);padding:0 0.5rem;font-size:0.8rem">&rarr;<br><small>cleanse.sql</small></div>
+    <div class="dep-node" style="border-color:var(--accent);background:#1e2228">CLEANSE<small>trim, normalize</small></div>
+    <div style="color:var(--text2);padding:0 0.5rem;font-size:0.8rem">&rarr;<br><small>validate.sql</small></div>
+    <div class="dep-node" style="border-color:var(--events);background:#1e2228">VALIDATE<small>VALID / INVALID</small></div>
+    <div style="color:var(--text2);padding:0 0.5rem;font-size:0.8rem">&rarr;<br><small>promote.sql</small></div>
+    <div class="dep-node" style="border-color:var(--education);background:#1e2a22">PROMOTE<small>core + membership</small></div>
+  </div></div>
 
   <div class="erd">
     <div class="ent" style="border-top:2px solid var(--staging)"><div class="ent-h">import_batch</div><div class="ent-body">
@@ -720,13 +709,6 @@ graph LR
 </div>
 
 <script>
-mermaid.initialize({
-  startOnLoad: true,
-  theme: 'dark',
-  themeVariables: { primaryColor:'#242836', primaryTextColor:'#e1e4ed', primaryBorderColor:'#2e3348', lineColor:'#6c8cff', secondaryColor:'#1a1d27', tertiaryColor:'#242836', fontSize:'13px' },
-  flowchart: { useMaxWidth: true, curve: 'basis' },
-  gantt: { useMaxWidth: true }
-});
 function go(s) {
   document.querySelectorAll('.sec').forEach(x => x.classList.remove('active'));
   document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
