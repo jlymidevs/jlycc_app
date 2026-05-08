@@ -285,7 +285,6 @@ gantt
     <div class="mermaid">
 erDiagram
   region ||--o{ branch : "contains"
-  region ||--o| region : "parent"
   branch ||--o{ household : "has"
   person ||--o{ contact_info : "has"
   person ||--o{ person_address : "lives at"
@@ -297,17 +296,17 @@ erDiagram
   region {
     bigint region_id PK
     text code UK
-    text name
-    enum type
+    text region_name
+    enum region_type
     bigint parent_region_id FK
   }
   branch {
     bigint branch_id PK
     text code UK
-    text name
+    text branch_name
     bigint region_id FK
-    enum type
-    enum status
+    enum branch_type
+    enum branch_status
   }
   person {
     bigint person_id PK
@@ -320,21 +319,21 @@ erDiagram
   contact_info {
     bigint contact_id PK
     bigint person_id FK
-    enum type
-    text value
+    enum contact_type
+    text contact_value
     boolean is_primary
   }
   address {
     bigint address_id PK
     text line1
     text city
-    char country_code
+    text country_code
   }
   household {
     bigint household_id PK
     bigint branch_id FK
-    text name
-    bigint head_of_household_id FK
+    text household_name
+    bigint head_person_id FK
   }
   household_member {
     bigint household_id PK
@@ -344,7 +343,7 @@ erDiagram
   person_address {
     bigint person_id PK
     bigint address_id PK
-    enum type
+    enum address_type
     date valid_from PK
   }
   kinship {
@@ -390,22 +389,22 @@ erDiagram
 
   member {
     bigint member_id PK
-    bigint person_id FK_UK
+    bigint person_id FK
     bigint branch_id FK
     text member_code UK
     text current_stage FK
-    enum status
+    enum member_status
   }
   lifecycle_stage {
     text stage_code PK
-    text name
+    text stage_name
     int order_index
     boolean is_terminal
   }
   role {
     bigint role_id PK
     text code UK
-    text name
+    text role_name
     boolean is_pastoral
   }
   member_role {
@@ -430,14 +429,14 @@ erDiagram
   regular_member_application {
     bigint application_id PK
     bigint member_id FK
-    enum status
+    enum application_status
     jsonb criteria_checklist
   }
   pastoral_care_assignment {
     bigint assignment_id PK
     bigint carer_member_id FK
     bigint assigned_member_id FK
-    enum status
+    enum pcm_status
   }
     </div>
   </div>
@@ -463,20 +462,20 @@ erDiagram
   network {
     bigint network_id PK
     text code UK
-    text name
+    text network_name
   }
   ministry {
     bigint ministry_id PK
     bigint network_id FK
     text code UK
-    text name
+    text ministry_name
     text target_demographic
   }
   ministry_chapter {
     bigint chapter_id PK
     bigint ministry_id FK
     bigint branch_id FK
-    enum status
+    enum chapter_status
   }
   ministry_membership {
     bigint membership_id PK
@@ -511,38 +510,38 @@ erDiagram
 
   event_category {
     text category_code PK
-    text name
+    text category_name
   }
   event_type {
     bigint event_type_id PK
     text category_code FK
     text code UK
-    text name
+    text type_name
   }
   event_series {
     bigint series_id PK
     bigint event_type_id FK
     enum recurrence_pattern
-    enum status
+    enum series_status
   }
   event {
     bigint event_id PK
     bigint event_type_id FK
     bigint series_id FK
-    text name
+    text event_name
     timestamptz starts_at
-    enum status
+    enum event_status
   }
   event_organizer {
     bigint event_id PK
     bigint member_id PK
-    text role
+    text organizer_role
   }
   event_registration {
     bigint registration_id PK
     bigint event_id FK
     bigint person_id FK
-    enum status
+    enum reg_status
     int group_size
   }
     </div>
@@ -618,15 +617,15 @@ erDiagram
   heartlink_cohort {
     bigint cohort_id PK
     bigint branch_id FK
-    text name
-    enum status
+    text cohort_name
+    enum cohort_status
     bigint facilitator_member_id FK
   }
   heartlink_enrollment {
     bigint enrollment_id PK
     bigint cohort_id FK
     bigint person_id FK
-    enum status
+    enum enrollment_status
   }
   heartlink_session {
     bigint session_id PK
@@ -665,8 +664,8 @@ erDiagram
 
   scholar_program {
     bigint program_id PK
-    text name
-    enum status
+    text program_name
+    enum program_status
   }
   scholarship_award {
     bigint award_id PK
@@ -674,14 +673,14 @@ erDiagram
     bigint member_id FK
     numeric amount
     text school_name
-    enum status
+    enum award_status
   }
   bac_initiative {
     bigint initiative_id PK
     bigint branch_id FK
-    text name
+    text initiative_name
     text target_community
-    enum status
+    enum initiative_status
   }
   bac_session {
     bigint session_id PK
@@ -693,7 +692,7 @@ erDiagram
     bigint participant_id PK
     bigint initiative_id FK
     bigint person_id FK
-    enum role
+    enum participant_role
   }
   bac_session_attendance {
     bigint attendance_id PK
@@ -731,20 +730,20 @@ erDiagram
   bc_program {
     bigint program_id PK
     text code UK
-    text name
+    text program_name
     text degree_level
   }
   bc_cohort {
     bigint cohort_id PK
     bigint program_id FK
-    text name
+    text cohort_name
     date starts_on
   }
   bc_semester {
     bigint semester_id PK
-    text name
+    text semester_name
     text academic_year
-    enum status
+    enum semester_status
   }
   bc_course {
     bigint course_id PK
@@ -760,20 +759,20 @@ erDiagram
   }
   bc_student {
     bigint student_id PK
-    bigint person_id FK_UK
+    bigint person_id FK
     bigint cohort_id FK
     text student_number UK
-    enum status
+    enum student_status
   }
   bc_enrollment {
     bigint enrollment_id PK
     bigint student_id FK
     bigint offering_id FK
-    enum status
+    enum enrollment_status
   }
   bc_completion {
-    bigint enrollment_id PK_FK
-    enum status
+    bigint enrollment_id PK
+    enum completion_status
     numeric attendance_rate
   }
   bc_class_attendance {
@@ -801,14 +800,14 @@ erDiagram
   isu_track {
     bigint track_id PK
     text code UK
-    text name
+    text track_name
     int order_index
   }
   isu_student {
     bigint student_id PK
-    bigint person_id FK_UK
+    bigint person_id FK
     bigint current_track_id FK
-    enum status
+    enum student_status
   }
   isu_track_progression {
     bigint progression_id PK
@@ -868,7 +867,7 @@ erDiagram
   import_batch {
     uuid batch_id PK
     text source_name
-    enum status
+    enum batch_status
     int row_count
   }
   stg_person {
@@ -898,7 +897,7 @@ erDiagram
     bigint candidate_a_id FK
     bigint candidate_b_id FK
     numeric confidence_score
-    enum status
+    enum review_status
   }
     </div>
   </div>
