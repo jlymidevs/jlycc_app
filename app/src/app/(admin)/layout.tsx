@@ -1,4 +1,5 @@
 // app/src/app/(admin)/layout.tsx
+import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { logoutAction } from "@/actions/auth";
@@ -14,7 +15,21 @@ export default async function AdminLayout({
   return (
     <div className="min-h-screen bg-gray-100">
       <nav className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
-        <span className="font-semibold text-gray-900">JLY Church Admin</span>
+        <div className="flex items-center gap-6">
+          <span className="font-semibold text-gray-900">JLY Church Admin</span>
+          <Link
+            href="/members"
+            className="text-sm text-gray-600 hover:text-gray-900"
+          >
+            Members
+          </Link>
+          <Link
+            href="/events"
+            className="text-sm text-gray-600 hover:text-gray-900"
+          >
+            Events
+          </Link>
+        </div>
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-600">{session.user?.email}</span>
           <form action={logoutAction}>
