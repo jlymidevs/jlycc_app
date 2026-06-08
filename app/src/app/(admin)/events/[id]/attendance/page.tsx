@@ -5,7 +5,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { event } from "@/schema/events";
-import { checkIn, visitorCapture } from "@/schema/attendance";
+import { checkIn } from "@/schema/attendance";
 import { person, contactInfo } from "@/schema/core";
 import { eq, and, desc, count, isNotNull, countDistinct } from "drizzle-orm";
 import { checkInPerson, captureVisitor, searchPersons } from "@/actions/attendance";
@@ -75,13 +75,17 @@ export default async function AttendancePage({
     }
   }
 
-  const ftverr = (searchParams as Record<string, string>).ftverr;
+  const ftverr = typeof searchParams.ftverr === "string" ? searchParams.ftverr : undefined;
+  const checkinErr = typeof searchParams.checkin_err === "string" ? searchParams.checkin_err : undefined;
 
   // Server actions
   async function handleCheckIn(formData: FormData) {
     "use server";
     const personId = Number(formData.get("personId"));
-    await checkInPerson(eventId, personId);
+    const result = await checkInPerson(eventId, personId);
+    if ("error" in result) {
+      redirect(`/events/${eventId}/attendance?checkin_err=${encodeURIComponent(result.error)}`);
+    }
     redirect(`/events/${eventId}/attendance`);
   }
 
@@ -148,6 +152,13 @@ export default async function AttendancePage({
       {/* Search form */}
       <div className="space-y-3">
         <h2 className="text-lg font-semibold text-gray-900">Check In</h2>
+        {checkinErr && (
+          <p className="text-sm text-amber-700 bg-amber-50 rounded px-3 py-2">
+            {checkinErr === "already_checked_in"
+              ? "This person is already checked in."
+              : checkinErr}
+          </p>
+        )}
         <form method="GET" className="flex gap-2">
           <input
             type="text"
