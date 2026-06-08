@@ -107,16 +107,20 @@ export async function checkInPerson(
 
   const now = new Date();
 
-  await db.insert(checkInTable).values({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    eventId: eventId as any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    personId: personId as any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    branchId: branchId as any,
-    checkedInAt: now,
-    checkInMethod: "USHER",
-  });
+  try {
+    await db.insert(checkInTable).values({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      eventId: eventId as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      personId: personId as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      branchId: branchId as any,
+      checkedInAt: now,
+      checkInMethod: "USHER",
+    });
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Check-in failed" };
+  }
 
   revalidatePath(`/events/${eventId}/attendance`);
   const name = personRow
@@ -160,6 +164,7 @@ export async function captureVisitor(
     return { error: "Event has no branch assigned" };
   }
 
+  try {
   await db.transaction(async (tx) => {
     const [newPerson] = await tx
       .insert(person)
@@ -203,6 +208,9 @@ export async function captureVisitor(
       ftvCaptureId: capture.ftvCaptureId as any,
     });
   });
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Visitor capture failed" };
+  }
 
   revalidatePath(`/events/${eventId}/attendance`);
   return { success: true };
