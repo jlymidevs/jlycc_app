@@ -17,7 +17,7 @@ export const createIsuSessionSchema = z.object({
   branchId: z.number().int().positive("Branch is required"),
   trackId: z.number().int().positive("Track is required"),
   topic: z.string().optional(),
-  scheduledAt: z.string().datetime({ offset: true }).optional(),
+  scheduledAt: z.string().datetime({ offset: false }).optional(),
 });
 
 export type RegisterIsuStudentInput = z.infer<typeof registerIsuStudentSchema>;
