@@ -42,7 +42,9 @@ export async function createMember(formData: FormData) {
       suffix: data.suffix,
       preferredName: data.preferredName,
       dateOfBirth: data.dateOfBirth,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       gender: data.gender as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       maritalStatus: data.maritalStatus as any,
     })
     .returning({ personId: person.personId });
@@ -115,7 +117,9 @@ export async function updateMember(memberId: number, formData: FormData) {
         ...(data.firstName && { firstName: data.firstName }),
         ...(data.middleName !== undefined && { middleName: data.middleName }),
         ...(data.lastName && { lastName: data.lastName }),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ...(data.gender && { gender: data.gender as any }),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ...(data.maritalStatus && { maritalStatus: data.maritalStatus as any }),
       })
       .where(eq(person.personId, existing.personId));
