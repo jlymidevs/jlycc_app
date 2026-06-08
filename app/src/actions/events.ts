@@ -66,6 +66,12 @@ export async function updateEvent(eventId: number, formData: FormData) {
     expectedAttendance: formData.get("expectedAttendance")
       ? Number(formData.get("expectedAttendance"))
       : undefined,
+    seriesId: formData.get("seriesId")
+      ? Number(formData.get("seriesId"))
+      : undefined,
+    branchId: formData.get("branchId")
+      ? Number(formData.get("branchId"))
+      : undefined,
   };
 
   const parsed = updateEventSchema.safeParse(raw);
@@ -89,6 +95,10 @@ export async function updateEvent(eventId: number, formData: FormData) {
       ...(data.expectedAttendance !== undefined && {
         expectedAttendance: data.expectedAttendance,
       }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ...(data.seriesId !== undefined && { seriesId: data.seriesId as any }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ...(data.branchId !== undefined && { branchId: data.branchId as any }),
     })
     .where(eq(event.eventId, eventId));
 
