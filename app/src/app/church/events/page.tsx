@@ -1,4 +1,6 @@
 // app/src/app/church/events/page.tsx
+export const dynamic = "force-dynamic";
+
 import Link from "next/link";
 import { db } from "@/lib/db";
 import { event, eventType } from "@/schema/events";
@@ -17,7 +19,7 @@ export default async function PublicEventsPage() {
     })
     .from(event)
     .innerJoin(eventType, eq(event.eventTypeId, eventType.eventTypeId))
-    .where(inArray(event.status, ["SCHEDULED", "IN_PROGRESS"] as unknown as any[]))
+    .where(inArray(event.status, ["SCHEDULED", "IN_PROGRESS"] as ("SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED")[]))
     .orderBy(asc(event.startsAt))
     .limit(50);
 

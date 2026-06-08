@@ -11,10 +11,11 @@ export default async function EventsPage({
 }) {
   const statusFilter = searchParams.status ?? "upcoming";
 
-  const statusValues =
+  type EventStatus = "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+  const statusValues: EventStatus[] =
     statusFilter === "past"
-      ? (["COMPLETED", "CANCELLED"] as const)
-      : (["SCHEDULED", "IN_PROGRESS"] as const);
+      ? ["COMPLETED", "CANCELLED"]
+      : ["SCHEDULED", "IN_PROGRESS"];
 
   const rows = await db
     .select({
@@ -28,7 +29,7 @@ export default async function EventsPage({
     })
     .from(event)
     .innerJoin(eventType, eq(event.eventTypeId, eventType.eventTypeId))
-    .where(inArray(event.status, statusValues as unknown as any[]))
+    .where(inArray(event.status, statusValues))
     .orderBy(desc(event.startsAt))
     .limit(50);
 
