@@ -1,0 +1,33 @@
+// app/src/app/(admin)/layout.tsx
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { logoutAction } from "@/actions/auth";
+
+export default async function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const session = await auth();
+  if (!session) redirect("/login");
+
+  return (
+    <div className="min-h-screen bg-gray-100">
+      <nav className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
+        <span className="font-semibold text-gray-900">JLY Church Admin</span>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-gray-600">{session.user?.email}</span>
+          <form action={logoutAction}>
+            <button
+              type="submit"
+              className="text-sm text-gray-500 hover:text-gray-900"
+            >
+              Sign out
+            </button>
+          </form>
+        </div>
+      </nav>
+      <main className="max-w-7xl mx-auto px-6 py-8">{children}</main>
+    </div>
+  );
+}
