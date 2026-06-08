@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { member, memberRole, role } from "@/schema/membership";
 import { person, contactInfo, branch } from "@/schema/core";
 import { eq, and, isNull } from "drizzle-orm";
+import { QRCodeSVG } from "qrcode.react";
 
 export default async function MemberDetailPage({
   params,
@@ -159,6 +160,15 @@ export default async function MemberDetailPage({
           </div>
         </section>
       )}
+      <section className="bg-white rounded-lg border border-gray-200 p-6 space-y-4">
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide">
+          Attendance QR
+        </h2>
+        <p className="text-xs text-gray-500">
+          Show this code to an usher for quick check-in at events.
+        </p>
+        <QRCodeSVG value={String(row.personId)} size={160} />
+      </section>
     </div>
   );
 }
