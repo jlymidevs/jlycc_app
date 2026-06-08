@@ -71,9 +71,9 @@ All tables already exist: `attendance.check_in` (V038), `attendance.visitor_capt
 ### FTV Auto-Prompt Flow
 
 1. Search returns 0 results → "Not found — capture as visitor?" prompt appears
-2. Staff fills: full name, email, consent_to_contact (checkbox, default false), invited_by (optional person search)
+2. Staff fills: first name, last name, birthday (date), email, consent_to_contact (checkbox, default false), invited_by (optional person search)
 3. `captureVisitor(eventId, data)` server action in a single transaction:
-   - Split name → insert `core.person`
+   - Insert `core.person` (firstName, lastName, birthday)
    - Insert `core.contact_info` (type=EMAIL)
    - Insert `attendance.visitor_capture` (captured_by_member_id from session, branch_id from event)
    - Insert `attendance.check_in` with ftv_capture_id linked
@@ -171,7 +171,9 @@ export const checkInSchema = z.object({
 });
 
 export const captureVisitorSchema = z.object({
-  name: z.string().min(1, "Name required"),
+  firstName: z.string().min(1, "First name required"),
+  lastName: z.string().min(1, "Last name required"),
+  birthday: z.string().min(1, "Birthday required"), // ISO date string YYYY-MM-DD
   email: z.string().email("Valid email required"),
   consentToContact: z.boolean().default(false),
   invitedByPersonId: z.number().int().positive().optional(),
@@ -192,7 +194,7 @@ export const captureVisitorSchema = z.object({
 ### Unit Tests (`tests/unit/attendance.test.ts`)
 
 - `checkInSchema`: valid input, missing eventId, missing personId
-- `captureVisitorSchema`: valid FTV, invalid email, name required, consent defaults false
+- `captureVisitorSchema`: valid FTV, invalid email, firstName required, lastName required, birthday required, consent defaults false
 
 ### E2E Tests (`tests/e2e/attendance.spec.ts`)
 
