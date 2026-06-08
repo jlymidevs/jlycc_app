@@ -83,12 +83,12 @@ test.describe("Staff event management", () => {
       .locator("a")
       .first();
 
-    const href = await eventLink.getAttribute("href");
-    if (!href) {
+    if ((await eventLink.count()) === 0) {
       test.skip();
       return;
     }
-    const eventId = href.split("/").pop();
+    const href = await eventLink.getAttribute("href");
+    const eventId = href!.split("/").pop();
 
     // Register via public form in new tab
     const publicPage = await context.newPage();
@@ -115,13 +115,13 @@ test.describe("Staff event management", () => {
       .locator("a")
       .first();
 
-    const href = await eventLink.getAttribute("href");
-    if (!href) {
+    if ((await eventLink.count()) === 0) {
       test.skip();
       return;
     }
+    const href = await eventLink.getAttribute("href");
 
-    await page.goto(href);
+    await page.goto(href!);
     const confirmButton = page
       .locator("table tbody tr")
       .filter({ has: page.locator("td span:has-text('REGISTERED')") })
