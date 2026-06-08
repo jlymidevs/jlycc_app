@@ -44,8 +44,6 @@ export async function createMember(formData: FormData) {
       dateOfBirth: data.dateOfBirth,
       gender: data.gender as any,
       maritalStatus: data.maritalStatus as any,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     })
     .returning({ personId: person.personId });
 
@@ -56,7 +54,6 @@ export async function createMember(formData: FormData) {
       type: "EMAIL",
       value: data.email,
       isPrimary: true,
-      createdAt: new Date(),
     });
   }
   if (data.mobile) {
@@ -65,7 +62,6 @@ export async function createMember(formData: FormData) {
       type: "MOBILE",
       value: data.mobile,
       isPrimary: true,
-      createdAt: new Date(),
     });
   }
 
@@ -78,8 +74,6 @@ export async function createMember(formData: FormData) {
       memberCode: `M-${newPerson.personId}`,
       currentStage: data.currentStage,
       joinedAt: new Date(data.joinedAt),
-      createdAt: new Date(),
-      updatedAt: new Date(),
     })
     .returning({ memberId: member.memberId });
 

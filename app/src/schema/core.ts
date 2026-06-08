@@ -54,8 +54,8 @@ export const person = coreSchema.table("person", {
   nationality: text("nationality"),
   profilePhotoUrl: text("profile_photo_url"),
   notes: text("notes"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdateFn(() => new Date()),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
@@ -70,8 +70,8 @@ export const branch = coreSchema.table("branch", {
   primaryAddressId: bigint("primary_address_id", { mode: "number" }),
   launchedOn: date("launched_on"),
   status: branchStatusEnum("status").notNull().default("ACTIVE"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdateFn(() => new Date()),
 });
 
 export const contactInfo = coreSchema.table("contact_info", {
@@ -84,5 +84,5 @@ export const contactInfo = coreSchema.table("contact_info", {
   isPrimary: boolean("is_primary").notNull().default(false),
   consentedAt: timestamp("consented_at", { withTimezone: true }),
   verifiedAt: timestamp("verified_at", { withTimezone: true }),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

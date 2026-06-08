@@ -31,7 +31,7 @@ export const lifecycleStage = membershipSchema.table("lifecycle_stage", {
   orderIndex: integer("order_index").notNull(),
   isTerminal: boolean("is_terminal").notNull().default(false),
   isActive: boolean("is_active").notNull().default(true),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const role = membershipSchema.table("role", {
@@ -41,7 +41,7 @@ export const role = membershipSchema.table("role", {
   description: text("description"),
   isPastoral: boolean("is_pastoral").notNull().default(false),
   isActive: boolean("is_active").notNull().default(true),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const member = membershipSchema.table("member", {
@@ -62,8 +62,8 @@ export const member = membershipSchema.table("member", {
     withTimezone: true,
   }),
   status: memberStatusEnum("status").notNull().default("ACTIVE"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdateFn(() => new Date()),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
 });
 
@@ -81,7 +81,7 @@ export const memberRole = membershipSchema.table("member_role", {
   endedAt: timestamp("ended_at", { withTimezone: true }),
   assignedByPersonId: bigint("assigned_by_person_id", { mode: "number" }),
   notes: text("notes"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const pastoralCareAssignment = membershipSchema.table(
