@@ -1,11 +1,8 @@
 // app/src/lib/db.ts
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-// @ts-ignore
 import * as core from "@/schema/core";
-// @ts-ignore
 import * as membership from "@/schema/membership";
-// @ts-ignore
 import * as app from "@/schema/app";
 
 const connectionString = process.env.DATABASE_URL!;
