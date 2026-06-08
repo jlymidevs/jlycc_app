@@ -10,7 +10,7 @@ export const captureVisitorSchema = z.object({
   lastName: z.string().min(1, "Last name required"),
   birthday: z.string().min(1, "Birthday required"),
   email: z.string().email("Valid email required"),
-  consentToContact: z.boolean().optional().default(false),
+  consentToContact: z.boolean().default(false),
   invitedByPersonId: z.number().int().positive().optional(),
 });
 
