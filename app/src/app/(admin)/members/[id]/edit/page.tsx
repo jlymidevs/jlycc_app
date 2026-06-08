@@ -57,7 +57,7 @@ export default async function EditMemberPage({
     <div className="space-y-6">
       <div>
         <Link
-          href={`/admin/members/${memberId}`}
+          href={`/members/${memberId}`}
           className="text-sm text-gray-500 hover:text-gray-900"
         >
           ← {row.lastName}, {row.firstName}
@@ -87,7 +87,7 @@ export default async function EditMemberPage({
             Save changes
           </button>
           <Link
-            href={`/admin/members/${memberId}`}
+            href={`/members/${memberId}`}
             className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
             Cancel

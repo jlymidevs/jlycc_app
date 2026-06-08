@@ -77,7 +77,7 @@ async function MemberTable({
           >
             <td className="py-3 pr-4">
               <Link
-                href={`/admin/members/${m.memberId}`}
+                href={`/members/${m.memberId}`}
                 className="text-blue-600 hover:underline font-medium"
               >
                 {m.lastName}, {m.firstName}
@@ -111,16 +111,14 @@ export default async function MembersPage({
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Members</h1>
         <Link
-          href="/admin/members/new"
+          href="/members/new"
           className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
         >
           Add member
         </Link>
       </div>
 
-      <Suspense fallback={null}>
-        <MemberSearch />
-      </Suspense>
+      <MemberSearch defaultValue={q} />
 
       <Suspense fallback={<p className="text-gray-500 text-sm">Loading…</p>}>
         <MemberTable q={q} page={page} />
@@ -129,14 +127,14 @@ export default async function MembersPage({
       <div className="flex gap-2 text-sm">
         {page > 1 && (
           <Link
-            href={`/admin/members?q=${q}&page=${page - 1}`}
+            href={`/members?q=${q}&page=${page - 1}`}
             className="text-blue-600 hover:underline"
           >
             ← Previous
           </Link>
         )}
         <Link
-          href={`/admin/members?q=${q}&page=${page + 1}`}
+          href={`/members?q=${q}&page=${page + 1}`}
           className="text-blue-600 hover:underline"
         >
           Next →

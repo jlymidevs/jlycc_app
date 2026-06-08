@@ -77,8 +77,8 @@ export async function createMember(formData: FormData) {
     })
     .returning({ memberId: member.memberId });
 
-  revalidatePath("/admin/members");
-  redirect(`/admin/members/${newMember.memberId}`);
+  revalidatePath("/members");
+  redirect(`/members/${newMember.memberId}`);
 }
 
 export async function updateMember(memberId: number, formData: FormData) {
@@ -129,7 +129,7 @@ export async function updateMember(memberId: number, formData: FormData) {
       .where(eq(member.memberId, memberId));
   }
 
-  revalidatePath(`/admin/members/${memberId}`);
-  revalidatePath("/admin/members");
-  redirect(`/admin/members/${memberId}`);
+  revalidatePath(`/members/${memberId}`);
+  revalidatePath("/members");
+  redirect(`/members/${memberId}`);
 }

@@ -1,33 +1,16 @@
 // app/src/components/members/member-search.tsx
-"use client";
+// Server component — native GET form, no client-side JS needed.
 
-import { useRouter, useSearchParams } from "next/navigation";
-import { useTransition } from "react";
+interface MemberSearchProps {
+  defaultValue?: string;
+}
 
-export function MemberSearch() {
-  const router = useRouter();
-  const params = useSearchParams();
-  const [, startTransition] = useTransition();
-
-  function handleSearch(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const q = (form.elements.namedItem("q") as HTMLInputElement).value;
-    const url = new URL(window.location.href);
-    if (q) {
-      url.searchParams.set("q", q);
-    } else {
-      url.searchParams.delete("q");
-    }
-    url.searchParams.delete("page");
-    startTransition(() => router.push(url.pathname + url.search));
-  }
-
+export function MemberSearch({ defaultValue = "" }: MemberSearchProps) {
   return (
-    <form onSubmit={handleSearch} className="flex gap-2">
+    <form method="get" action="/members" className="flex gap-2">
       <input
         name="q"
-        defaultValue={params.get("q") ?? ""}
+        defaultValue={defaultValue}
         placeholder="Search by name…"
         className="rounded-md border border-gray-300 px-3 py-2 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-blue-500"
       />

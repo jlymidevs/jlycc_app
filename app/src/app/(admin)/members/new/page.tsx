@@ -29,7 +29,7 @@ export default async function NewMemberPage() {
     <div className="space-y-6">
       <div>
         <Link
-          href="/admin/members"
+          href="/members"
           className="text-sm text-gray-500 hover:text-gray-900"
         >
           ← Members
@@ -37,7 +37,7 @@ export default async function NewMemberPage() {
         <h1 className="text-2xl font-bold text-gray-900 mt-1">Add member</h1>
       </div>
 
-      <form action={(fd) => void createMember(fd)} className="space-y-6">
+      <form action={createMember} className="space-y-6">
         <MemberForm branches={branches} stages={stages} />
         <div className="flex gap-3">
           <button
@@ -47,7 +47,7 @@ export default async function NewMemberPage() {
             Create member
           </button>
           <Link
-            href="/admin/members"
+            href="/members"
             className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
             Cancel

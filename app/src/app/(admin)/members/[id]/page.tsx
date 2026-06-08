@@ -57,7 +57,7 @@ export default async function MemberDetailPage({
       <div className="flex items-center justify-between">
         <div>
           <Link
-            href="/admin/members"
+            href="/members"
             className="text-sm text-gray-500 hover:text-gray-900"
           >
             ← Members
@@ -69,7 +69,7 @@ export default async function MemberDetailPage({
           <p className="text-sm text-gray-500">{row.memberCode}</p>
         </div>
         <Link
-          href={`/admin/members/${memberId}/edit`}
+          href={`/members/${memberId}/edit`}
           className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
         >
           Edit
