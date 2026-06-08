@@ -2,6 +2,7 @@
 import {
   bigserial,
   bigint,
+  boolean,
   text,
   timestamp,
   integer,
@@ -10,6 +11,7 @@ import {
   pgSchema,
 } from "drizzle-orm/pg-core";
 import { person, branch } from "./core";
+import { member } from "./membership";
 
 export const eventsSchema = pgSchema("events");
 
@@ -41,11 +43,19 @@ export const seriesStatusEnum = eventsSchema.enum("series_status", [
   "ENDED",
 ]);
 
+export const eventCategory = eventsSchema.table("event_category", {
+  categoryCode: text("category_code").primaryKey(),
+  name: text("name").notNull(),
+});
+
 export const eventType = eventsSchema.table("event_type", {
   eventTypeId: bigserial("event_type_id", { mode: "number" }).primaryKey(),
   code: text("code").notNull().unique(),
   name: text("name").notNull(),
-  categoryCode: text("category_code").notNull(),
+  categoryCode: text("category_code").notNull().references(() => eventCategory.categoryCode),
+  networkId: bigint("network_id", { mode: "number" }),
+  ministryId: bigint("ministry_id", { mode: "number" }),
+  typicalDurationMinutes: integer("typical_duration_minutes"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdateFn(() => new Date()),
 });
@@ -79,6 +89,7 @@ export const event = eventsSchema.table("event", {
   branchId: bigint("branch_id", { mode: "number" }).references(
     () => branch.branchId
   ),
+  hostBranchId: bigint("host_branch_id", { mode: "number" }).references(() => branch.branchId),
   name: text("name").notNull(),
   startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
   endsAt: timestamp("ends_at", { withTimezone: true }),
@@ -100,9 +111,22 @@ export const eventRegistration = eventsSchema.table("event_registration", {
   registeredAt: timestamp("registered_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
+  registeredByMemberId: bigint("registered_by_member_id", { mode: "number" }).references(() => member.memberId),
   status: registrationStatusEnum("status").notNull().default("REGISTERED"),
+  accommodationRequired: boolean("accommodation_required").notNull().default(false),
+  dietaryRequirements: text("dietary_requirements"),
   groupSize: integer("group_size").notNull().default(1),
+  emergencyContactName: text("emergency_contact_name"),
+  emergencyContactPhone: text("emergency_contact_phone"),
+  paymentReference: text("payment_reference"),
   notes: text("notes"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdateFn(() => new Date()),
+});
+
+export const eventOrganizer = eventsSchema.table("event_organizer", {
+  eventId: bigint("event_id", { mode: "number" }).notNull().references(() => event.eventId),
+  memberId: bigint("member_id", { mode: "number" }).notNull().references(() => member.memberId),
+  role: text("role").notNull(),
+  addedAt: timestamp("added_at", { withTimezone: true }).notNull().defaultNow(),
 });
