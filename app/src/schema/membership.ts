@@ -5,7 +5,6 @@ import {
   text,
   boolean,
   timestamp,
-  pgEnum,
   integer,
   pgSchema,
 } from "drizzle-orm/pg-core";
