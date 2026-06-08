@@ -9,6 +9,7 @@ import {
   date,
   jsonb,
   pgSchema,
+  primaryKey,
 } from "drizzle-orm/pg-core";
 import { person, branch } from "./core";
 import { member } from "./membership";
@@ -124,9 +125,17 @@ export const eventRegistration = eventsSchema.table("event_registration", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdateFn(() => new Date()),
 });
 
-export const eventOrganizer = eventsSchema.table("event_organizer", {
-  eventId: bigint("event_id", { mode: "number" }).notNull().references(() => event.eventId),
-  memberId: bigint("member_id", { mode: "number" }).notNull().references(() => member.memberId),
-  role: text("role").notNull(),
-  addedAt: timestamp("added_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const eventOrganizer = eventsSchema.table(
+  "event_organizer",
+  {
+    eventId: bigint("event_id", { mode: "number" })
+      .notNull()
+      .references(() => event.eventId, { onDelete: "cascade" }),
+    memberId: bigint("member_id", { mode: "number" })
+      .notNull()
+      .references(() => member.memberId),
+    role: text("role").notNull(),
+    addedAt: timestamp("added_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [primaryKey({ columns: [t.eventId, t.memberId] })]
+);
