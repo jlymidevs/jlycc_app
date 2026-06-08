@@ -24,6 +24,8 @@ BEGIN
 END
 $$;
 
--- Grant to app_writer
+-- Grant to app_writer and app_reader
+GRANT USAGE ON SCHEMA app TO app_writer;
+GRANT USAGE ON SCHEMA app TO app_reader;
 GRANT SELECT, INSERT, UPDATE ON app.users TO app_writer;
 GRANT SELECT ON app.users TO app_reader;
