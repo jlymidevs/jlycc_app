@@ -40,7 +40,9 @@ export const checkIn = attendanceSchema.table(
     capturedByMemberId: bigint("captured_by_member_id", {
       mode: "number",
     }).references(() => member.memberId),
-    ftvCaptureId: bigint("ftv_capture_id", { mode: "number" }),
+    ftvCaptureId: bigint("ftv_capture_id", { mode: "number" }).references(
+      () => visitorCapture.ftvCaptureId
+    ),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
