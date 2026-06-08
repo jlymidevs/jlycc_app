@@ -6,7 +6,7 @@ import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { event } from "@/schema/events";
 import { checkIn } from "@/schema/attendance";
-import { person, contactInfo } from "@/schema/core";
+import { person } from "@/schema/core";
 import { eq, and, desc, count, isNotNull, countDistinct } from "drizzle-orm";
 import { checkInPerson, captureVisitor, searchPersons } from "@/actions/attendance";
 import QrScanner from "@/components/QrScanner";
