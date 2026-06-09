@@ -7,6 +7,7 @@ import {
   timestamp,
   integer,
   pgSchema,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import { person, branch } from "./core";
 
@@ -98,5 +99,30 @@ export const pastoralCareAssignment = membershipSchema.table(
     endedAt: timestamp("ended_at", { withTimezone: true }),
     status: pcmStatusEnum("status").notNull().default("ACTIVE"),
     notes: text("notes"),
+  }
+);
+
+export const applicationStatusEnum = membershipSchema.enum("application_status", [
+  "PENDING",
+  "APPROVED",
+  "REJECTED",
+  "WITHDRAWN",
+]);
+
+export const regularMemberApplication = membershipSchema.table(
+  "regular_member_application",
+  {
+    applicationId: bigserial("application_id", { mode: "number" }).primaryKey(),
+    memberId: bigint("member_id", { mode: "number" })
+      .notNull()
+      .references(() => member.memberId, { onDelete: "cascade" }),
+    submittedAt: timestamp("submitted_at", { withTimezone: true }).notNull().defaultNow(),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    reviewedByPersonId: bigint("reviewed_by_person_id", { mode: "number" }),
+    status: applicationStatusEnum("status").notNull().default("PENDING"),
+    criteriaChecklist: jsonb("criteria_checklist").notNull().default({}),
+    decisionNotes: text("decision_notes"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdateFn(() => new Date()),
   }
 );
