@@ -19,6 +19,8 @@ import {
   endPcm,
   submitApplication,
 } from "@/actions/membership-extensions";
+import { encodePortalToken } from "@/lib/portal-token";
+import { PortalLinkSection } from "./PortalLinkSection";
 
 export default async function MemberDetailPage({
   params,
@@ -62,12 +64,6 @@ export default async function MemberDetailPage({
     .from(contactInfo)
     .where(eq(contactInfo.personId, row.personId));
 
-  const roles = await db
-    .select({ code: role.code, name: role.name })
-    .from(memberRole)
-    .innerJoin(role, eq(memberRole.roleId, role.roleId))
-    .where(and(eq(memberRole.memberId, memberId), isNull(memberRole.endedAt)));
-
   // Roles section data
   const activeRoles = await db
     .select({
@@ -110,6 +106,8 @@ export default async function MemberDetailPage({
     .limit(1);
 
   const today = new Date().toISOString().split("T")[0];
+  const baseUrl = process.env.APP_BASE_URL ?? "http://localhost:3000";
+  const portalUrl = `${baseUrl}/portal/${encodePortalToken(memberId)}`;
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -445,6 +443,8 @@ export default async function MemberDetailPage({
           </form>
         )}
       </section>
+
+      <PortalLinkSection portalUrl={portalUrl} />
     </div>
   );
 }
