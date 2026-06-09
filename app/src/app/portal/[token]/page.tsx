@@ -90,6 +90,12 @@ export default async function PortalPage({ params }: { params: { token: string }
   const canApply = memberRow.status === "ACTIVE" &&
     (!application || (application.status !== "PENDING" && application.status !== "APPROVED"));
 
+  async function applyAction() {
+    "use server";
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    await submitApplicationFromPortal(memberId!);
+  }
+
   return (
     <div className="max-w-2xl mx-auto px-4 py-10 space-y-8">
       <div>
@@ -174,7 +180,7 @@ export default async function PortalPage({ params }: { params: { token: string }
             </span>
           </div>
         ) : canApply ? (
-          <form action={async () => { "use server"; await submitApplicationFromPortal(memberId); }}>
+          <form action={applyAction}>
             <button
               type="submit"
               className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
