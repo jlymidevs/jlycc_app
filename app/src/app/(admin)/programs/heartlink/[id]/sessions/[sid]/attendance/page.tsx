@@ -87,6 +87,7 @@ export default async function HeartlinkAttendancePage({
                       {e.firstName} {e.lastName}
                     </td>
                     <td className="px-4 py-3 text-center">
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                       <form action={markHeartlinkAttendance.bind(null, sessionId, e.enrollmentId, true) as any}>
                         <button
                           type="submit"
@@ -101,6 +102,7 @@ export default async function HeartlinkAttendancePage({
                       </form>
                     </td>
                     <td className="px-4 py-3 text-center">
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                       <form action={markHeartlinkAttendance.bind(null, sessionId, e.enrollmentId, false) as any}>
                         <button
                           type="submit"

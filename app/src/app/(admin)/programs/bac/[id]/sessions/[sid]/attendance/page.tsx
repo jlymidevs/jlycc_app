@@ -90,6 +90,7 @@ export default async function BacAttendancePage({
                       {p.firstName} {p.lastName}
                     </td>
                     <td className="px-4 py-3 text-center">
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                       <form action={markBacAttendance.bind(null, sessionId, p.personId, true) as any}>
                         <button
                           type="submit"
@@ -104,6 +105,7 @@ export default async function BacAttendancePage({
                       </form>
                     </td>
                     <td className="px-4 py-3 text-center">
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                       <form action={markBacAttendance.bind(null, sessionId, p.personId, false) as any}>
                         <button
                           type="submit"

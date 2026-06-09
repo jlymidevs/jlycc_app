@@ -86,6 +86,7 @@ export default async function EventDetailPage({
               >
                 Edit
               </Link>
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               <form action={cancelEvent.bind(null, eventId) as any}>
                 <button
                   type="submit"
@@ -186,9 +187,8 @@ export default async function EventDetailPage({
                     <div className="flex gap-2">
                       {r.status !== "CONFIRMED" &&
                         r.status !== "CANCELLED" && (
-                          <form
-                            action={updateRegistrationStatus.bind(null, r.registrationId, "CONFIRMED") as any}
-                          >
+                          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+                          <form action={updateRegistrationStatus.bind(null, r.registrationId, "CONFIRMED") as any}>
                             <button
                               type="submit"
                               className="text-xs text-green-700 hover:underline"
@@ -198,9 +198,8 @@ export default async function EventDetailPage({
                           </form>
                         )}
                       {r.status !== "CANCELLED" && (
-                        <form
-                          action={updateRegistrationStatus.bind(null, r.registrationId, "CANCELLED") as any}
-                        >
+                        /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
+                        <form action={updateRegistrationStatus.bind(null, r.registrationId, "CANCELLED") as any}>
                           <button
                             type="submit"
                             className="text-xs text-red-600 hover:underline"

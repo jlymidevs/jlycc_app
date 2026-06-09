@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { heartlinkCohort } from "@/schema/programs";
-import { branch } from "@/schema/core";
 import { eq } from "drizzle-orm";
 import { updateCohort } from "@/actions/programs";
 
@@ -22,11 +21,6 @@ export default async function EditCohortPage({ params }: { params: { id: string 
     .where(eq(heartlinkCohort.cohortId, cohortId as any));
 
   if (!cohort) notFound();
-
-  const branches = await db
-    .select({ branchId: branch.branchId, name: branch.name })
-    .from(branch)
-    .orderBy(branch.name);
 
   return (
     <div className="space-y-6 max-w-2xl">

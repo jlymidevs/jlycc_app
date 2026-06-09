@@ -3,14 +3,13 @@
 
 import { db } from "@/lib/db";
 import {
-  bcStudent, bcEnrollment, bcCompletion, bcClassAttendance,
+  bcStudent, bcEnrollment, bcClassAttendance,
 } from "@/schema/education";
 import {
   registerBcStudentSchema, enrollInOfferingSchema, recordClassAttendanceSchema,
 } from "@/lib/validations/education-bc";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { eq, and } from "drizzle-orm";
 
 export async function registerBcStudent(formData: FormData) {
   const raw = {
