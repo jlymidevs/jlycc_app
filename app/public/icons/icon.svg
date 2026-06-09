@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="100" fill="#0d0d12"/>
+  <!-- Globe base (blue) -->
+  <ellipse cx="256" cy="340" rx="180" ry="60" fill="none" stroke="#2563eb" stroke-width="18"/>
+  <path d="M90 300 Q256 200 422 300" fill="none" stroke="#2563eb" stroke-width="18"/>
+  <path d="M76 340 Q256 440 436 340" fill="none" stroke="#2563eb" stroke-width="18"/>
+  <line x1="256" y1="280" x2="256" y2="400" stroke="#2563eb" stroke-width="18"/>
+  <!-- J letter (red) -->
+  <path d="M160 120 L160 260 Q160 310 120 310 L100 310" fill="none" stroke="#dc2626" stroke-width="22" stroke-linecap="round"/>
+  <!-- L letter (red) -->
+  <path d="M200 120 L200 310 L260 310" fill="none" stroke="#dc2626" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Flame accent (red) -->
+  <path d="M310 80 Q290 120 320 150 Q300 110 330 100 Q310 130 335 155 Q360 120 340 80 Q325 100 310 80Z" fill="#dc2626"/>
+</svg>
