@@ -7,6 +7,7 @@ import {
   timestamp,
   integer,
   date,
+  numeric,
   pgSchema,
 } from "drizzle-orm/pg-core";
 import { person, branch } from "./core";
@@ -95,4 +96,46 @@ export const bacSessionAttendance = missionsSchema.table("bac_session_attendance
   notes: text("notes"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   // UNIQUE(session_id, person_id) enforced at DB level
+});
+
+// --- Scholar / Scholarship tables (V046) ---
+
+export const programStatusEnum = missionsSchema.enum("program_status", [
+  "PLANNING",
+  "ACTIVE",
+  "COMPLETED",
+  "CANCELLED",
+]);
+
+export const awardStatusEnum = missionsSchema.enum("award_status", [
+  "AWARDED",
+  "ACTIVE",
+  "COMPLETED",
+  "REVOKED",
+]);
+
+export const scholarProgram = missionsSchema.table("scholar_program", {
+  programId: bigserial("program_id", { mode: "number" }).primaryKey(),
+  name: text("name").notNull(),
+  startsOn: date("starts_on"),
+  endsOn: date("ends_on"),
+  description: text("description"),
+  status: programStatusEnum("status").notNull().default("PLANNING"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdateFn(() => new Date()),
+});
+
+export const scholarshipAward = missionsSchema.table("scholarship_award", {
+  awardId: bigserial("award_id", { mode: "number" }).primaryKey(),
+  programId: bigint("program_id", { mode: "number" }).notNull().references(() => scholarProgram.programId),
+  memberId: bigint("member_id", { mode: "number" }).notNull().references(() => member.memberId),
+  awardedAt: timestamp("awarded_at", { withTimezone: true }).notNull().defaultNow(),
+  term: text("term"),
+  amount: numeric("amount"),
+  schoolName: text("school_name"),
+  sponsorMemberId: bigint("sponsor_member_id", { mode: "number" }).references(() => member.memberId),
+  status: awardStatusEnum("status").notNull().default("AWARDED"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdateFn(() => new Date()),
 });
