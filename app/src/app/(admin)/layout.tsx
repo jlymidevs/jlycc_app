@@ -44,6 +44,12 @@ export default async function AdminLayout({
           >
             Education
           </Link>
+          <Link
+            href="/ministries"
+            className="text-sm text-gray-600 hover:text-gray-900"
+          >
+            Ministries
+          </Link>
         </div>
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-600">{session.user?.email}</span>
