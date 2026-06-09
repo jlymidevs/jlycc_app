@@ -106,13 +106,13 @@ export default async function ChapterDetailPage({
   async function handleSetLeader(formData: FormData) {
     "use server";
     const membershipId = Number(formData.get("membershipId"));
-    const isLeader = formData.get("isLeader") === "true";
     const leaderRole = formData.get("leaderRole") as string | null;
+    const isLeader = !!(leaderRole && leaderRole.trim().length > 0);
 
     const result = await setLeaderRole(
       membershipId,
       isLeader,
-      leaderRole || undefined
+      isLeader ? (leaderRole as "HEAD" | "ASSISTANT_HEAD" | "COORDINATOR") : undefined
     );
 
     if ("error" in result) {
@@ -243,11 +243,7 @@ export default async function ChapterDetailPage({
                               name="membershipId"
                               value={m.membershipId}
                             />
-                            <input
-                              type="hidden"
-                              name="isLeader"
-                              value="false"
-                            />
+                            {/* no leaderRole submitted → isLeader derived as false */}
                             <button
                               type="submit"
                               className="text-xs text-amber-600 hover:text-amber-800 underline"
@@ -262,7 +258,7 @@ export default async function ChapterDetailPage({
                               name="membershipId"
                               value={m.membershipId}
                             />
-                            <input type="hidden" name="isLeader" value="true" />
+                            {/* leaderRole presence → isLeader derived as true */}
                             <select
                               name="leaderRole"
                               className="rounded border border-gray-300 px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500"
