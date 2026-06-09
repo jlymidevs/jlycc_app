@@ -46,6 +46,7 @@ test.describe("Announcements", () => {
 
     await page.getByRole("button", { name: "Publish" }).click();
     await expect(page.getByText("PUBLISHED", { exact: true })).toBeVisible();
+    await expect(page.getByText("Delivered")).toBeVisible();
   });
 
   test("published announcement shows recipient count", async ({ page }) => {
