@@ -39,7 +39,6 @@ export async function submitApplicationFromPortal(
     criteriaChecklist: {},
   });
 
-  revalidatePath(`/portal`);
   revalidatePath(`/members/${memberId}`);
   revalidatePath("/members/applications");
   return { success: true };

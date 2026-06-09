@@ -92,7 +92,6 @@ export default async function PortalPage({ params }: { params: { token: string }
 
   async function applyAction() {
     "use server";
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     await submitApplicationFromPortal(memberId!);
   }
 
