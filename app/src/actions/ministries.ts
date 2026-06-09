@@ -158,7 +158,17 @@ export async function getMinistry(
       activeMemberCount: count(),
     })
     .from(ministryMembership)
-    .where(isNull(ministryMembership.endedAt))
+    .innerJoin(
+      ministryChapter,
+      eq(ministryMembership.chapterId, ministryChapter.chapterId)
+    )
+    .where(
+      and(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        eq(ministryChapter.ministryId, id as any),
+        isNull(ministryMembership.endedAt)
+      )
+    )
     .groupBy(ministryMembership.chapterId);
 
   const countMap = new Map(
@@ -319,6 +329,14 @@ export async function updateChapterStatus(
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .where(eq(ministryChapter.chapterId, chapterId as any));
 
+    const [ch] = await db
+      .select({ ministryId: ministryChapter.ministryId })
+      .from(ministryChapter)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .where(eq(ministryChapter.chapterId, chapterId as any))
+      .limit(1);
+
+    if (ch) revalidatePath(`/ministries/${ch.ministryId}`);
     revalidatePath(`/ministries`);
     return { success: true };
   } catch (e) {
@@ -381,6 +399,16 @@ export async function endMembership(
   }
 
   const { membershipId, endedAt, endedReason } = parsed.data;
+
+  const [existing] = await db
+    .select({ endedAt: ministryMembership.endedAt })
+    .from(ministryMembership)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .where(eq(ministryMembership.membershipId, membershipId as any))
+    .limit(1);
+
+  if (!existing) return { error: "membership_not_found" };
+  if (existing.endedAt !== null) return { error: "membership_already_ended" };
 
   try {
     await db
