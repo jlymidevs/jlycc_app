@@ -36,4 +36,17 @@ describe("portal token", () => {
   it("portalTokenSchema accepts 10-char string", () => {
     expect(portalTokenSchema.safeParse("abcdefghij").success).toBe(true);
   });
+
+  it("decodePortalToken with structurally valid but wrong-sig token returns null", () => {
+    const legit = encodePortalToken(1);
+    const decoded = Buffer.from(legit, "base64url").toString();
+    const forged = Buffer.from(
+      decoded.slice(0, decoded.lastIndexOf(".") + 1) + "a".repeat(64)
+    ).toString("base64url");
+    expect(decodePortalToken(forged)).toBeNull();
+  });
+
+  it("portalTokenSchema accepts a real encoded token", () => {
+    expect(portalTokenSchema.safeParse(encodePortalToken(1)).success).toBe(true);
+  });
 });

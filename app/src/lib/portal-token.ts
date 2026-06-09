@@ -1,6 +1,10 @@
-import { createHmac } from "crypto";
+import { createHmac, timingSafeEqual } from "crypto";
 
-const secret = () => process.env.PORTAL_SECRET ?? "dev-portal-secret-fallback";
+const secret = () => {
+  const s = process.env.PORTAL_SECRET;
+  if (!s && process.env.NODE_ENV === "production") throw new Error("PORTAL_SECRET is not set");
+  return s ?? "dev-portal-secret-fallback";
+};
 
 export function encodePortalToken(memberId: number): string {
   const payload = String(memberId);
@@ -16,7 +20,9 @@ export function decodePortalToken(token: string): number | null {
     const payload = decoded.slice(0, dotIndex);
     const sig = decoded.slice(dotIndex + 1);
     const expected = createHmac("sha256", secret()).update(payload).digest("hex");
-    if (sig !== expected) return null;
+    const sigBuf = Buffer.from(sig, "hex");
+    const expBuf = Buffer.from(expected, "hex");
+    if (sigBuf.length !== expBuf.length || !timingSafeEqual(sigBuf, expBuf)) return null;
     const id = Number(payload);
     if (!Number.isInteger(id) || id <= 0) return null;
     return id;
