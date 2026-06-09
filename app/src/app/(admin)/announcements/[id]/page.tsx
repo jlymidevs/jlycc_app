@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { announcementRecipient } from "@/schema/communications";
 import { person } from "@/schema/core";
-import { eq } from "drizzle-orm";
+import { eq, and, isNotNull, count } from "drizzle-orm";
 import { getAnnouncement, publishAnnouncement, archiveAnnouncement } from "@/actions/announcements";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +17,16 @@ export default async function AnnouncementDetailPage({
 
   const row = await getAnnouncement(id);
   if (!row) notFound();
+
+  const [{ deliveredCount }] = await db
+    .select({ deliveredCount: count() })
+    .from(announcementRecipient)
+    .where(
+      and(
+        eq(announcementRecipient.announcementId, id),
+        isNotNull(announcementRecipient.deliveredAt)
+      )
+    );
 
   const recipients = await db
     .select({
@@ -78,6 +88,12 @@ export default async function AnnouncementDetailPage({
           <dd className="text-gray-900">{row.targetType}{row.targetId ? ` (${row.targetId})` : ""}</dd>
           <dt className="text-gray-500">Recipients</dt>
           <dd className="text-gray-900">{row.recipientCount}</dd>
+          {row.status === "PUBLISHED" && (
+            <>
+              <dt className="text-gray-500">Delivered</dt>
+              <dd className="text-gray-900">{deliveredCount}</dd>
+            </>
+          )}
           {row.publishedAt && (
             <>
               <dt className="text-gray-500">Published</dt>
