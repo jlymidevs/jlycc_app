@@ -3,9 +3,11 @@
 import { db } from "@/lib/db";
 import { announcement, announcementRecipient } from "@/schema/communications";
 import { member } from "@/schema/membership";
+import { contactInfo, person } from "@/schema/core";
 import { createAnnouncementSchema, CreateAnnouncementInput } from "@/lib/validations/announcements";
 import { eq, and, isNull, desc, count, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { sendAnnouncementEmail } from "@/lib/email";
 
 // Create a draft announcement
 export async function createAnnouncement(
@@ -32,10 +34,10 @@ export async function createAnnouncement(
   return { announcementId: row.announcementId };
 }
 
-// Publish a draft announcement — fans out recipients
+// Publish a draft announcement — fans out recipients and sends emails
 export async function publishAnnouncement(
   id: number
-): Promise<{ success: true; recipientCount: number } | { error: string }> {
+): Promise<{ success: true; recipientCount: number; deliveredCount: number } | { error: string }> {
   const [row] = await db
     .select()
     .from(announcement)
@@ -91,9 +93,53 @@ export async function publishAnnouncement(
     .set({ status: "PUBLISHED", publishedAt: new Date() })
     .where(eq(announcement.announcementId, id));
 
+  // Fetch recipients with primary email and name
+  const recipientsWithEmail = await db
+    .select({
+      recipientId: announcementRecipient.recipientId,
+      firstName: person.firstName,
+      lastName: person.lastName,
+      email: contactInfo.value,
+    })
+    .from(announcementRecipient)
+    .innerJoin(person, eq(announcementRecipient.personId, person.personId))
+    .innerJoin(
+      contactInfo,
+      and(
+        eq(contactInfo.personId, announcementRecipient.personId),
+        eq(contactInfo.type, "EMAIL"),
+        eq(contactInfo.isPrimary, true)
+      )
+    )
+    .where(eq(announcementRecipient.announcementId, id));
+
+  // Send in batches of 50
+  let deliveredCount = 0;
+  const BATCH_SIZE = 50;
+  for (let i = 0; i < recipientsWithEmail.length; i += BATCH_SIZE) {
+    const batch = recipientsWithEmail.slice(i, i + BATCH_SIZE);
+    await Promise.all(
+      batch.map(async (r) => {
+        const result = await sendAnnouncementEmail({
+          to: r.email,
+          recipientName: `${r.firstName} ${r.lastName}`.trim(),
+          title: row.title,
+          body: row.body,
+        });
+        if (result.success) {
+          await db
+            .update(announcementRecipient)
+            .set({ deliveredAt: new Date() })
+            .where(eq(announcementRecipient.recipientId, r.recipientId));
+          deliveredCount++;
+        }
+      })
+    );
+  }
+
   revalidatePath("/announcements");
   revalidatePath(`/announcements/${id}`);
-  return { success: true, recipientCount: targetMembers.length };
+  return { success: true, recipientCount: targetMembers.length, deliveredCount };
 }
 
 // Archive an announcement
