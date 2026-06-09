@@ -47,6 +47,11 @@ describe("createChapterSchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it("rejects non-positive ministryId", () => {
+    const result = createChapterSchema.safeParse({ ministryId: 0, branchId: 1 });
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("addMemberSchema", () => {
@@ -113,6 +118,11 @@ describe("addMemberSchema", () => {
       expect(result.data.isLeader).toBe(false);
     }
   });
+
+  it("rejects non-positive chapterId", () => {
+    const result = addMemberSchema.safeParse({ chapterId: -1, memberId: 5, joinedAt: "2024-03-01" });
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("endMemberSchema", () => {
@@ -143,5 +153,10 @@ describe("endMemberSchema", () => {
     const result = endMemberSchema.safeParse({ membershipId: 10 });
     expect(result.success).toBe(false);
     expect(result.error?.issues[0].path).toContain("endedAt");
+  });
+
+  it("rejects non-positive membershipId", () => {
+    const result = endMemberSchema.safeParse({ membershipId: 0, endedAt: "2024-06-01" });
+    expect(result.success).toBe(false);
   });
 });
