@@ -7,6 +7,7 @@ import {
   date,
   timestamp,
   pgSchema,
+  unique,
 } from "drizzle-orm/pg-core";
 import { branch } from "./core";
 import { member } from "./membership";
@@ -32,7 +33,7 @@ export const network = ministriesSchema.table("network", {
   description: text("description"),
   foundedOn: date("founded_on"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdateFn(() => new Date()),
 });
 
 export const ministry = ministriesSchema.table("ministry", {
@@ -46,31 +47,35 @@ export const ministry = ministriesSchema.table("ministry", {
   targetDemographic: text("target_demographic"),
   foundedOn: date("founded_on"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdateFn(() => new Date()),
 });
 
-export const ministryChapter = ministriesSchema.table("ministry_chapter", {
-  chapterId: bigserial("chapter_id", { mode: "number" }).primaryKey(),
-  ministryId: bigint("ministry_id", { mode: "number" })
-    .notNull()
-    .references(() => ministry.ministryId),
-  branchId: bigint("branch_id", { mode: "number" })
-    .notNull()
-    .references(() => branch.branchId),
-  launchedOn: date("launched_on"),
-  status: chapterStatusEnum("status").notNull().default("ACTIVE"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const ministryChapter = ministriesSchema.table(
+  "ministry_chapter",
+  {
+    chapterId: bigserial("chapter_id", { mode: "number" }).primaryKey(),
+    ministryId: bigint("ministry_id", { mode: "number" })
+      .notNull()
+      .references(() => ministry.ministryId),
+    branchId: bigint("branch_id", { mode: "number" })
+      .notNull()
+      .references(() => branch.branchId),
+    launchedOn: date("launched_on"),
+    status: chapterStatusEnum("status").notNull().default("ACTIVE"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdateFn(() => new Date()),
+  },
+  (t) => [unique("chapter_ministry_branch_unique").on(t.ministryId, t.branchId)]
+);
 
 export const ministryMembership = ministriesSchema.table("ministry_membership", {
   membershipId: bigserial("membership_id", { mode: "number" }).primaryKey(),
   chapterId: bigint("chapter_id", { mode: "number" })
     .notNull()
-    .references(() => ministryChapter.chapterId),
+    .references(() => ministryChapter.chapterId, { onDelete: "cascade" }),
   memberId: bigint("member_id", { mode: "number" })
     .notNull()
-    .references(() => member.memberId),
+    .references(() => member.memberId, { onDelete: "cascade" }),
   joinedAt: timestamp("joined_at", { withTimezone: true }).notNull(),
   endedAt: timestamp("ended_at", { withTimezone: true }),
   endedReason: text("ended_reason"),
