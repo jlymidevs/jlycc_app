@@ -42,26 +42,26 @@ test.describe("Scholarship programs", () => {
     await page.getByRole("button", { name: "Create program" }).click();
 
     await expect(page).toHaveURL(/\/missions\/scholarships\/\d+/);
-    await expect(page.getByText("E2E Test Scholarship 2026")).toBeVisible();
+    await expect(page.getByText("E2E Test Scholarship 2026").first()).toBeVisible();
   });
 
   test("created program appears in list", async ({ page }) => {
     await staffLogin(page);
     await page.goto("/missions/scholarships");
-    await expect(page.getByText("E2E Test Scholarship 2026")).toBeVisible();
+    await expect(page.getByText("E2E Test Scholarship 2026").first()).toBeVisible();
   });
 
   test("program detail shows Add award button", async ({ page }) => {
     await staffLogin(page);
     await page.goto("/missions/scholarships");
-    await page.getByText("E2E Test Scholarship 2026").click();
+    await page.getByText("E2E Test Scholarship 2026").first().click();
     await expect(page.getByRole("link", { name: "Add award" })).toBeVisible();
   });
 
   test("Add award page loads with member ID field", async ({ page }) => {
     await staffLogin(page);
     await page.goto("/missions/scholarships");
-    await page.getByText("E2E Test Scholarship 2026").click();
+    await page.getByText("E2E Test Scholarship 2026").first().click();
     await page.getByRole("link", { name: "Add award" }).click();
     await expect(page.getByRole("heading", { name: "Add award" })).toBeVisible();
     await expect(page.locator('input[name="memberId"]')).toBeVisible();

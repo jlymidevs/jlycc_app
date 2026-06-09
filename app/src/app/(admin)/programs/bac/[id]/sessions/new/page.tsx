@@ -24,7 +24,8 @@ export default async function NewSessionPage({ params }: { params: { id: string 
         </Link>
         <h1 className="text-2xl font-bold text-gray-900 mt-1">Add session</h1>
       </div>
-      <form action={(fd) => void createBacSession(initiativeId, fd)} className="space-y-5">
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      <form action={createBacSession.bind(null, initiativeId) as any} className="space-y-5">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Session number <span className="text-red-500">*</span>

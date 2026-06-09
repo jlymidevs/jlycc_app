@@ -25,7 +25,8 @@ export default async function NewAwardPage({ params }: { params: { id: string } 
         </Link>
         <h1 className="text-2xl font-bold text-gray-900 mt-1">Add award</h1>
       </div>
-      <form action={(fd) => void createAward(programId, fd)} className="space-y-5">
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      <form action={createAward.bind(null, programId) as any} className="space-y-5">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Member ID <span className="text-red-500">*</span>

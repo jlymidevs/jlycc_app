@@ -13,12 +13,12 @@ test.describe("Public church homepage", () => {
   test("nav shows JLY Church and Events links", async ({ page }) => {
     await page.goto("/church");
     await expect(page.getByRole("link", { name: "JLY Church" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Events" })).toBeVisible();
+    await expect(page.getByRole("navigation").getByRole("link", { name: "Events", exact: true })).toBeVisible();
   });
 
   test("Events nav link navigates to /church/events", async ({ page }) => {
     await page.goto("/church");
-    await page.getByRole("link", { name: "Events" }).click();
+    await page.getByRole("navigation").getByRole("link", { name: "Events", exact: true }).click();
     await expect(page).toHaveURL("/church/events");
     await expect(
       page.getByRole("heading", { name: "Upcoming Events" })
@@ -38,6 +38,6 @@ test.describe("Public church homepage", () => {
   test("nav is present on /church/events (layout applied)", async ({ page }) => {
     await page.goto("/church/events");
     await expect(page.getByRole("link", { name: "JLY Church" })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Events" })).toBeVisible();
+    await expect(page.getByRole("navigation").getByRole("link", { name: "Events", exact: true })).toBeVisible();
   });
 });

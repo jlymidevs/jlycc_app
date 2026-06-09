@@ -37,7 +37,8 @@ export default async function NewMemberPage() {
         <h1 className="text-2xl font-bold text-gray-900 mt-1">Add member</h1>
       </div>
 
-      <form action={(fd) => void createMember(fd)} className="space-y-6">
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      <form action={createMember as any} className="space-y-6">
         <MemberForm branches={branches} stages={stages} />
         <div className="flex gap-3">
           <button

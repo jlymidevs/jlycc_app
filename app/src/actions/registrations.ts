@@ -108,6 +108,7 @@ export async function registerForEvent(
     status: registrationStatus as any,
   });
 
+  revalidatePath(`/events/${eventId}`);
   return { success: true };
 }
 

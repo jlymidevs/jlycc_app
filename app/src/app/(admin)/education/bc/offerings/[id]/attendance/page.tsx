@@ -104,7 +104,8 @@ export default async function BcClassAttendancePage({
                 <tr key={s.studentId}>
                   <td className="px-4 py-3 text-gray-900">{s.firstName} {s.lastName} <span className="text-xs text-gray-400">#{s.studentNumber}</span></td>
                   <td className="px-4 py-3 text-center">
-                    <form action={(fd) => void recordClassAttendance(offeringId, fd)}>
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                    <form action={recordClassAttendance.bind(null, offeringId) as any}>
                       <input type="hidden" name="studentId" value={s.studentId} />
                       <input type="hidden" name="classDate" value={classDate} />
                       <input type="hidden" name="attended" value="true" />
@@ -117,7 +118,8 @@ export default async function BcClassAttendancePage({
                     </form>
                   </td>
                   <td className="px-4 py-3 text-center">
-                    <form action={(fd) => void recordClassAttendance(offeringId, fd)}>
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                    <form action={recordClassAttendance.bind(null, offeringId) as any}>
                       <input type="hidden" name="studentId" value={s.studentId} />
                       <input type="hidden" name="classDate" value={classDate} />
                       <input type="hidden" name="attended" value="false" />

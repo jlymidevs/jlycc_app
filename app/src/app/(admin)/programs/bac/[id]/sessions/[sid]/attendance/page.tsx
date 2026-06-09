@@ -90,7 +90,7 @@ export default async function BacAttendancePage({
                       {p.firstName} {p.lastName}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <form action={() => void markBacAttendance(sessionId, p.personId, true)}>
+                      <form action={markBacAttendance.bind(null, sessionId, p.personId, true) as any}>
                         <button
                           type="submit"
                           className={`rounded px-3 py-1 text-xs font-medium ${
@@ -104,7 +104,7 @@ export default async function BacAttendancePage({
                       </form>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <form action={() => void markBacAttendance(sessionId, p.personId, false)}>
+                      <form action={markBacAttendance.bind(null, sessionId, p.personId, false) as any}>
                         <button
                           type="submit"
                           className={`rounded px-3 py-1 text-xs font-medium ${

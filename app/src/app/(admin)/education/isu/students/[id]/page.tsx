@@ -63,7 +63,8 @@ export default async function IsuStudentDetailPage({ params }: { params: { id: s
       {/* Progress track form */}
       <section className="space-y-3">
         <h2 className="text-lg font-semibold text-gray-900">Progress to track</h2>
-        <form action={(fd) => void progressTrack(studentId, fd)} className="flex gap-3 items-end">
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        <form action={progressTrack.bind(null, studentId) as any} className="flex gap-3 items-end">
           <div className="flex-1">
             <select name="toTrackId" required
               className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">

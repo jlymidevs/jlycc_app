@@ -88,7 +88,8 @@ export default async function BcOfferingDetailPage({ params }: { params: { id: s
       {/* Enroll student form */}
       <section className="space-y-3">
         <h2 className="text-lg font-semibold text-gray-900">Enroll a student</h2>
-        <form action={(fd) => void enrollInOffering(offeringId, fd)} className="flex gap-3 items-end">
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+        <form action={enrollInOffering.bind(null, offeringId) as any} className="flex gap-3 items-end">
           <div className="flex-1">
             <label className="block text-sm font-medium text-gray-700 mb-1">Student ID</label>
             <input name="studentId" type="number" required min="1"

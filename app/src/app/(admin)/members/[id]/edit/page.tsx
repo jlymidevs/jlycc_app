@@ -65,7 +65,8 @@ export default async function EditMemberPage({
         <h1 className="text-2xl font-bold text-gray-900 mt-1">Edit member</h1>
       </div>
 
-      <form action={(fd) => void action(fd)} className="space-y-6">
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      <form action={action as any} className="space-y-6">
         <MemberForm
           branches={branches}
           stages={stages}

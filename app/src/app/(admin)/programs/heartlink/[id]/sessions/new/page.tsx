@@ -12,7 +12,8 @@ export default function NewHeartlinkSessionPage({ params }: { params: { id: stri
         </Link>
         <h1 className="text-2xl font-bold text-gray-900 mt-1">Add session</h1>
       </div>
-      <form action={(fd) => void createHeartlinkSession(cohortId, fd)} className="space-y-5">
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      <form action={createHeartlinkSession.bind(null, cohortId) as any} className="space-y-5">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Session number <span className="text-red-500">*</span></label>
           <input name="sessionNumber" type="number" required min="1" className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />

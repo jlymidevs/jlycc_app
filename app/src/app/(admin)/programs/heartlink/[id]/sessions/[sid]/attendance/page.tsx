@@ -87,7 +87,7 @@ export default async function HeartlinkAttendancePage({
                       {e.firstName} {e.lastName}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <form action={() => void markHeartlinkAttendance(sessionId, e.enrollmentId, true)}>
+                      <form action={markHeartlinkAttendance.bind(null, sessionId, e.enrollmentId, true) as any}>
                         <button
                           type="submit"
                           className={`rounded px-3 py-1 text-xs font-medium ${
@@ -101,7 +101,7 @@ export default async function HeartlinkAttendancePage({
                       </form>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <form action={() => void markHeartlinkAttendance(sessionId, e.enrollmentId, false)}>
+                      <form action={markHeartlinkAttendance.bind(null, sessionId, e.enrollmentId, false) as any}>
                         <button
                           type="submit"
                           className={`rounded px-3 py-1 text-xs font-medium ${

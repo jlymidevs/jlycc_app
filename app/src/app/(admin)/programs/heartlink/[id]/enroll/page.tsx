@@ -12,7 +12,8 @@ export default function EnrollPersonPage({ params }: { params: { id: string } })
         </Link>
         <h1 className="text-2xl font-bold text-gray-900 mt-1">Enroll person</h1>
       </div>
-      <form action={(fd) => void enrollPerson(cohortId, fd)} className="space-y-5">
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      <form action={enrollPerson.bind(null, cohortId) as any} className="space-y-5">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Person ID <span className="text-red-500">*</span>

@@ -37,7 +37,8 @@ export default async function EditInitiativePage({ params }: { params: { id: str
         </Link>
         <h1 className="text-2xl font-bold text-gray-900 mt-1">Edit initiative</h1>
       </div>
-      <form action={(fd) => void updateInitiative(initiativeId, fd)} className="space-y-5">
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      <form action={updateInitiative.bind(null, initiativeId) as any} className="space-y-5">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Name <span className="text-red-500">*</span></label>
           <input name="name" type="text" required defaultValue={initiative.name} className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />

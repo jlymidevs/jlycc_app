@@ -88,7 +88,8 @@ export default async function IsuSessionAttendancePage({ params }: { params: { i
                   <tr key={s.personId}>
                     <td className="px-4 py-3 text-gray-900">{s.firstName} {s.lastName}</td>
                     <td className="px-4 py-3 text-center">
-                      <form action={(fd) => void markIsuAttendance(sessionId, s.personId, true)}>
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                      <form action={markIsuAttendance.bind(null, sessionId, s.personId, true) as any}>
                         <button type="submit"
                           className={`rounded px-3 py-1 text-xs font-medium ${
                             s.attended === true ? "bg-green-100 text-green-700" : "border border-gray-200 text-gray-500 hover:bg-green-50"
@@ -96,7 +97,8 @@ export default async function IsuSessionAttendancePage({ params }: { params: { i
                       </form>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <form action={(fd) => void markIsuAttendance(sessionId, s.personId, false)}>
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                      <form action={markIsuAttendance.bind(null, sessionId, s.personId, false) as any}>
                         <button type="submit"
                           className={`rounded px-3 py-1 text-xs font-medium ${
                             s.attended === false ? "bg-red-100 text-red-700" : "border border-gray-200 text-gray-500 hover:bg-red-50"

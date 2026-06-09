@@ -33,7 +33,7 @@ test.describe("Ministries module", () => {
     await firstMinistryLink.click();
     await expect(page).toHaveURL(/\/ministries\/\d+/);
     // should have chapters section
-    await expect(page.getByText(/chapter/i)).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Chapters", exact: true })).toBeVisible();
   });
 
   test("ministry detail page has chapters section", async ({ page }) => {
@@ -49,7 +49,7 @@ test.describe("Ministries module", () => {
     await firstMinistryLink.click();
     await expect(page).toHaveURL(/\/ministries\/\d+/);
     // chapters section heading
-    await expect(page.getByRole("heading", { name: /chapter/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Chapters", exact: true })).toBeVisible();
   });
 
   test("chapter detail page loads when chapter exists", async ({ page }) => {

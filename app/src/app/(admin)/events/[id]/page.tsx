@@ -86,7 +86,7 @@ export default async function EventDetailPage({
               >
                 Edit
               </Link>
-              <form action={() => void cancelEvent(eventId)}>
+              <form action={cancelEvent.bind(null, eventId) as any}>
                 <button
                   type="submit"
                   className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700"
@@ -187,12 +187,7 @@ export default async function EventDetailPage({
                       {r.status !== "CONFIRMED" &&
                         r.status !== "CANCELLED" && (
                           <form
-                            action={() =>
-                              void updateRegistrationStatus(
-                                r.registrationId,
-                                "CONFIRMED"
-                              )
-                            }
+                            action={updateRegistrationStatus.bind(null, r.registrationId, "CONFIRMED") as any}
                           >
                             <button
                               type="submit"
@@ -204,12 +199,7 @@ export default async function EventDetailPage({
                         )}
                       {r.status !== "CANCELLED" && (
                         <form
-                          action={() =>
-                            void updateRegistrationStatus(
-                              r.registrationId,
-                              "CANCELLED"
-                            )
-                          }
+                          action={updateRegistrationStatus.bind(null, r.registrationId, "CANCELLED") as any}
                         >
                           <button
                             type="submit"
