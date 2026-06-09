@@ -5,7 +5,6 @@ import { notFound, redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { branch } from "@/schema/core";
 import { getMinistry, createChapter } from "@/actions/ministries";
-import { revalidatePath } from "next/cache";
 
 export default async function MinistryDetailPage({
   params,
@@ -43,7 +42,6 @@ export default async function MinistryDetailPage({
       redirect(`/ministries/${ministryId}?err=${encodeURIComponent(result.error)}`);
     }
 
-    revalidatePath(`/ministries/${ministryId}`);
     redirect(`/ministries/${ministryId}/chapters/${result.chapterId}`);
   }
 
