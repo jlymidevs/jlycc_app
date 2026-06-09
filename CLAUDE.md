@@ -77,15 +77,18 @@ JLYCC App/
 - **Plan 6c — Public Homepage**: `church/layout.tsx` + `church/page.tsx` + `homepage.spec.ts` (merged PR #4)
 - **Plan 7 — Programs / BAC**: Heartlink + BAC admin modules, 26 files, 88 unit tests (merged PR #5)
 - **Plan 8 — Education (BC + ISU)**: Bible College + ISU admin modules, 21 files, 123 unit tests (merged PR #6)
+- **Plan 11 — Membership Extensions**: `regular_member_application` schema, 6 server actions, applications queue page, extended member detail page (Roles/PCM/Application sections), 31 unit tests, 6 E2E tests (merged PR #9)
+- **Form action fixes**: Fixed arrow-wrapper pattern (`action={(fd)=>void fn(fd)}`) across 23+ pages — Next.js requires direct ref or `.bind()`
 
 ### In Progress / Next
-- **Plan 9** — not yet defined; next feature TBD
+- **Plan 12** — next feature TBD (missions, finance, or further membership features)
 
 ## Git State
 
-- Branch: `master` (in sync with origin)
-- Untracked: `CLAUDE.md`, `docs/superpowers/plans/2026-04-19-foundation-implementation.md`, `docs/superpowers/plans/2026-06-08-plan6c-public-homepage.md`, `docs/superpowers/plans/2026-06-09-plan8-education.md`, `docs/superpowers/specs/2026-04-19-jly-church-database-design.md`, `jly-church-db.zip`
-- Remote branches: plan5/6a/6b/6c/7/8 feature branches all merged
+- Branch: `master` (in sync with origin, all plan branches merged)
+- E2E: 50/56 passing, 6 skipped (accumulated test data, QR code)
+- Unit tests: 183 passing
+- Untracked: `CLAUDE.md`, various docs in `docs/superpowers/`, `jly-church-db.zip`
 
 ## Known Issues / Risks
 
@@ -96,15 +99,14 @@ JLYCC App/
 
 ## Pending Tasks
 
-1. **Commit untracked docs** — foundation plan, plan 6c plan, plan 8 plan, DB spec
-2. **Gitignore `jly-church-db.zip`** — binary archive, should not be tracked
-3. **Run E2E tests** against live DB to validate Plan 7 + Plan 8 UI flows
-4. **Define Plan 9** — next feature area TBD
+1. **Gitignore `jly-church-db.zip`** — binary archive, should not be tracked
+2. **Commit untracked docs** — foundation plan, plan 6c plan, plan 8 plan, DB spec
+3. **Define Plan 12** — next feature area (missions finance, events calendar, or member portal)
 
 ## Suggested Next Steps
 
-1. Run `cd app && npm run dev` + `npx playwright test` to validate Plan 7 + 8 E2E against real DB
-2. Define Plan 9 — next logical area based on remaining schema (missions, finance, or membership extensions)
+1. Define Plan 12 based on remaining schema areas
+2. E2E "see registrant" test is skipped — root cause: cross-context timing; `revalidatePath` added but test still flaky
 
 ## Safety Notes
 
