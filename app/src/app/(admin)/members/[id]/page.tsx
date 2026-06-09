@@ -64,12 +64,6 @@ export default async function MemberDetailPage({
     .from(contactInfo)
     .where(eq(contactInfo.personId, row.personId));
 
-  const roles = await db
-    .select({ code: role.code, name: role.name })
-    .from(memberRole)
-    .innerJoin(role, eq(memberRole.roleId, role.roleId))
-    .where(and(eq(memberRole.memberId, memberId), isNull(memberRole.endedAt)));
-
   // Roles section data
   const activeRoles = await db
     .select({
