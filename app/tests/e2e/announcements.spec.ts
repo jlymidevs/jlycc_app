@@ -32,7 +32,7 @@ test.describe("Announcements", () => {
     await page.selectOption('select[name="targetType"]', "ALL_MEMBERS");
     await page.getByRole("button", { name: "Create announcement" }).click();
     await expect(page).toHaveURL(/\/announcements\/\d+/);
-    await expect(page.getByText("DRAFT")).toBeVisible();
+    await expect(page.getByText("DRAFT", { exact: true })).toBeVisible();
   });
 
   test("staff can publish an announcement", async ({ page }) => {
@@ -45,7 +45,7 @@ test.describe("Announcements", () => {
     await expect(page).toHaveURL(/\/announcements\/\d+/);
 
     await page.getByRole("button", { name: "Publish" }).click();
-    await expect(page.getByText("PUBLISHED")).toBeVisible();
+    await expect(page.getByText("PUBLISHED", { exact: true })).toBeVisible();
   });
 
   test("published announcement shows recipient count", async ({ page }) => {
@@ -57,9 +57,9 @@ test.describe("Announcements", () => {
     await page.getByRole("button", { name: "Create announcement" }).click();
     await expect(page).toHaveURL(/\/announcements\/\d+/);
     await page.getByRole("button", { name: "Publish" }).click();
-    await expect(page.getByText("PUBLISHED")).toBeVisible();
+    await expect(page.getByText("PUBLISHED", { exact: true })).toBeVisible();
     // Recipient count shown in details section — just check it's a number (could be 0+)
-    await expect(page.getByText(/Recipients/)).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Recipients/ })).toBeVisible();
   });
 
   test("staff can archive a published announcement", async ({ page }) => {
@@ -71,9 +71,9 @@ test.describe("Announcements", () => {
     await page.getByRole("button", { name: "Create announcement" }).click();
     await expect(page).toHaveURL(/\/announcements\/\d+/);
     await page.getByRole("button", { name: "Publish" }).click();
-    await expect(page.getByText("PUBLISHED")).toBeVisible();
+    await expect(page.getByText("PUBLISHED", { exact: true })).toBeVisible();
 
     await page.getByRole("button", { name: "Archive" }).click();
-    await expect(page.getByText("ARCHIVED")).toBeVisible();
+    await expect(page.getByText("ARCHIVED", { exact: true })).toBeVisible();
   });
 });
