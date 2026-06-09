@@ -8,6 +8,7 @@ import { createMemberSchema, updateMemberSchema } from "@/lib/validations/member
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
+import { ghlCreateContact, ghlUpdateContact } from "@/lib/ghl";
 
 export async function createMember(formData: FormData) {
   const raw = {
@@ -32,6 +33,15 @@ export async function createMember(formData: FormData) {
 
   const data = parsed.data;
 
+  // Sync to GHL (fire-and-forget, non-blocking)
+  const ghlId = await ghlCreateContact({
+    firstName: data.firstName,
+    lastName: data.lastName,
+    email: data.email,
+    phone: data.mobile,
+    tags: ["jlycc-member"],
+  });
+
   // Insert person
   const [newPerson] = await db
     .insert(person)
@@ -46,6 +56,7 @@ export async function createMember(formData: FormData) {
       gender: data.gender as any,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       maritalStatus: data.maritalStatus as any,
+      ...(ghlId ? { ghlContactId: ghlId } : {}),
     })
     .returning({ personId: person.personId });
 
@@ -100,14 +111,23 @@ export async function updateMember(memberId: number, formData: FormData) {
 
   const data = parsed.data;
 
-  // Get person_id for this member
+  // Get person_id + ghl_contact_id for this member
   const [existing] = await db
-    .select({ personId: member.personId })
+    .select({ personId: member.personId, ghlContactId: person.ghlContactId })
     .from(member)
+    .innerJoin(person, eq(person.personId, member.personId))
     .where(eq(member.memberId, memberId))
     .limit(1);
 
   if (!existing) return { errors: { _: ["Member not found"] } };
+
+  // Sync update to GHL
+  if (existing.ghlContactId) {
+    await ghlUpdateContact(existing.ghlContactId, {
+      firstName: data.firstName,
+      lastName: data.lastName,
+    });
+  }
 
   // Update person fields
   if (data.firstName || data.lastName || data.gender || data.maritalStatus) {
@@ -125,7 +145,7 @@ export async function updateMember(memberId: number, formData: FormData) {
       .where(eq(person.personId, existing.personId));
   }
 
-  // Update member stage (DB trigger writes lifecycle_stage_history automatically)
+  // Update member stage
   if (data.currentStage) {
     await db
       .update(member)

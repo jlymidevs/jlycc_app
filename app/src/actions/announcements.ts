@@ -8,6 +8,7 @@ import { createAnnouncementSchema, CreateAnnouncementInput } from "@/lib/validat
 import { eq, and, isNull, desc, count, ne } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { sendAnnouncementEmail } from "@/lib/email";
+import { ghlSendSMS } from "@/lib/ghl";
 
 // Create a draft announcement
 export async function createAnnouncement(
@@ -113,6 +114,16 @@ export async function publishAnnouncement(
     )
     .where(eq(announcementRecipient.announcementId, id));
 
+  // Fetch recipients with GHL contact ID for SMS
+  const recipientsWithGHL = await db
+    .select({
+      personId: announcementRecipient.personId,
+      ghlContactId: person.ghlContactId,
+    })
+    .from(announcementRecipient)
+    .innerJoin(person, eq(announcementRecipient.personId, person.personId))
+    .where(eq(announcementRecipient.announcementId, id));
+
   // Send in batches of 50
   let deliveredCount = 0;
   const BATCH_SIZE = 50;
@@ -136,6 +147,14 @@ export async function publishAnnouncement(
       })
     );
   }
+
+  // Fire GHL SMS (non-blocking, best-effort)
+  const smsMessage = `${row.title}\n\n${row.body}`;
+  await Promise.allSettled(
+    recipientsWithGHL
+      .filter((r) => r.ghlContactId)
+      .map((r) => ghlSendSMS(r.ghlContactId!, smsMessage))
+  );
 
   revalidatePath("/announcements");
   revalidatePath(`/announcements/${id}`);

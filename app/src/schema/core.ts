@@ -54,6 +54,7 @@ export const person = coreSchema.table("person", {
   nationality: text("nationality"),
   profilePhotoUrl: text("profile_photo_url"),
   notes: text("notes"),
+  ghlContactId: text("ghl_contact_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdateFn(() => new Date()),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
