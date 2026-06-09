@@ -4,7 +4,7 @@ export default function LoginPage() {
   return (
     <div
       className="min-h-screen flex items-center justify-center"
-      style={{ background: "var(--bg-base)" }}
+      style={{ background: "var(--bg-base)", position: "relative" }}
     >
       {/* Background glow */}
       <div
@@ -16,7 +16,7 @@ export default function LoginPage() {
           style={{
             width: 600,
             height: 600,
-            background: "radial-gradient(circle, #22c55e 0%, transparent 70%)",
+            background: "radial-gradient(circle, rgba(31,138,139,0.25) 0%, transparent 70%)",
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -60%)",

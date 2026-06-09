@@ -4,8 +4,8 @@
   "description": "JLY Church Admin Portal",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0d0d12",
-  "theme_color": "#22c55e",
+  "background_color": "#F4F8F7",
+  "theme_color": "#1F8A8B",
   "orientation": "portrait-primary",
   "icons": [
     {

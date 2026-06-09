@@ -26,7 +26,7 @@ export default function SplashPage() {
           style={{
             width: 800,
             height: 800,
-            background: "radial-gradient(circle, rgba(34,197,94,0.18) 0%, transparent 65%)",
+            background: "radial-gradient(circle, rgba(31,138,139,0.2) 0%, transparent 65%)",
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
@@ -49,7 +49,7 @@ export default function SplashPage() {
           alt="JLYCC"
           width={180}
           height={180}
-          style={{ borderRadius: 36, boxShadow: "0 0 80px rgba(34,197,94,0.25)" }}
+          style={{ borderRadius: 36, boxShadow: "0 0 80px rgba(31,138,139,0.3)" }}
         />
 
         {/* Name */}
@@ -69,8 +69,8 @@ export default function SplashPage() {
         <div
           className="w-8 h-8 rounded-full border-2"
           style={{
-            borderColor: "var(--border)",
-            borderTopColor: "var(--accent)",
+            borderColor: "var(--border-strong)",
+            borderTopColor: "var(--teal)",
             animation: "spin 0.8s linear infinite",
           }}
         />

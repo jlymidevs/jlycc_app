@@ -114,8 +114,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         className="flex flex-col items-center py-4 gap-2 shrink-0"
         style={{
           width: "var(--sidebar-width)",
-          background: "var(--bg-surface)",
-          borderRight: "1px solid var(--border)",
+          background: "var(--sidebar-bg)",
+          borderRight: "none",
         }}
       >
         {/* Logo */}
@@ -132,16 +132,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               href={item.href}
               title={item.label}
               className="group relative flex items-center justify-center w-full h-11 rounded-xl transition-all"
-              style={{ color: "var(--text-secondary)" }}
+              style={{ color: "var(--sidebar-icon)" }}
             >
-              <span className="group-hover:text-white transition-colors"
+              <span className="group-hover:opacity-100 transition-opacity"
                 style={{ color: "inherit" }}>
                 {item.icon}
               </span>
               {/* Tooltip */}
               <span
                 className="absolute left-full ml-3 px-3 py-1 rounded-lg text-xs font-medium whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50"
-                style={{ background: "var(--bg-card)", color: "var(--text-primary)", border: "1px solid var(--border)" }}
+                style={{ background: "var(--teal-dark)", color: "#fff", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}
               >
                 {item.label}
               </span>
@@ -155,7 +155,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             type="submit"
             title={`Sign out (${session.user?.email})`}
             className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold transition-opacity hover:opacity-75"
-            style={{ background: "var(--accent)", color: "#fff" }}
+            style={{ background: "rgba(255,255,255,0.2)", color: "#fff", border: "1px solid rgba(255,255,255,0.3)" }}
           >
             {initials}
           </button>
@@ -170,6 +170,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           style={{
             background: "var(--bg-surface)",
             borderBottom: "1px solid var(--border)",
+            boxShadow: "0 1px 0 var(--border)",
             height: "60px",
           }}
         >
@@ -185,9 +186,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 type="submit"
                 className="text-xs px-3 py-1.5 rounded-lg transition-colors"
                 style={{
-                  background: "var(--bg-card)",
+                  background: "transparent",
                   color: "var(--text-secondary)",
-                  border: "1px solid var(--border)",
+                  border: "1px solid var(--border-strong)",
                 }}
               >
                 Sign out
