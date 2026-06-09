@@ -62,6 +62,12 @@ export default async function AdminLayout({
           >
             Missions
           </Link>
+          <Link
+            href="/announcements"
+            className="text-sm text-gray-600 hover:text-gray-900"
+          >
+            Announcements
+          </Link>
         </div>
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-600">{session.user?.email}</span>
