@@ -4,7 +4,10 @@ import {
   uuid,
   text,
   timestamp,
+  boolean,
+  bigint,
 } from "drizzle-orm/pg-core";
+import { person } from "./core";
 
 export const appSchema = pgSchema("app");
 
@@ -13,7 +16,11 @@ export const users = appSchema.table("users", {
   email: text("email").notNull().unique(),
   name: text("name"),
   passwordHash: text("password_hash"),
-  role: text("role").notNull().default("staff"),
+  role: text("role").notNull().default("MEMBER"),
+  personId: bigint("person_id", { mode: "number" })
+    .unique()
+    .references(() => person.personId),
+  isActive: boolean("is_active").notNull().default(true),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
