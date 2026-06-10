@@ -97,9 +97,15 @@ JLYCC App/
 - **UI overhaul**: dark dashboard redesign + PWA setup (`ff4e77f`), animated splash on root (`bc0f971`), soft teal brand palette (`73f17a5`), split login layout with video panel (`fd6cf70`)
 - **GHL integration**: bidirectional contact sync + SMS messaging (`b9672f3`) — `src/lib/ghl.ts`, `src/actions/ghl.ts`, `/ghl` admin page, V067 migration adds `core.person.ghl_contact_id`
 
-### In Progress / Next
-- **Plan 18 implemented** on branch `plan18-roles-member-journey` — migrations V068/V069 not yet run locally (Docker down); E2E `roles-journey.spec.ts` not yet run (needs local DB)
-- **Plan 16 — Deployment**: middleware fix done; remaining = Neon DB + Vercel provisioning (human actions), prod env vars, Resend domain verification.
+### Deployed (2026-06-11)
+- **Live on Vercel**: https://jlycc-app-xi.vercel.app (project `jlycc-app`, CLI deploys from `app/`)
+- **Neon DB** (prod): migrated through V069, Flyway baselined at 069, lifecycle stages + NCR region + MAIN branch seeded; `admin@jly.church` = SUPER_ADMIN
+- **Vercel prod env vars set**: DATABASE_URL(+READER), AUTH_SECRET, RESEND_API_KEY, RESEND_FROM (=onboarding@resend.dev — no verified Resend domain yet), GHL_*, PORTAL_SECRET, AUTH_TRUST_HOST, APP_BASE_URL
+- E2E verified vs local DB: roles-journey 4/4, calendar 6/6
+
+### Remaining (human actions)
+- **Google OAuth in prod**: `AUTH_GOOGLE_ID/SECRET` empty in local `.env` — obtain from Google Cloud Console, add redirect URI `https://jlycc-app-xi.vercel.app/api/auth/callback/google`, then `vercel env add`
+- **Resend domain**: verify a sending domain in Resend (DNS), then update `RESEND_FROM`
 
 ## Git State (as of 2026-06-11)
 
@@ -112,6 +118,9 @@ JLYCC App/
 
 ## Known Issues / Risks
 
+- **Middleware MUST live at `app/src/middleware.ts`** — Next.js ignores `middleware.ts` at the project root when `src/` exists (route guards were silently dead until 2026-06-11). Middleware is edge runtime: decode JWT via `getToken`, never import `@/lib/auth` (postgres driver breaks on edge).
+- **Local `.env` points at NEON (prod)** — `npm run dev` and E2E hit prod unless you override: `DATABASE_URL=postgresql://jly_admin:localdevpassword@localhost:5432/jly` (same for `_READER`). Never run Playwright against the Neon URL.
+- Flyway-on-Neon: history baselined at 069 via dockerized Flyway; bind-mounting `db/migrations` from Git Bash on Windows may silently mount empty — verify "validated N migrations" count in output.
 - `app/.env` exists locally (untracked, now gitignored, contains secrets) — never commit; create from `app/.env.example` on new machines
 - GHL Location ID hardcoded as display text in `src/app/(admin)/ghl/page.tsx` (UI only, API uses env var)
 - `RESEND_API_KEY` + `RESEND_FROM` must be set in prod env for email delivery to work
@@ -121,10 +130,8 @@ JLYCC App/
 
 ## Pending Tasks
 
-1. **Run Plan 18 migrations + E2E locally** — `cd db && docker compose up -d` (applies V068/V069), then `npx playwright test tests/e2e/roles-journey.spec.ts`
-2. **Run calendar E2E** — `npx playwright test tests/e2e/calendar.spec.ts` against a local DB
-3. **Set prod env vars** — `RESEND_API_KEY`, `RESEND_FROM`, `PORTAL_SECRET`, `AUTH_SECRET`, `AUTH_GOOGLE_ID/SECRET`, `GHL_*`, `APP_BASE_URL`
-4. **Finish Plan 16 deployment** — Neon + Vercel provisioning (human actions)
+1. **Google OAuth prod credentials** — see Remaining (human actions) above
+2. **Resend domain verification** — see Remaining (human actions) above
 
 ## Suggested Next Steps
 
