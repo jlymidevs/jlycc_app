@@ -62,7 +62,7 @@ Hierarchy is strict: SUPER_ADMIN > ADMIN > MINISTRY_HEAD > MEMBER. Guards check 
    - Nav shows "My profile" for every logged-in user; ADMIN+ nav shows both admin modules and My profile.
 3. **`/ministry`** — head dashboard: **Requests section first** — pending join_requests for the head's chapter(s), each showing member name, current stage, and **the member's priority rank for this ministry** (e.g. "1st priority" vs "3rd priority"), with Approve / Reject buttons (badge count in nav). Approve → create `ministry_membership` row (joined_at now, priority copied from request) + mark request APPROVED. Reject → mark REJECTED (member can re-request or request another ministry from `/me`). Below: per chapter roster table (member, priority, current stage, last attendance date from `attendance` schema), add member directly (search), remove (end membership with `ended_at`).
 4. **`/users`** — super-admin user management: table (email, name, role, linked person), change-role action, deactivate/reactivate. Deactivation = `is_active boolean NOT NULL DEFAULT true` column (added in V068); sign-in callbacks reject inactive users.
-5. **Admin chapter page change** — existing chapter detail gets "Assign head" (choose member in roster → set leader). If that member's email matches a user account, promote account to `MINISTRY_HEAD` (and demote to `MEMBER` when unset and they lead no other chapter).
+5. **Admin chapter page change** — existing chapter detail gets "Assign head" (choose member in roster → set leader). **Eligibility rule: only members whose current stage is `INNER_CORE` or `JOSHUA_GENERATION` can be appointed ministry head** — the picker filters to eligible members and the server action rejects ineligible ones. If that member's email matches a user account, promote account to `MINISTRY_HEAD` (and demote to `MEMBER` when unset and they lead no other chapter).
 
 ## Error handling
 
@@ -77,7 +77,7 @@ Hierarchy is strict: SUPER_ADMIN > ADMIN > MINISTRY_HEAD > MEMBER. Guards check 
 
 ## Testing
 
-- Unit: signup Zod schema (incl. head selection); join-request schema (priority validation); `requireRole` hierarchy helper; stage-ladder ordering helper; next-free-priority helper (pure).
+- Unit: signup Zod schema (incl. head selection); join-request schema (priority validation); `requireRole` hierarchy helper; stage-ladder ordering helper; next-free-priority helper; head-eligibility helper (stage ∈ {INNER_CORE, JOSHUA_GENERATION}) (all pure).
 - E2E: signup with head pick → `/me` shows priority-1 request "Pending approval from <head>"; head logs in → sees request with priority rank → approves → member's `/me` shows ministry under My ministries; member requests a 2nd ministry (priority 2); reject path → member re-requests; MEMBER blocked from `/members`; super admin changes role on `/users`; admin assigns head on chapter; admin sees own `/me` profile.
 
 ## Out of scope
