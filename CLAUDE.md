@@ -84,9 +84,10 @@ JLYCC App/
 - **Plan 12 — Member Self-Service Portal**: `/portal/[token]` public page, portal link on admin member detail (PR #10)
 - **Plan 13 — Communications**: announcements module, fan-out recipients, admin pages (PR #11)
 - **Plan 14 — Email Delivery**: Resend SDK, email send on publish, `delivered_at` tracking (PR #12)
+- **Plan 17 — Church Calendar**: public `/church/calendar` month grid + agenda list, add-to-calendar (Google URL + ICS download route), recurring series admin (create/cancel) materializing WEEKLY/MONTHLY `event` rows ~3 months ahead in Asia/Manila time (PR #13)
 
 ### In Progress / Next
-- All schema areas covered. Next: define new features or deployment prep.
+- All schema areas covered. Next: deployment prep (Plan 16 remaining) or new features.
 
 ## Git State
 
