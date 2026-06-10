@@ -14,12 +14,20 @@ export default function ChurchLayout({
         >
           JLY Church
         </Link>
-        <Link
-          href="/church/events"
-          className="text-sm text-gray-600 hover:text-gray-900"
-        >
-          Events
-        </Link>
+        <div className="flex items-center gap-5">
+          <Link
+            href="/church/calendar"
+            className="text-sm text-gray-600 hover:text-gray-900"
+          >
+            Calendar
+          </Link>
+          <Link
+            href="/church/events"
+            className="text-sm text-gray-600 hover:text-gray-900"
+          >
+            Events
+          </Link>
+        </div>
       </nav>
       <main>{children}</main>
     </div>
