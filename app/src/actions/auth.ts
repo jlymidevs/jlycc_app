@@ -36,7 +36,9 @@ export async function loginAction(formData: FormData) {
 }
 
 export async function googleLoginAction() {
-  await signIn("google", { redirectTo: "/members" });
+  // /welcome completes the profile for first-time Google users and
+  // bounces existing members straight to /me.
+  await signIn("google", { redirectTo: "/welcome" });
 }
 
 export async function logoutAction() {

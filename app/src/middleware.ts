@@ -38,7 +38,11 @@ export default async function middleware(req: NextRequest) {
   );
   const isUsersRoute = path === "/users" || path.startsWith("/users/");
   const isMinistryRoute = path === "/ministry" || path.startsWith("/ministry/");
-  const isMeRoute = path === "/me" || path.startsWith("/me/");
+  const isMeRoute =
+    path === "/me" ||
+    path.startsWith("/me/") ||
+    path === "/welcome" ||
+    path.startsWith("/welcome/");
 
   if (!(isAdminRoute || isUsersRoute || isMinistryRoute || isMeRoute)) {
     return NextResponse.next();
@@ -84,5 +88,6 @@ export const config = {
     "/users/:path*",
     "/ministry/:path*",
     "/me/:path*",
+    "/welcome/:path*",
   ],
 };

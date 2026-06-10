@@ -15,5 +15,24 @@ export const joinRequestSchema = z.object({
   priority: z.number().int().min(1, "Priority must be 1 or higher"),
 });
 
+export const completeProfileSchema = z.object({
+  firstName: z.string().min(1, "First name required"),
+  lastName: z.string().min(1, "Last name required"),
+  mobile: z
+    .string()
+    .trim()
+    .regex(/^\+?[0-9 ()-]{7,20}$/, "Valid mobile number required")
+    .optional()
+    .or(z.literal("")),
+  dateOfBirth: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Valid date required")
+    .optional()
+    .or(z.literal("")),
+  gender: z.enum(["MALE", "FEMALE", "UNDISCLOSED"]).optional(),
+  chapterId: z.number().int().positive().optional(),
+});
+
 export type SignupInput = z.infer<typeof signupSchema>;
 export type JoinRequestInput = z.infer<typeof joinRequestSchema>;
+export type CompleteProfileInput = z.infer<typeof completeProfileSchema>;
