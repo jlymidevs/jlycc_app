@@ -14,7 +14,9 @@ Two surfaces: **admin portal** (staff, auth-required) and **public church pages*
 | Styling | Tailwind CSS |
 | ORM | Drizzle ORM |
 | Database | PostgreSQL 16 |
-| Auth | NextAuth.js v5 (credentials) |
+| Auth | NextAuth.js v5 (credentials + Google OAuth with DB allowlist) |
+| Email | Resend SDK |
+| CRM | GoHighLevel (REST, no SDK — `src/lib/ghl.ts`) |
 | Validation | Zod |
 | Unit Tests | Vitest |
 | E2E Tests | Playwright |
@@ -61,11 +63,13 @@ JLYCC App/
 │   ├── .env.example            # Required env vars template
 │   └── drizzle.config.ts
 ├── db/
-│   ├── migrations/             # 66 Flyway SQL migrations (V001–V066) + repeatable seeds
+│   ├── migrations/             # 73 Flyway SQL migrations (V001–V067) + repeatable seeds
 │   └── docker-compose.yml      # Local PostgreSQL 16 + Flyway
+├── etl/                        # Python CSV → staging.stg_person loader (uses DATABASE_URL env)
+├── JLYCC favicon_io/           # Favicon/PWA icon set (untracked)
 └── docs/superpowers/
-    ├── plans/                  # Implementation plans (Plans 1–15)
-    └── specs/                  # Architecture specs
+    ├── plans/                  # Implementation plans (Plans 1–17; 12–16 untracked)
+    └── specs/                  # Architecture specs (incl. church calendar design)
 ```
 
 ## Current Progress
@@ -85,34 +89,50 @@ JLYCC App/
 - **Plan 13 — Communications**: announcements module, fan-out recipients, admin pages (PR #11)
 - **Plan 14 — Email Delivery**: Resend SDK, email send on publish, `delivered_at` tracking (PR #12)
 
+### Completed after PR #12 (committed directly to master, no PRs)
+- **Auth hardening**: middleware now protects ALL admin routes (`b1b6103`) — Plan 16 Task 1 done
+- **Google OAuth**: provider added with DB allowlist check (`8bfee2b`)
+- **UI overhaul**: dark dashboard redesign + PWA setup (`ff4e77f`), animated splash on root (`bc0f971`), soft teal brand palette (`73f17a5`), split login layout with video panel (`fd6cf70`)
+- **GHL integration**: bidirectional contact sync + SMS messaging (`b9672f3`) — `src/lib/ghl.ts`, `src/actions/ghl.ts`, `/ghl` admin page, V067 migration adds `core.person.ghl_contact_id`
+
 ### In Progress / Next
-- All schema areas covered. Next: define new features or deployment prep.
+- **Plan 17 — Church Calendar + Recurring Series**: design spec + implementation plan COMMITTED (`docs/superpowers/plans/2026-06-10-plan17-church-calendar.md`), code NOT started. Public `/church/calendar` (month grid + agenda), Add-to-Calendar/ICS, WEEKLY/MONTHLY series materialization (~3 months ahead, Asia/Manila). Uses existing `event_series` table (V034) — no new migration needed. 10 tasks.
+- **Plan 16 — Deployment**: middleware fix done; remaining = Neon DB + Vercel provisioning (human actions), prod env vars, Resend domain verification.
 
-## Git State
+## Git State (as of 2026-06-10)
 
-- Branch: `master` (in sync with origin, all PRs #1–#12 merged)
-- Unit tests: 216 passing (13 test files)
-- E2E: ~56 tests across 13 spec files (some skipped: accumulated test data, QR code)
+- Branch: `master`, PRs #1–#12 merged; post-PR work committed directly to master
+- Untracked: `app/.env` (local secrets — never commit), `app/test-results/`, `JLYCC favicon_io/`, plan docs 12–16
+- `.worktrees/` has 4 stale worktrees (feature, plan6b, plan12, plan5)
+- Verified 2026-06-10: `tsc --noEmit` clean; unit tests 216/216 passing (vitest 4)
+- E2E: 11 spec files (some skipped: accumulated test data, QR code)
 
 ## Known Issues / Risks
 
-- No `.env` file in repo — create `app/.env` from `app/.env.example` before running locally
+- `app/.env` exists locally (untracked, contains secrets) — never commit; create from `app/.env.example` on new machines
+- `.env.example` is missing `GHL_API_KEY` + `GHL_LOCATION_ID` (used by `src/lib/ghl.ts`)
+- GHL Location ID hardcoded as display text in `src/app/(admin)/ghl/page.tsx` (UI only, API uses env var)
 - `RESEND_API_KEY` + `RESEND_FROM` must be set in prod env for email delivery to work
-- `flyway.conf` has hardcoded local dev credentials — do NOT use in production
-- `jly-church-db.zip` in root is untracked binary — gitignore or delete
+- `flyway.conf` + `docker-compose.yml` have hardcoded local dev credentials — do NOT use in production
+- `jly-church-db.zip` in root is untracked binary — gitignore or delete; `jly-church-db/` folder is an empty stub
 - `CLAUDE.md` at repo root (parent folder) is for a different project (DMerch) — this file is the correct one
 
 ## Pending Tasks
 
-1. **Gitignore `jly-church-db.zip`** — binary archive, should not be tracked
-2. **Set prod env vars** — `RESEND_API_KEY`, `RESEND_FROM`, `PORTAL_SECRET`, `AUTH_SECRET`
+1. **Implement Plan 17** — church calendar + recurring series (plan committed, code not started)
+2. **Commit untracked plan docs 12–16** (`docs/superpowers/plans/`)
+3. **Add `GHL_API_KEY`/`GHL_LOCATION_ID` to `.env.example`**
+4. **Gitignore** `jly-church-db.zip`, `app/test-results/`
+5. **Set prod env vars** — `RESEND_API_KEY`, `RESEND_FROM`, `PORTAL_SECRET`, `AUTH_SECRET`, `AUTH_GOOGLE_ID/SECRET`, `GHL_*`
+6. **Finish Plan 16 deployment** — Neon + Vercel provisioning (human actions)
 
 ## Suggested Next Steps
 
-1. Deployment prep (Vercel + Supabase/Neon for prod DB)
-2. SMS delivery for announcements (Twilio)
+1. Plan 17 calendar implementation (design approved, 10 tasks ready)
+2. Deployment (Plan 16 remaining tasks)
 3. Member giving/finance module
 4. E2E flaky test investigation (accumulated test data issue)
+5. Clean stale `.worktrees/` entries
 
 ## Safety Notes
 
