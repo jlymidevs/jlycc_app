@@ -34,7 +34,7 @@ test.describe("Signup and member profile", () => {
     await page.waitForURL(/\/login/);
 
     await login(page, email, "password123", "/me");
-    await expect(page.getByText("Journey")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Journey" })).toBeVisible();
     await expect(page.getByText("Regular Member").first()).toBeVisible();
   });
 
@@ -72,7 +72,7 @@ test.describe("Super admin user management", () => {
     await login(page, ADMIN_EMAIL, ADMIN_PASSWORD, "/members");
     await page.goto("/me");
     // Either the journey ladder (profile provisioned) or the not-linked notice.
-    const journey = page.getByText("Journey");
+    const journey = page.getByRole("heading", { name: "Journey" });
     const notLinked = page.getByText("not linked");
     await expect(journey.or(notLinked)).toBeVisible();
   });

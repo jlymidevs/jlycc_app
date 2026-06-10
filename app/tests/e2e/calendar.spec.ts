@@ -58,9 +58,10 @@ test.describe("Recurring series → calendar", () => {
     await page.fill('input[name="time"]', "09:00");
     await page.fill('input[name="durationMinutes"]', "120");
     await page.fill('input[name="venue"]', "Main Hall");
-    // Start today so occurrences fall in current + next months
-    const today = new Date().toISOString().slice(0, 10);
-    await page.fill('input[name="startsOn"]', today);
+    // Start tomorrow (local date) so the first occurrence is in the future
+    const tomorrow = new Date(Date.now() + 86_400_000);
+    const startsOn = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, "0")}-${String(tomorrow.getDate()).padStart(2, "0")}`;
+    await page.fill('input[name="startsOn"]', startsOn);
     await page.getByRole("button", { name: "Create series" }).click();
 
     await page.waitForURL("/events/series");
@@ -69,11 +70,23 @@ test.describe("Recurring series → calendar", () => {
     // Public calendar (list view) shows an occurrence within ~2 months
     await page.goto("/church/calendar");
     await page.getByRole("button", { name: "List" }).click();
-    let found = await page.getByText(seriesName).first().isVisible().catch(() => false);
+    // Grid AND list are both in the DOM (toggle hides via CSS) — the list
+    // copy comes last, so target .last() for the visible occurrence.
+    let found = await page
+      .getByText(seriesName)
+      .last()
+      .waitFor({ state: "visible", timeout: 5000 })
+      .then(() => true)
+      .catch(() => false);
     if (!found) {
       await page.getByRole("link", { name: "Next month" }).click();
       await page.getByRole("button", { name: "List" }).click();
-      found = await page.getByText(seriesName).first().isVisible().catch(() => false);
+      found = await page
+        .getByText(seriesName)
+        .last()
+        .waitFor({ state: "visible", timeout: 5000 })
+        .then(() => true)
+        .catch(() => false);
     }
     expect(found).toBe(true);
 
@@ -115,8 +128,11 @@ test.describe("Recurring series → calendar", () => {
     await page.selectOption('select[name="dayOfWeek"]', "3");
     await page.fill('input[name="time"]', "19:00");
     await page.fill('input[name="durationMinutes"]', "60");
-    const today = new Date().toISOString().slice(0, 10);
-    await page.fill('input[name="startsOn"]', today);
+    // Start tomorrow (local date) so every occurrence is in the future —
+    // cancelSeries only cancels future occurrences; past ones stay on the calendar.
+    const tomorrow = new Date(Date.now() + 86_400_000);
+    const startsOn = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, "0")}-${String(tomorrow.getDate()).padStart(2, "0")}`;
+    await page.fill('input[name="startsOn"]', startsOn);
     await page.getByRole("button", { name: "Create series" }).click();
     await page.waitForURL("/events/series");
 

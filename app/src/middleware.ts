@@ -1,6 +1,10 @@
-// app/middleware.ts
-import { auth } from "@/lib/auth";
-import { NextResponse } from "next/server";
+// app/src/middleware.ts
+// Edge-safe role guards: decode the session JWT directly (no DB, no
+// next-auth callbacks — the postgres driver cannot run on the edge).
+// NOTE: must live in src/ — Next.js ignores middleware.ts at the project
+// root when a src/ directory exists.
+import { NextResponse, type NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
 const ADMIN_PREFIXES = [
   "/members",
@@ -22,14 +26,12 @@ const ROLE_RANK: Record<string, number> = {
   SUPER_ADMIN: 3,
 };
 
-function rank(role: string | undefined): number {
-  return role !== undefined && role in ROLE_RANK ? ROLE_RANK[role] : -1;
+function rank(role: unknown): number {
+  return typeof role === "string" && role in ROLE_RANK ? ROLE_RANK[role] : -1;
 }
 
-export default auth((req) => {
+export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
-  const session = req.auth;
-  const role = session?.user?.role;
 
   const isAdminRoute = ADMIN_PREFIXES.some(
     (prefix) => path === prefix || path.startsWith(prefix + "/")
@@ -38,11 +40,20 @@ export default auth((req) => {
   const isMinistryRoute = path === "/ministry" || path.startsWith("/ministry/");
   const isMeRoute = path === "/me" || path.startsWith("/me/");
 
-  if (!(isAdminRoute || isUsersRoute || isMinistryRoute || isMeRoute)) return;
+  if (!(isAdminRoute || isUsersRoute || isMinistryRoute || isMeRoute)) {
+    return NextResponse.next();
+  }
 
-  if (!session) {
+  const token = await getToken({
+    req,
+    secret: process.env.AUTH_SECRET,
+    secureCookie: process.env.NODE_ENV === "production",
+  });
+
+  if (!token) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
+  const role = token.role;
 
   if (isUsersRoute && rank(role) < ROLE_RANK.SUPER_ADMIN) {
     return NextResponse.redirect(new URL("/me", req.url));
@@ -55,7 +66,8 @@ export default auth((req) => {
   if (isMinistryRoute && rank(role) < ROLE_RANK.MINISTRY_HEAD) {
     return NextResponse.redirect(new URL("/me", req.url));
   }
-});
+  return NextResponse.next();
+}
 
 export const config = {
   matcher: [
