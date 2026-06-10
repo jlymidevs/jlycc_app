@@ -44,55 +44,60 @@ JLYCC App/
 │   ├── src/
 │   │   ├── actions/            # Server actions (auth, members, events, attendance, registrations)
 │   │   ├── app/
-│   │   │   ├── (admin)/        # Protected admin routes (members, events, attendance)
+│   │   │   ├── (admin)/        # Protected admin routes (members, events, attendance, programs, education, ministries, missions, announcements)
 │   │   │   ├── church/         # Public routes (no auth)
 │   │   │   │   ├── events/     # Public events list + detail
-│   │   │   │   ├── layout.tsx  # Shared public nav (Plan 6c)
+│   │   │   │   ├── layout.tsx  # Shared public nav
 │   │   │   │   └── page.tsx    # Church homepage, hero + 5 upcoming events
+│   │   │   ├── portal/[token]/ # Public member self-service portal
 │   │   │   ├── login/          # Staff login
 │   │   │   └── api/auth/       # NextAuth API route
 │   │   ├── components/         # QrScanner, member-form, member-search
-│   │   ├── lib/                # auth.ts, db.ts, validations/
-│   │   └── schema/             # Drizzle schemas (core, membership, events, attendance, app)
+│   │   ├── lib/                # auth.ts, db.ts, email.ts, portal-token.ts, validations/
+│   │   └── schema/             # Drizzle schemas (core, membership, events, attendance, programs, education, ministries, missions, communications, app)
 │   ├── tests/
-│   │   ├── e2e/                # Playwright E2E (members, events, attendance)
-│   │   └── unit/               # Vitest unit tests (validations)
+│   │   ├── e2e/                # Playwright E2E (13 spec files)
+│   │   └── unit/               # Vitest unit tests (13 test files, 216 tests)
 │   ├── .env.example            # Required env vars template
 │   └── drizzle.config.ts
 ├── db/
-│   ├── migrations/             # 65 Flyway SQL migrations (V001–V065) + repeatable seeds
+│   ├── migrations/             # 66 Flyway SQL migrations (V001–V066) + repeatable seeds
 │   └── docker-compose.yml      # Local PostgreSQL 16 + Flyway
 └── docs/superpowers/
-    ├── plans/                  # Implementation plans
+    ├── plans/                  # Implementation plans (Plans 1–15)
     └── specs/                  # Architecture specs
 ```
 
 ## Current Progress
 
-### Completed
-- **Plan 1 — Foundation**: DB schema (65 migrations, 10 schemas)
-- **Plan 5 — Web App**: Next.js app scaffold, NextAuth, Drizzle, member CRUD
-- **Plan 6a — Events**: Event CRUD, registration, organizer assignment
-- **Plan 6b — Attendance**: QR scanner, check-in, FTV capture, attendance dashboard (merged PR #3)
-- **Plan 6c — Public Homepage**: `church/layout.tsx` + `church/page.tsx` + `homepage.spec.ts` (merged PR #4)
-- **Plan 7 — Programs / BAC**: Heartlink + BAC admin modules, 26 files, 88 unit tests (merged PR #5)
-- **Plan 8 — Education (BC + ISU)**: Bible College + ISU admin modules, 21 files, 123 unit tests (merged PR #6)
-- **Plan 11 — Membership Extensions**: `regular_member_application` schema, 6 server actions, applications queue page, extended member detail page (Roles/PCM/Application sections), 31 unit tests, 6 E2E tests (merged PR #9)
-- **Form action fixes**: Fixed arrow-wrapper pattern (`action={(fd)=>void fn(fd)}`) across 23+ pages — Next.js requires direct ref or `.bind()`
+### Completed (PRs #1–#12)
+- **Plan 1 — Foundation**: DB schema (66 migrations, 10 schemas)
+- **Plan 5 — Web App**: Next.js app scaffold, NextAuth, Drizzle, member CRUD (PR #1)
+- **Plan 6a — Events**: Event CRUD, registration, organizer assignment (PR #2)
+- **Plan 6b — Attendance**: QR scanner, check-in, FTV capture, attendance dashboard (PR #3)
+- **Plan 6c — Public Homepage**: `church/layout.tsx` + `church/page.tsx` (PR #4)
+- **Plan 7 — Programs / BAC**: Heartlink + BAC admin modules (PR #5)
+- **Plan 8 — Education (BC + ISU)**: Bible College + ISU admin modules (PR #6)
+- **Plan 9 — Ministries**: networks/ministry/chapter/membership admin module (PR #7)
+- **Plan 10 — Scholarships**: missions scholarships CRUD admin module (PR #8)
+- **Plan 11 — Membership Extensions**: applications queue, extended member detail (Roles/PCM/Application sections) (PR #9)
+- **Plan 12 — Member Self-Service Portal**: `/portal/[token]` public page, portal link on admin member detail (PR #10)
+- **Plan 13 — Communications**: announcements module, fan-out recipients, admin pages (PR #11)
+- **Plan 14 — Email Delivery**: Resend SDK, email send on publish, `delivered_at` tracking (PR #12)
 
 ### In Progress / Next
-- **Plan 12** — next feature TBD (missions, finance, or further membership features)
+- All schema areas covered. Next: define new features or deployment prep.
 
 ## Git State
 
-- Branch: `master` (in sync with origin, all plan branches merged)
-- E2E: 50/56 passing, 6 skipped (accumulated test data, QR code)
-- Unit tests: 183 passing
-- Untracked: `CLAUDE.md`, various docs in `docs/superpowers/`, `jly-church-db.zip`
+- Branch: `master` (in sync with origin, all PRs #1–#12 merged)
+- Unit tests: 216 passing (13 test files)
+- E2E: ~56 tests across 13 spec files (some skipped: accumulated test data, QR code)
 
 ## Known Issues / Risks
 
-- No `.env` file in repo — must create `app/.env` from `app/.env.example` before running locally
+- No `.env` file in repo — create `app/.env` from `app/.env.example` before running locally
+- `RESEND_API_KEY` + `RESEND_FROM` must be set in prod env for email delivery to work
 - `flyway.conf` has hardcoded local dev credentials — do NOT use in production
 - `jly-church-db.zip` in root is untracked binary — gitignore or delete
 - `CLAUDE.md` at repo root (parent folder) is for a different project (DMerch) — this file is the correct one
@@ -100,13 +105,14 @@ JLYCC App/
 ## Pending Tasks
 
 1. **Gitignore `jly-church-db.zip`** — binary archive, should not be tracked
-2. **Commit untracked docs** — foundation plan, plan 6c plan, plan 8 plan, DB spec
-3. **Define Plan 12** — next feature area (missions finance, events calendar, or member portal)
+2. **Set prod env vars** — `RESEND_API_KEY`, `RESEND_FROM`, `PORTAL_SECRET`, `AUTH_SECRET`
 
 ## Suggested Next Steps
 
-1. Define Plan 12 based on remaining schema areas
-2. E2E "see registrant" test is skipped — root cause: cross-context timing; `revalidatePath` added but test still flaky
+1. Deployment prep (Vercel + Supabase/Neon for prod DB)
+2. SMS delivery for announcements (Twilio)
+3. Member giving/finance module
+4. E2E flaky test investigation (accumulated test data issue)
 
 ## Safety Notes
 
@@ -114,4 +120,4 @@ JLYCC App/
 - Do NOT touch `app/src/schema/` without a corresponding migration in `db/migrations/`
 - Do NOT commit `.env` files
 - `app/.next/` is build output — safe to delete if build issues arise
-- All destructive DB changes need a new versioned migration (V066+)
+- All new destructive DB changes need a new versioned migration (V067+)

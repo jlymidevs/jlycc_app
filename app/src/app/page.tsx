@@ -52,28 +52,6 @@ export default function SplashPage() {
           style={{ borderRadius: 36, boxShadow: "0 0 80px rgba(31,138,139,0.3)" }}
         />
 
-        {/* Name */}
-        <div className="text-center space-y-2">
-          <h1
-            className="text-5xl font-black tracking-tight"
-            style={{ color: "var(--text-primary)", letterSpacing: "-0.03em" }}
-          >
-            JLYCC
-          </h1>
-          <p className="text-base font-medium" style={{ color: "var(--text-secondary)" }}>
-            JLY Church Admin Portal
-          </p>
-        </div>
-
-        {/* Spinner */}
-        <div
-          className="w-8 h-8 rounded-full border-2"
-          style={{
-            borderColor: "var(--border-strong)",
-            borderTopColor: "var(--teal)",
-            animation: "spin 0.8s linear infinite",
-          }}
-        />
       </div>
 
       <style>{`
