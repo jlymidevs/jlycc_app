@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { loginAction, googleLoginAction } from "@/actions/auth";
 
 export default function LoginPage() {
@@ -91,6 +92,13 @@ export default function LoginPage() {
                 Sign in
               </button>
             </form>
+
+            <p className="text-sm text-center" style={{ color: "var(--text-muted)" }}>
+              New here?{" "}
+              <Link href="/signup" style={{ color: "var(--accent, #1f8a8b)" }}>
+                Create an account
+              </Link>
+            </p>
           </div>
         </div>
       </div>
