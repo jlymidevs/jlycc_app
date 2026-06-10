@@ -2,7 +2,8 @@
 ALTER TABLE app.users ADD COLUMN person_id bigint UNIQUE REFERENCES core.person(person_id);
 ALTER TABLE app.users ADD COLUMN is_active boolean NOT NULL DEFAULT true;
 
-UPDATE app.users SET role = 'ADMIN' WHERE role = 'staff';
+-- Legacy values: local dev used 'staff', early prod used 'admin'.
+UPDATE app.users SET role = 'ADMIN' WHERE role IN ('staff', 'admin');
 UPDATE app.users SET role = 'SUPER_ADMIN' WHERE email = 'admin@jly.church';
 
 ALTER TABLE app.users ADD CONSTRAINT users_role_check
