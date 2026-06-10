@@ -88,6 +88,7 @@ JLYCC App/
 - **Plan 12 — Member Self-Service Portal**: `/portal/[token]` public page, portal link on admin member detail (PR #10)
 - **Plan 13 — Communications**: announcements module, fan-out recipients, admin pages (PR #11)
 - **Plan 14 — Email Delivery**: Resend SDK, email send on publish, `delivered_at` tracking (PR #12)
+- **Plan 17 — Church Calendar**: public `/church/calendar` month grid + agenda list, add-to-calendar (Google URL + ICS download route), recurring series admin (create/cancel) materializing WEEKLY/MONTHLY `event` rows ~3 months ahead in Asia/Manila time (PR #13)
 
 ### Completed after PR #12 (committed directly to master, no PRs)
 - **Auth hardening**: middleware now protects ALL admin routes (`b1b6103`) — Plan 16 Task 1 done
@@ -96,21 +97,20 @@ JLYCC App/
 - **GHL integration**: bidirectional contact sync + SMS messaging (`b9672f3`) — `src/lib/ghl.ts`, `src/actions/ghl.ts`, `/ghl` admin page, V067 migration adds `core.person.ghl_contact_id`
 
 ### In Progress / Next
-- **Plan 17 — Church Calendar + Recurring Series**: design spec + implementation plan COMMITTED (`docs/superpowers/plans/2026-06-10-plan17-church-calendar.md`), code NOT started. Public `/church/calendar` (month grid + agenda), Add-to-Calendar/ICS, WEEKLY/MONTHLY series materialization (~3 months ahead, Asia/Manila). Uses existing `event_series` table (V034) — no new migration needed. 10 tasks.
 - **Plan 16 — Deployment**: middleware fix done; remaining = Neon DB + Vercel provisioning (human actions), prod env vars, Resend domain verification.
+- All schema areas covered; Plan 17 calendar shipped. Next: deployment prep or new features.
 
 ## Git State (as of 2026-06-10)
 
 - Branch: `master`, PRs #1–#12 merged; post-PR work committed directly to master
 - Untracked: `app/.env` (local secrets — never commit), `app/test-results/`, `JLYCC favicon_io/`, plan docs 12–16
 - `.worktrees/` has 4 stale worktrees (feature, plan6b, plan12, plan5)
-- Verified 2026-06-10: `tsc --noEmit` clean; unit tests 216/216 passing (vitest 4)
-- E2E: 11 spec files (some skipped: accumulated test data, QR code)
+- Verified 2026-06-10: `tsc --noEmit` clean; unit tests 245/245 passing (vitest 4); prod build compiles
+- E2E: 12 spec files (calendar.spec.ts added; some skipped: accumulated test data, QR code) — calendar E2E not yet run (needs local DB)
 
 ## Known Issues / Risks
 
-- `app/.env` exists locally (untracked, contains secrets) — never commit; create from `app/.env.example` on new machines
-- `.env.example` is missing `GHL_API_KEY` + `GHL_LOCATION_ID` (used by `src/lib/ghl.ts`)
+- `app/.env` exists locally (untracked, now gitignored, contains secrets) — never commit; create from `app/.env.example` on new machines
 - GHL Location ID hardcoded as display text in `src/app/(admin)/ghl/page.tsx` (UI only, API uses env var)
 - `RESEND_API_KEY` + `RESEND_FROM` must be set in prod env for email delivery to work
 - `flyway.conf` + `docker-compose.yml` have hardcoded local dev credentials — do NOT use in production
@@ -119,20 +119,16 @@ JLYCC App/
 
 ## Pending Tasks
 
-1. **Implement Plan 17** — church calendar + recurring series (plan committed, code not started)
-2. **Commit untracked plan docs 12–16** (`docs/superpowers/plans/`)
-3. **Add `GHL_API_KEY`/`GHL_LOCATION_ID` to `.env.example`**
-4. **Gitignore** `jly-church-db.zip`, `app/test-results/`
-5. **Set prod env vars** — `RESEND_API_KEY`, `RESEND_FROM`, `PORTAL_SECRET`, `AUTH_SECRET`, `AUTH_GOOGLE_ID/SECRET`, `GHL_*`
-6. **Finish Plan 16 deployment** — Neon + Vercel provisioning (human actions)
+1. **Run calendar E2E** — `npx playwright test tests/e2e/calendar.spec.ts` against a local DB
+2. **Set prod env vars** — `RESEND_API_KEY`, `RESEND_FROM`, `PORTAL_SECRET`, `AUTH_SECRET`, `AUTH_GOOGLE_ID/SECRET`, `GHL_*`, `APP_BASE_URL`
+3. **Finish Plan 16 deployment** — Neon + Vercel provisioning (human actions)
 
 ## Suggested Next Steps
 
-1. Plan 17 calendar implementation (design approved, 10 tasks ready)
-2. Deployment (Plan 16 remaining tasks)
-3. Member giving/finance module
-4. E2E flaky test investigation (accumulated test data issue)
-5. Clean stale `.worktrees/` entries
+1. Deployment (Plan 16 remaining tasks)
+2. Member giving/finance module
+3. E2E flaky test investigation (accumulated test data issue)
+4. Clean stale `.worktrees/` entries
 
 ## Safety Notes
 
