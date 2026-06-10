@@ -8,6 +8,7 @@ import {
   timestamp,
   pgSchema,
   unique,
+  smallint,
 } from "drizzle-orm/pg-core";
 import { branch } from "./core";
 import { member } from "./membership";
@@ -81,5 +82,30 @@ export const ministryMembership = ministriesSchema.table("ministry_membership", 
   endedReason: text("ended_reason"),
   isLeader: boolean("is_leader").notNull().default(false),
   leaderRole: leaderRoleEnum("leader_role"),
+  priority: smallint("priority"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const joinRequestStatusEnum = ministriesSchema.enum(
+  "join_request_status",
+  ["PENDING", "APPROVED", "REJECTED"]
+);
+
+export const joinRequest = ministriesSchema.table("join_request", {
+  requestId: bigserial("request_id", { mode: "number" }).primaryKey(),
+  memberId: bigint("member_id", { mode: "number" })
+    .notNull()
+    .references(() => member.memberId, { onDelete: "cascade" }),
+  chapterId: bigint("chapter_id", { mode: "number" })
+    .notNull()
+    .references(() => ministryChapter.chapterId, { onDelete: "cascade" }),
+  priority: smallint("priority").notNull(),
+  status: joinRequestStatusEnum("status").notNull().default("PENDING"),
+  requestedAt: timestamp("requested_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  decidedAt: timestamp("decided_at", { withTimezone: true }),
+  decidedByMemberId: bigint("decided_by_member_id", {
+    mode: "number",
+  }).references(() => member.memberId),
 });

@@ -18,6 +18,9 @@ import {
   AddMemberInput,
   EndMemberInput,
 } from "@/lib/validations/ministries";
+import { users } from "@/schema/app";
+import { isHeadEligible } from "@/lib/journey";
+import { requireRole } from "@/lib/authz-server";
 import { revalidatePath } from "next/cache";
 import { and, eq, isNull, ilike, or, count, asc } from "drizzle-orm";
 
@@ -432,11 +435,35 @@ export async function setLeaderRole(
   isLeader: boolean,
   leaderRole?: string
 ): Promise<{ success: true } | { error: string }> {
+  await requireRole("ADMIN");
   if (isLeader && !leaderRole) {
     return { error: "Leader role required" };
   }
 
   try {
+    // Load the membership + member stage + linked account.
+    const [row] = await db
+      .select({
+        memberId: ministryMembership.memberId,
+        chapterId: ministryMembership.chapterId,
+        currentStage: member.currentStage,
+        personId: member.personId,
+      })
+      .from(ministryMembership)
+      .innerJoin(member, eq(ministryMembership.memberId, member.memberId))
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .where(eq(ministryMembership.membershipId, membershipId as any))
+      .limit(1);
+    if (!row) return { error: "Membership not found" };
+
+    // Eligibility: only Inner Core / Joshua Generation can be HEAD.
+    if (isLeader && leaderRole === "HEAD" && !isHeadEligible(row.currentStage)) {
+      return {
+        error:
+          "Only Inner Core or Joshua Generation members can be appointed ministry head",
+      };
+    }
+
     await db
       .update(ministryMembership)
       .set({
@@ -447,6 +474,42 @@ export async function setLeaderRole(
       })
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .where(eq(ministryMembership.membershipId, membershipId as any));
+
+    // Sync linked account role.
+    const [account] = await db
+      .select({ userId: users.userId, role: users.role })
+      .from(users)
+      .where(eq(users.personId, row.personId))
+      .limit(1);
+    if (account) {
+      if (isLeader && leaderRole === "HEAD" && account.role === "MEMBER") {
+        await db
+          .update(users)
+          .set({ role: "MINISTRY_HEAD" })
+          .where(eq(users.userId, account.userId));
+      }
+      if ((!isLeader || leaderRole !== "HEAD") && account.role === "MINISTRY_HEAD") {
+        // Demote only when they lead no other chapter.
+        const stillLeads = await db
+          .select({ membershipId: ministryMembership.membershipId })
+          .from(ministryMembership)
+          .where(
+            and(
+              eq(ministryMembership.memberId, row.memberId),
+              eq(ministryMembership.isLeader, true),
+              eq(ministryMembership.leaderRole, "HEAD"),
+              isNull(ministryMembership.endedAt)
+            )
+          )
+          .limit(1);
+        if (stillLeads.length === 0) {
+          await db
+            .update(users)
+            .set({ role: "MEMBER" })
+            .where(eq(users.userId, account.userId));
+        }
+      }
+    }
 
     revalidatePath(`/ministries`);
     return { success: true };

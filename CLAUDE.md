@@ -14,7 +14,9 @@ Two surfaces: **admin portal** (staff, auth-required) and **public church pages*
 | Styling | Tailwind CSS |
 | ORM | Drizzle ORM |
 | Database | PostgreSQL 16 |
-| Auth | NextAuth.js v5 (credentials) |
+| Auth | NextAuth.js v5 (credentials + Google OAuth with DB allowlist) |
+| Email | Resend SDK |
+| CRM | GoHighLevel (REST, no SDK — `src/lib/ghl.ts`) |
 | Validation | Zod |
 | Unit Tests | Vitest |
 | E2E Tests | Playwright |
@@ -61,11 +63,13 @@ JLYCC App/
 │   ├── .env.example            # Required env vars template
 │   └── drizzle.config.ts
 ├── db/
-│   ├── migrations/             # 66 Flyway SQL migrations (V001–V066) + repeatable seeds
+│   ├── migrations/             # 75 Flyway SQL migrations (V001–V069) + repeatable seeds
 │   └── docker-compose.yml      # Local PostgreSQL 16 + Flyway
+├── etl/                        # Python CSV → staging.stg_person loader (uses DATABASE_URL env)
+├── JLYCC favicon_io/           # Favicon/PWA icon set (untracked)
 └── docs/superpowers/
-    ├── plans/                  # Implementation plans (Plans 1–15)
-    └── specs/                  # Architecture specs
+    ├── plans/                  # Implementation plans (Plans 1–17; 12–16 untracked)
+    └── specs/                  # Architecture specs (incl. church calendar design)
 ```
 
 ## Current Progress
@@ -84,35 +88,51 @@ JLYCC App/
 - **Plan 12 — Member Self-Service Portal**: `/portal/[token]` public page, portal link on admin member detail (PR #10)
 - **Plan 13 — Communications**: announcements module, fan-out recipients, admin pages (PR #11)
 - **Plan 14 — Email Delivery**: Resend SDK, email send on publish, `delivered_at` tracking (PR #12)
+- **Plan 17 — Church Calendar**: public `/church/calendar` month grid + agenda list, add-to-calendar (Google URL + ICS download route), recurring series admin (create/cancel) materializing WEEKLY/MONTHLY `event` rows ~3 months ahead in Asia/Manila time (PR #13)
+- **Plan 18 — Roles & Member Journey**: 4-role access (Super Admin/Admin/Ministry Head/Member), self-signup, universal member profiles (/me), FB-style ministry join requests with priority ranks, head dashboard (/ministry), super-admin user management (/users), head eligibility = Inner Core/Joshua Generation (branch `plan18-roles-member-journey`)
+
+### Completed after PR #12 (committed directly to master, no PRs)
+- **Auth hardening**: middleware now protects ALL admin routes (`b1b6103`) — Plan 16 Task 1 done
+- **Google OAuth**: provider added with DB allowlist check (`8bfee2b`)
+- **UI overhaul**: dark dashboard redesign + PWA setup (`ff4e77f`), animated splash on root (`bc0f971`), soft teal brand palette (`73f17a5`), split login layout with video panel (`fd6cf70`)
+- **GHL integration**: bidirectional contact sync + SMS messaging (`b9672f3`) — `src/lib/ghl.ts`, `src/actions/ghl.ts`, `/ghl` admin page, V067 migration adds `core.person.ghl_contact_id`
 
 ### In Progress / Next
-- All schema areas covered. Next: define new features or deployment prep.
+- **Plan 18 implemented** on branch `plan18-roles-member-journey` — migrations V068/V069 not yet run locally (Docker down); E2E `roles-journey.spec.ts` not yet run (needs local DB)
+- **Plan 16 — Deployment**: middleware fix done; remaining = Neon DB + Vercel provisioning (human actions), prod env vars, Resend domain verification.
 
-## Git State
+## Git State (as of 2026-06-11)
 
-- Branch: `master` (in sync with origin, all PRs #1–#12 merged)
-- Unit tests: 216 passing (13 test files)
-- E2E: ~56 tests across 13 spec files (some skipped: accumulated test data, QR code)
+- Branch: `master`, PRs #1–#13 merged; post-PR work committed directly to master
+- HEAD `eb072d9` = Plan 18 docs; no Plan 18 code yet
+- Untracked: `app/.env` (local secrets — never commit), `app/test-results/`, `JLYCC favicon_io/`, plan docs 12–16
+- `.worktrees/` has 4 stale worktrees (feature, plan6b, plan12, plan5)
+- Verified 2026-06-10: `tsc --noEmit` clean; unit tests 245/245 passing (vitest 4); prod build compiles
+- E2E: 12 spec files (calendar.spec.ts added; some skipped: accumulated test data, QR code) — calendar E2E not yet run (needs local DB)
 
 ## Known Issues / Risks
 
-- No `.env` file in repo — create `app/.env` from `app/.env.example` before running locally
+- `app/.env` exists locally (untracked, now gitignored, contains secrets) — never commit; create from `app/.env.example` on new machines
+- GHL Location ID hardcoded as display text in `src/app/(admin)/ghl/page.tsx` (UI only, API uses env var)
 - `RESEND_API_KEY` + `RESEND_FROM` must be set in prod env for email delivery to work
-- `flyway.conf` has hardcoded local dev credentials — do NOT use in production
-- `jly-church-db.zip` in root is untracked binary — gitignore or delete
+- `flyway.conf` + `docker-compose.yml` have hardcoded local dev credentials — do NOT use in production
+- `jly-church-db.zip` in root is untracked binary — gitignore or delete; `jly-church-db/` folder is an empty stub
 - `CLAUDE.md` at repo root (parent folder) is for a different project (DMerch) — this file is the correct one
 
 ## Pending Tasks
 
-1. **Gitignore `jly-church-db.zip`** — binary archive, should not be tracked
-2. **Set prod env vars** — `RESEND_API_KEY`, `RESEND_FROM`, `PORTAL_SECRET`, `AUTH_SECRET`
+1. **Run Plan 18 migrations + E2E locally** — `cd db && docker compose up -d` (applies V068/V069), then `npx playwright test tests/e2e/roles-journey.spec.ts`
+2. **Run calendar E2E** — `npx playwright test tests/e2e/calendar.spec.ts` against a local DB
+3. **Set prod env vars** — `RESEND_API_KEY`, `RESEND_FROM`, `PORTAL_SECRET`, `AUTH_SECRET`, `AUTH_GOOGLE_ID/SECRET`, `GHL_*`, `APP_BASE_URL`
+4. **Finish Plan 16 deployment** — Neon + Vercel provisioning (human actions)
 
 ## Suggested Next Steps
 
-1. Deployment prep (Vercel + Supabase/Neon for prod DB)
-2. SMS delivery for announcements (Twilio)
+1. Plan 18 implementation (active)
+2. Deployment (Plan 16 remaining tasks)
 3. Member giving/finance module
 4. E2E flaky test investigation (accumulated test data issue)
+5. Clean stale `.worktrees/` entries
 
 ## Safety Notes
 
