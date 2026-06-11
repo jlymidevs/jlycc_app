@@ -52,15 +52,17 @@ export default function TrendChart({ buckets }: { buckets: WeeklyBucket[] }) {
               rx={1}
               className="fill-amber-400"
             />
-            <text
-              x={cx}
-              y={barY - 4}
-              textAnchor="middle"
-              className="fill-gray-600"
-              fontSize={10}
-            >
-              {b.checkIns}
-            </text>
+            {i % labelEvery === 0 && (
+              <text
+                x={cx}
+                y={barY - 4}
+                textAnchor="middle"
+                className="fill-gray-600"
+                fontSize={10}
+              >
+                {b.checkIns}
+              </text>
+            )}
             {i % labelEvery === 0 && (
               <text
                 x={cx}
