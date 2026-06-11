@@ -103,9 +103,17 @@ JLYCC App/
 - **Vercel prod env vars set**: DATABASE_URL(+READER), AUTH_SECRET, RESEND_API_KEY, RESEND_FROM (=onboarding@resend.dev — no verified Resend domain yet), GHL_*, PORTAL_SECRET, AUTH_TRUST_HOST, APP_BASE_URL
 - E2E verified vs local DB: roles-journey 4/4, calendar 6/6
 
+### Google OAuth (live 2026-06-11)
+- Web OAuth client created in JLYCC Google Cloud project; creds in Vercel prod env + local `app/.env`
+- "Continue with Google" on /login + /signup; new Google users → MEMBER + /welcome profile completion
+- Old desktop client (`App/JLYCC/client_secrets.json`) is for the YouTube script — NOT usable for web auth
+
+### Accounts (prod, 2026-06-11)
+- **SUPER_ADMIN: jlymi.devs@gmail.com** (password set + Google); `admin@jly.church` demoted to ADMIN (V068 seed still names admin@jly.church — prod overridden by data change, fresh local rebuilds get the old super admin)
+- 4 other ADMIN accounts are Google-only (no password)
+
 ### Remaining (human actions)
-- **Google OAuth in prod**: `AUTH_GOOGLE_ID/SECRET` empty in local `.env` — obtain from Google Cloud Console, add redirect URI `https://jlycc-app-xi.vercel.app/api/auth/callback/google`, then `vercel env add`
-- **Resend domain**: verify a sending domain in Resend (DNS), then update `RESEND_FROM`
+- **Resend domain**: verify a sending domain in Resend (DNS), then update `RESEND_FROM` (currently onboarding@resend.dev — test-only sends)
 
 ## Git State (as of 2026-06-11)
 
@@ -130,8 +138,8 @@ JLYCC App/
 
 ## Pending Tasks
 
-1. **Google OAuth prod credentials** — see Remaining (human actions) above
-2. **Resend domain verification** — see Remaining (human actions) above
+1. **Resend domain verification** — see Remaining (human actions) above
+2. **Password change UI** — jlymi.devs@gmail.com runs on an agent-issued temp password; no self-service change page exists yet
 
 ## Suggested Next Steps
 
