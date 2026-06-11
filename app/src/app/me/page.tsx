@@ -6,25 +6,19 @@ import { db } from "@/lib/db";
 import { users } from "@/schema/app";
 import { member, lifecycleStage } from "@/schema/membership";
 import { person } from "@/schema/core";
-import {
-  joinRequest,
-  ministryMembership,
-  ministryChapter,
-  ministry,
-} from "@/schema/ministries";
-import { hasRole, type Role } from "@/lib/authz";
 import { requireRole } from "@/lib/authz-server";
-import { nextStage, nextFreePriority, type StageRow } from "@/lib/journey";
-import { requestJoin } from "@/actions/join-requests";
-import { listActiveHeads } from "@/actions/account";
+import { nextStage, type StageRow } from "@/lib/journey";
+import { greetingForHour, manilaHour } from "@/lib/greeting";
 import { checkIn } from "@/schema/attendance";
 import { event } from "@/schema/events";
-import { and, asc, desc, eq, isNull, sql } from "drizzle-orm";
+import { asc, eq, gt, sql } from "drizzle-orm";
+import MotionCard from "@/components/motion-card";
+import AnimatedNumber from "@/components/animated-number";
+import JourneyLadder from "@/components/journey-ladder";
 
 export default async function MePage() {
   const session = await requireRole("MEMBER");
   const email = session.user!.email!;
-  const role = (session.user!.role ?? "MEMBER") as Role;
 
   const [me] = await db
     .select({
@@ -40,6 +34,19 @@ export default async function MePage() {
     .where(eq(users.email, email))
     .limit(1);
 
+  if (!me) {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-10">
+        <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
+          My profile
+        </h1>
+        <p className="mt-4" style={{ color: "var(--text-secondary)" }}>
+          Your profile is not linked yet — please contact a church admin.
+        </p>
+      </div>
+    );
+  }
+
   const ladder: StageRow[] = await db
     .select({
       stageCode: lifecycleStage.stageCode,
@@ -50,54 +57,7 @@ export default async function MePage() {
     .from(lifecycleStage)
     .where(eq(lifecycleStage.isActive, true))
     .orderBy(asc(lifecycleStage.orderIndex));
-
   const visibleLadder = ladder.filter((s) => !s.isTerminal);
-
-  if (!me) {
-    return (
-      <div className="max-w-3xl mx-auto px-4 py-10">
-        <h1 className="text-2xl font-bold text-gray-900">My profile</h1>
-        <p className="mt-4 text-gray-600">
-          Your profile is not linked yet — please contact a church admin.
-        </p>
-      </div>
-    );
-  }
-
-  const memberships = await db
-    .select({
-      priority: ministryMembership.priority,
-      ministryName: ministry.name,
-      chapterId: ministryChapter.chapterId,
-    })
-    .from(ministryMembership)
-    .innerJoin(
-      ministryChapter,
-      eq(ministryMembership.chapterId, ministryChapter.chapterId)
-    )
-    .innerJoin(ministry, eq(ministryChapter.ministryId, ministry.ministryId))
-    .where(
-      and(
-        eq(ministryMembership.memberId, me.memberId),
-        isNull(ministryMembership.endedAt)
-      )
-    );
-
-  const requests = await db
-    .select({
-      requestId: joinRequest.requestId,
-      priority: joinRequest.priority,
-      status: joinRequest.status,
-      ministryName: ministry.name,
-    })
-    .from(joinRequest)
-    .innerJoin(
-      ministryChapter,
-      eq(joinRequest.chapterId, ministryChapter.chapterId)
-    )
-    .innerJoin(ministry, eq(ministryChapter.ministryId, ministry.ministryId))
-    .where(eq(joinRequest.memberId, me.memberId))
-    .orderBy(asc(joinRequest.priority));
 
   const [attendanceStats] = await db
     .select({
@@ -108,245 +68,120 @@ export default async function MePage() {
     .from(checkIn)
     .where(eq(checkIn.personId, me.personId));
 
-  const recentCheckIns = await db
-    .select({
-      checkInId: checkIn.checkInId,
-      eventName: event.name,
-      checkedInAt: checkIn.checkedInAt,
-    })
-    .from(checkIn)
-    .innerJoin(event, eq(checkIn.eventId, event.eventId))
-    .where(eq(checkIn.personId, me.personId))
-    .orderBy(desc(checkIn.checkedInAt))
-    .limit(10);
+  const [nextEvent] = await db
+    .select({ eventId: event.eventId, name: event.name, startsAt: event.startsAt })
+    .from(event)
+    .where(gt(event.startsAt, sql`now()`))
+    .orderBy(asc(event.startsAt))
+    .limit(1);
 
-  const heads = await listActiveHeads();
-  const memberChapterIds = new Set(memberships.map((m) => m.chapterId));
-  const pendingChapterCount = requests.filter((r) => r.status === "PENDING").length;
-  const taken = [
-    ...memberships.map((m) => m.priority),
-    ...requests.filter((r) => r.status === "PENDING").map((r) => r.priority),
-  ].filter((p): p is number => p != null);
-  const suggestedPriority = nextFreePriority(taken);
   const next = nextStage(ladder, me.currentStage);
-  const currentStageRow = ladder.find((s) => s.stageCode === me.currentStage);
-
-  const sortedMemberships = [...memberships].sort(
-    (a, b) => (a.priority ?? 99) - (b.priority ?? 99)
-  );
+  const greeting = greetingForHour(manilaHour(new Date()));
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-10 space-y-6">
-      <div className="reveal flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            {me.firstName} {me.lastName}
-          </h1>
-          <p className="text-sm text-gray-500">My christian journey</p>
-        </div>
-        <div className="flex gap-3 text-sm">
-          {hasRole(role, "MINISTRY_HEAD") && (
-            <Link href="/ministry" className="text-blue-600 hover:text-blue-800">
-              Ministry dashboard
-            </Link>
-          )}
-          {hasRole(role, "ADMIN") && (
-            <Link href="/members" className="text-blue-600 hover:text-blue-800">
-              Admin
-            </Link>
-          )}
-          <Link href="/church/calendar" className="text-blue-600 hover:text-blue-800">
-            Calendar
-          </Link>
-        </div>
-      </div>
+    <div className="mx-auto max-w-4xl space-y-6 px-2 py-6 md:px-4">
+      <MotionCard lift={false}>
+        <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
+          {greeting}, {me.firstName}
+        </h1>
+        <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+          My christian journey
+        </p>
+      </MotionCard>
 
-      {/* Journey ladder */}
-      <section className="card reveal d-1 p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">Journey</h2>
-        <ol className="flex flex-wrap items-center gap-2">
-          {visibleLadder.map((s, i) => {
-            const isCurrent = s.stageCode === me.currentStage;
-            const passed =
-              currentStageRow !== undefined &&
-              s.orderIndex < currentStageRow.orderIndex;
-            return (
-              <li key={s.stageCode} className="flex items-center gap-2">
-                {i > 0 && <span className="text-gray-300">→</span>}
-                <span
-                  className="rounded-full px-3 py-1 text-xs font-medium"
-                  style={
-                    isCurrent
-                      ? { background: "var(--lime)", color: "#1C2018", fontWeight: 700 }
-                      : passed
-                        ? { background: "var(--lime-soft)", color: "var(--text-primary)" }
-                        : { background: "var(--bg-inset)", color: "var(--text-muted)" }
-                  }
-                >
-                  {s.name}
-                </span>
-              </li>
-            );
-          })}
-        </ol>
+      {/* Journey */}
+      <MotionCard delay={0.05} lift={false} className="card p-6 space-y-4">
+        <h2 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>
+          Journey
+        </h2>
+        <JourneyLadder stages={visibleLadder} currentCode={me.currentStage} />
         {next ? (
-          <p className="text-sm text-gray-600">
-            Next step: <span className="font-medium text-gray-900">{next.name}</span>
+          <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
+            Next step:{" "}
+            <span className="font-medium" style={{ color: "var(--text-primary)" }}>
+              {next.name}
+            </span>
           </p>
         ) : (
-          <p className="text-sm text-gray-600">
+          <p className="text-sm" style={{ color: "var(--text-secondary)" }}>
             You are at the top of the ladder. Keep leading!
           </p>
         )}
-      </section>
+      </MotionCard>
 
-      {/* My attendance */}
-      <section className="card reveal d-2 p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">My attendance</h2>
-        {attendanceStats.total === 0 ? (
-          <p className="text-sm text-gray-500">No attendance recorded yet.</p>
-        ) : (
-          <>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="card-lime card-hover px-4 py-3">
-                <p className="text-xs font-bold uppercase tracking-wider opacity-70">Total</p>
-                <p className="stat-number mt-1 text-3xl">{attendanceStats.total}</p>
-              </div>
-              <div className="card card-hover px-4 py-3">
-                <p className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                  This year
-                </p>
-                <p className="stat-number mt-1 text-3xl text-gray-900">
-                  {attendanceStats.thisYear}
-                </p>
-              </div>
-              <div className="card card-hover px-4 py-3">
-                <p className="text-xs font-bold uppercase tracking-wider text-gray-500">
-                  Last attended
-                </p>
-                <p className="stat-number mt-1 text-lg text-gray-900 leading-9">
-                  {attendanceStats.lastAttended ?? "—"}
-                </p>
-              </div>
-            </div>
-            <ul className="divide-y divide-gray-100">
-              {recentCheckIns.map((c) => (
-                <li
-                  key={c.checkInId}
-                  className="flex items-center justify-between py-2 text-sm"
-                >
-                  <span className="text-gray-900">{c.eventName}</span>
-                  <span className="text-gray-500">
-                    {c.checkedInAt.toISOString().split("T")[0]}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-      </section>
-
-      {/* My ministries */}
-      <section className="card reveal d-3 p-6 space-y-3">
-        <h2 className="text-lg font-semibold text-gray-900">My ministries</h2>
-        {sortedMemberships.length === 0 ? (
-          <p className="text-sm text-gray-500">No ministries yet.</p>
-        ) : (
-          <ul className="divide-y divide-gray-100">
-            {sortedMemberships.map((m) => (
-              <li key={m.chapterId} className="flex items-center gap-3 py-2 text-sm">
-                <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-blue-50 text-xs font-semibold text-blue-700">
-                  {m.priority ?? "—"}
-                </span>
-                <span className="text-gray-900">{m.ministryName}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
-
-      {/* Join a ministry */}
-      <section className="card reveal d-4 p-6 space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">Join a ministry</h2>
-
-        {requests.length > 0 && (
-          <ul className="divide-y divide-gray-100">
-            {requests.map((r) => (
-              <li
-                key={r.requestId}
-                className="flex items-center justify-between py-2 text-sm"
-              >
-                <span className="text-gray-900">
-                  #{r.priority} — {r.ministryName}
-                </span>
-                <span
-                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                    r.status === "PENDING"
-                      ? "bg-yellow-50 text-yellow-700"
-                      : r.status === "APPROVED"
-                        ? "bg-green-50 text-green-700"
-                        : "bg-red-50 text-red-700"
-                  }`}
-                >
-                  {r.status}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {heads.filter((h) => !memberChapterIds.has(h.chapterId)).length === 0 ? (
-          <p className="text-sm text-gray-500">
-            No ministries available to join right now.
+      {/* Stats */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <MotionCard delay={0.1} className="card-lime px-4 py-3">
+          <p className="text-xs font-bold uppercase tracking-wider opacity-70">Total check-ins</p>
+          <p className="stat-number mt-1 text-3xl">
+            <AnimatedNumber value={attendanceStats.total} />
           </p>
-        ) : (
-          /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-          <form action={requestJoin as any} className="flex flex-wrap items-end gap-3">
-            <div className="grow">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Ministry
-              </label>
-              <select
-                name="chapterId"
-                required
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                {heads
-                  .filter((h) => !memberChapterIds.has(h.chapterId))
-                  .map((h) => (
-                    <option key={h.chapterId} value={h.chapterId}>
-                      {h.ministryName} — {h.headFirstName} {h.headLastName}
-                    </option>
-                  ))}
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Priority
-              </label>
-              <input
-                name="priority"
-                type="number"
-                min="1"
-                defaultValue={suggestedPriority}
-                required
-                className="w-24 rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <button
-              type="submit"
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-            >
-              Request to join
-            </button>
-          </form>
-        )}
-        {pendingChapterCount > 0 && (
-          <p className="text-xs text-gray-400">
-            Requests are approved by the ministry head.
+        </MotionCard>
+        <MotionCard delay={0.16} className="card px-4 py-3">
+          <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+            This year
           </p>
-        )}
-      </section>
+          <p className="stat-number mt-1 text-3xl" style={{ color: "var(--text-primary)" }}>
+            <AnimatedNumber value={attendanceStats.thisYear} />
+          </p>
+        </MotionCard>
+        <MotionCard delay={0.22} className="card px-4 py-3">
+          <p className="text-xs font-bold uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+            Last attended
+          </p>
+          <p className="stat-number mt-1 text-lg leading-9" style={{ color: "var(--text-primary)" }}>
+            {attendanceStats.lastAttended ?? "—"}
+          </p>
+        </MotionCard>
+      </div>
+
+      {/* Next event + quick actions */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <MotionCard delay={0.28} className="card p-6">
+          <h2 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>
+            Next event
+          </h2>
+          {nextEvent ? (
+            <div className="mt-3">
+              <p className="font-medium" style={{ color: "var(--text-primary)" }}>
+                {nextEvent.name}
+              </p>
+              <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                {nextEvent.startsAt.toISOString().split("T")[0]}
+              </p>
+              <Link href="/church/calendar" className="mt-2 inline-block text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+                View calendar →
+              </Link>
+            </div>
+          ) : (
+            <p className="mt-3 text-sm" style={{ color: "var(--text-muted)" }}>
+              No upcoming events scheduled.
+            </p>
+          )}
+        </MotionCard>
+        <MotionCard delay={0.34} className="card p-6">
+          <h2 className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>
+            Quick actions
+          </h2>
+          <ul className="mt-3 space-y-2 text-sm">
+            <li>
+              <Link href="/me/attendance" style={{ color: "var(--text-secondary)" }} className="font-medium hover:opacity-75">
+                View my attendance →
+              </Link>
+            </li>
+            <li>
+              <Link href="/me/ministries" style={{ color: "var(--text-secondary)" }} className="font-medium hover:opacity-75">
+                Manage my ministries →
+              </Link>
+            </li>
+            <li>
+              <Link href="/me/announcements" style={{ color: "var(--text-secondary)" }} className="font-medium hover:opacity-75">
+                Read announcements →
+              </Link>
+            </li>
+          </ul>
+        </MotionCard>
+      </div>
     </div>
   );
 }
