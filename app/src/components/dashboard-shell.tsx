@@ -3,8 +3,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from "framer-motion";
 import { logoutAction } from "@/actions/auth";
 import ThemeToggle from "@/components/theme-toggle";
 import type { ShellNavItem } from "@/lib/admin-nav";
@@ -27,9 +27,30 @@ export default function DashboardShell({
   const pathname = usePathname();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const reduced = useReducedMotion();
+  const hamburgerRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLElement>(null);
 
   // Close the drawer whenever the route changes.
   useEffect(() => setDrawerOpen(false), [pathname]);
+
+  // Focus management: move focus into drawer on open, return to hamburger on close.
+  useEffect(() => {
+    if (drawerOpen) {
+      drawerRef.current?.focus();
+    } else {
+      hamburgerRef.current?.focus();
+    }
+  }, [drawerOpen]);
+
+  // Escape key closes the drawer.
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setDrawerOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [drawerOpen]);
 
   const initials = (user.name ?? user.email ?? "?")
     .split(" ")
@@ -46,46 +67,48 @@ export default function DashboardShell({
     return best;
   }, null);
 
-  const nav = (
-    <nav className="flex w-full flex-1 flex-col gap-1 px-3">
-      {navItems.map((item) => {
-        const isActive = active === item.href;
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="group relative flex h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium"
-            style={{
-              color: isActive ? "var(--sidebar-icon-active)" : "var(--sidebar-icon)",
-              fontWeight: isActive ? 700 : 500,
-            }}
-          >
-            {isActive && (
-              <motion.span
-                layoutId="nav-pill"
-                className="absolute inset-0 rounded-xl"
-                style={{ background: "var(--sidebar-active-bg)" }}
-                transition={
-                  reduced
-                    ? { duration: 0 }
-                    : { type: "spring", stiffness: 400, damping: 32 }
-                }
-              />
-            )}
-            {!isActive && (
-              <span
-                className="absolute inset-0 rounded-xl opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-                style={{ background: "var(--bg-card-hover)" }}
-              />
-            )}
-            <span className="relative shrink-0 transition-transform duration-200 group-hover:scale-110">
-              {item.icon}
-            </span>
-            <span className="relative truncate">{item.label}</span>
-          </Link>
-        );
-      })}
-    </nav>
+  const renderNav = (group: "desktop" | "drawer") => (
+    <LayoutGroup id={group}>
+      <nav className="flex w-full flex-1 flex-col gap-1 px-3">
+        {navItems.map((item) => {
+          const isActive = active === item.href;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="group relative flex h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium"
+              style={{
+                color: isActive ? "var(--sidebar-icon-active)" : "var(--sidebar-icon)",
+                fontWeight: isActive ? 700 : 500,
+              }}
+            >
+              {isActive && (
+                <motion.span
+                  layoutId={`nav-pill-${group}`}
+                  className="absolute inset-0 rounded-xl"
+                  style={{ background: "var(--sidebar-active-bg)" }}
+                  transition={
+                    reduced
+                      ? { duration: 0 }
+                      : { type: "spring", stiffness: 400, damping: 32 }
+                  }
+                />
+              )}
+              {!isActive && (
+                <span
+                  className="absolute inset-0 rounded-xl opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                  style={{ background: "var(--bg-card-hover)" }}
+                />
+              )}
+              <span className="relative shrink-0 transition-transform duration-200 group-hover:scale-110">
+                {item.icon}
+              </span>
+              <span className="relative truncate">{item.label}</span>
+            </Link>
+          );
+        })}
+      </nav>
+    </LayoutGroup>
   );
 
   const userCard = (
@@ -146,7 +169,7 @@ export default function DashboardShell({
         }}
       >
         {brand}
-        {nav}
+        {renderNav("desktop")}
         {userCard}
       </aside>
 
@@ -164,6 +187,10 @@ export default function DashboardShell({
             />
             <motion.aside
               key="drawer"
+              ref={drawerRef}
+              role="dialog"
+              aria-modal="true"
+              tabIndex={-1}
               className="fixed inset-y-0 left-0 z-40 flex w-72 flex-col py-5 md:hidden"
               style={{ background: "var(--sidebar-bg)", borderRight: "1px solid var(--border)" }}
               initial={reduced ? false : { x: "-100%" }}
@@ -172,7 +199,7 @@ export default function DashboardShell({
               transition={{ type: "spring", stiffness: 380, damping: 36 }}
             >
               {brand}
-              {nav}
+              {renderNav("drawer")}
               {userCard}
             </motion.aside>
           </>
@@ -191,6 +218,7 @@ export default function DashboardShell({
         >
           <div className="flex items-center gap-3">
             <button
+              ref={hamburgerRef}
               type="button"
               aria-label="Open menu"
               onClick={() => setDrawerOpen(true)}
