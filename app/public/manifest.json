@@ -1,11 +1,11 @@
 {
   "name": "JLYCC APP",
   "short_name": "JLYCC",
-  "description": "JLY Church Admin Portal",
+  "description": "JLYCC Admin Portal",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F4F8F7",
-  "theme_color": "#1F8A8B",
+  "background_color": "#F1F0E8",
+  "theme_color": "#C8E04B",
   "orientation": "portrait-primary",
   "icons": [
     {
