@@ -6,6 +6,16 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev", "--prefix", "app"],
       "port": 3000
+    },
+    {
+      "name": "jlycc-dev-localdb",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": [
+        "-NoProfile",
+        "-Command",
+        "$env:DATABASE_URL='postgresql://jly_admin:localdevpassword@localhost:5432/jly'; $env:DATABASE_URL_READER=$env:DATABASE_URL; npm run dev --prefix app"
+      ],
+      "port": 3000
     }
   ]
 }

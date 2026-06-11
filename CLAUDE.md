@@ -90,6 +90,7 @@ JLYCC App/
 - **Plan 14 — Email Delivery**: Resend SDK, email send on publish, `delivered_at` tracking (PR #12)
 - **Plan 17 — Church Calendar**: public `/church/calendar` month grid + agenda list, add-to-calendar (Google URL + ICS download route), recurring series admin (create/cancel) materializing WEEKLY/MONTHLY `event` rows ~3 months ahead in Asia/Manila time (PR #13)
 - **Plan 18 — Roles & Member Journey**: 4-role access (Super Admin/Admin/Ministry Head/Member), self-signup, universal member profiles (/me), FB-style ministry join requests with priority ranks, head dashboard (/ministry), super-admin user management (/users), head eligibility = Inner Core/Joshua Generation (branch `plan18-roles-member-journey`)
+- **Attendance Audit Dashboard** (2026-06-11, branch `attendance-audit-dashboard`, ready for PR): weekly trend stat cards + server-rendered SVG bar chart on `/events/attendance`, "My attendance" section on `/me`. New: `app/src/lib/attendance-trends.ts` (pure helpers, 7 unit tests), `app/src/components/trend-chart.tsx`. Zero new deps, no migrations. Verified 2026-06-11: 278/278 unit tests, tsc clean, prod build clean. Plan: `docs/superpowers/plans/2026-06-11-attendance-audit-dashboard.md`
 
 ### Completed after PR #12 (committed directly to master, no PRs)
 - **Auth hardening**: middleware now protects ALL admin routes (`b1b6103`) — Plan 16 Task 1 done
@@ -117,8 +118,8 @@ JLYCC App/
 
 ## Git State (as of 2026-06-11)
 
-- Branch: `master`, PRs #1–#13 merged; post-PR work committed directly to master
-- HEAD `eb072d9` = Plan 18 docs; no Plan 18 code yet
+- Active branch: `attendance-audit-dashboard` (HEAD `58109a9`) — all plan tasks done, verified (tests/tsc/build/visual vs local DB); pushed, PR #14 open to master
+- `master`: PRs #1–#13 merged; post-PR work committed directly to master
 - Untracked: `app/.env` (local secrets — never commit), `app/test-results/`, `JLYCC favicon_io/`, plan docs 12–16
 - `.worktrees/` has 4 stale worktrees (feature, plan6b, plan12, plan5)
 - Verified 2026-06-10: `tsc --noEmit` clean; unit tests 245/245 passing (vitest 4); prod build compiles
