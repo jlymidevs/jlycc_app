@@ -2,6 +2,8 @@
 import { db } from "@/lib/db";
 import { branch } from "@/schema/core";
 import { sql } from "drizzle-orm";
+import { aggregateWeekly, trendTotals } from "@/lib/attendance-trends";
+import TrendChart from "@/components/trend-chart";
 
 export const dynamic = "force-dynamic";
 
@@ -58,6 +60,9 @@ export default async function AttendanceDashboardPage({
   // postgres.js returns rows directly as an iterable array
   const summary = (Array.isArray(result) ? result : ((result as { rows: unknown[] }).rows ?? [])) as SummaryRow[];
 
+  const buckets = aggregateWeekly(summary);
+  const totals = trendTotals(buckets);
+
   return (
     <div className="space-y-6">
       <div>
@@ -101,6 +106,51 @@ export default async function AttendanceDashboardPage({
           Filter
         </button>
       </form>
+
+      {/* Weekly trend */}
+      <div className="space-y-4">
+        <h2 className="text-lg font-semibold text-gray-900">Weekly trend</h2>
+        {buckets.length === 0 ? (
+          <p className="text-sm text-gray-500">
+            No attendance data for the selected filters.
+          </p>
+        ) : (
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {[
+                { label: "Total check-ins", value: totals.totalCheckIns },
+                { label: "Avg per week", value: totals.avgPerWeek },
+                { label: "First-time visitors", value: totals.totalFtv },
+              ].map((card) => (
+                <div
+                  key={card.label}
+                  className="bg-white rounded-lg border border-gray-200 px-5 py-4"
+                >
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {card.label}
+                  </p>
+                  <p className="mt-1 text-2xl font-bold text-gray-900">
+                    {card.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <div className="bg-white rounded-lg border border-gray-200 p-4">
+              <TrendChart buckets={buckets} />
+              <div className="mt-2 flex gap-4 text-xs text-gray-500">
+                <span className="flex items-center gap-1.5">
+                  <span className="inline-block h-2.5 w-2.5 rounded-sm bg-blue-500" />
+                  Check-ins
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="inline-block h-2.5 w-2.5 rounded-sm bg-amber-400" />
+                  First-time visitors
+                </span>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
 
       {/* Table */}
       {summary.length === 0 ? (
