@@ -51,7 +51,12 @@ export default async function middleware(req: NextRequest) {
   const token = await getToken({
     req,
     secret: process.env.AUTH_SECRET,
-    secureCookie: process.env.NODE_ENV === "production",
+    // Match how Auth.js picks the cookie name: secure (__Secure- prefix)
+    // only when actually serving HTTPS. NODE_ENV alone breaks `next start`
+    // over plain HTTP (e.g. E2E against a production build).
+    secureCookie:
+      req.nextUrl.protocol === "https:" ||
+      req.headers.get("x-forwarded-proto") === "https",
   });
 
   if (!token) {
