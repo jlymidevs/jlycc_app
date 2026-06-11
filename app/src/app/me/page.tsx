@@ -11,7 +11,7 @@ import { nextStage, type StageRow } from "@/lib/journey";
 import { greetingForHour, manilaHour } from "@/lib/greeting";
 import { checkIn } from "@/schema/attendance";
 import { event } from "@/schema/events";
-import { asc, eq, gt, sql } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, sql } from "drizzle-orm";
 import MotionCard from "@/components/motion-card";
 import AnimatedNumber from "@/components/animated-number";
 import JourneyLadder from "@/components/journey-ladder";
@@ -71,7 +71,12 @@ export default async function MePage() {
   const [nextEvent] = await db
     .select({ eventId: event.eventId, name: event.name, startsAt: event.startsAt })
     .from(event)
-    .where(gt(event.startsAt, sql`now()`))
+    .where(
+      and(
+        gt(event.startsAt, sql`now()`),
+        inArray(event.status, ["SCHEDULED", "IN_PROGRESS"] as ("SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED")[]),
+      )
+    )
     .orderBy(asc(event.startsAt))
     .limit(1);
 
@@ -147,7 +152,7 @@ export default async function MePage() {
                 {nextEvent.name}
               </p>
               <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-                {nextEvent.startsAt.toISOString().split("T")[0]}
+                {new Intl.DateTimeFormat("en-PH", { timeZone: "Asia/Manila", dateStyle: "medium" }).format(nextEvent.startsAt)}
               </p>
               <Link href="/church/calendar" className="mt-2 inline-block text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
                 View calendar →
