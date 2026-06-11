@@ -110,7 +110,8 @@ test.describe("Super admin user management", () => {
     await login(page, ADMIN_EMAIL, ADMIN_PASSWORD, "/members");
     await page.goto("/users");
     await expect(page.getByRole("heading", { name: "Users" })).toBeVisible();
-    await expect(page.getByText(ADMIN_EMAIL)).toBeVisible();
+    // Cell, not bare text: the shell's sidebar user card also shows the email.
+    await expect(page.getByRole("cell", { name: ADMIN_EMAIL })).toBeVisible();
   });
 
   test("admin sees own member profile at /me", async ({ page }) => {
