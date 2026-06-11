@@ -73,4 +73,14 @@ test.describe("Member dashboard shell", () => {
     await expect(page.getByRole("link", { name: "Members", exact: true })).toBeVisible();
     await expect(page.getByText("Admin Portal")).toBeVisible();
   });
+
+  test("super admin reaches /users from sidebar, page renders in shell", async ({ page }) => {
+    await login(page, "admin@jly.church", "changeme", "/members");
+    await expect(page.getByRole("link", { name: "My Dashboard", exact: true })).toBeVisible();
+    await page.getByRole("link", { name: "Users", exact: true }).click();
+    await page.waitForURL("/users");
+    await expect(page.getByRole("heading", { name: "Users" })).toBeVisible();
+    // Shell chrome present: sidebar still shows admin items.
+    await expect(page.getByRole("link", { name: "Members", exact: true })).toBeVisible();
+  });
 });
