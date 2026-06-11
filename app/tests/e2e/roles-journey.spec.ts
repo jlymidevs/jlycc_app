@@ -87,7 +87,7 @@ test.describe("Welcome profile completion", () => {
     if (page.url().endsWith("/me")) return;
 
     await expect(
-      page.getByRole("heading", { name: "Welcome to JLY Church!" })
+      page.getByRole("heading", { name: "Welcome to JLYCC!" })
     ).toBeVisible();
     await page.fill('input[name="mobile"]', "+63 917 000 1122");
     await page.fill('input[name="dateOfBirth"]', "1990-01-15");
