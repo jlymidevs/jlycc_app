@@ -21,6 +21,9 @@ export async function registerIsuStudent(formData: FormData) {
   const parsed = registerIsuStudentSchema.safeParse(raw);
   if (!parsed.success) return { errors: parsed.error.flatten().fieldErrors };
 
+  // redirect() throws NEXT_REDIRECT, so it must stay outside the try/catch
+  // or the catch swallows the navigation and reports a false error.
+  let studentId: number;
   try {
     const [s] = await db.insert(isuStudent).values({
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -40,12 +43,13 @@ export async function registerIsuStudent(formData: FormData) {
         toTrackId: parsed.data.currentTrackId as any,
       });
     }
-
-    revalidatePath("/education/isu/students");
-    redirect(`/education/isu/students/${s.studentId}`);
+    studentId = s.studentId;
   } catch {
     return { error: "Student already registered for this person" };
   }
+
+  revalidatePath("/education/isu/students");
+  redirect(`/education/isu/students/${studentId}`);
 }
 
 export async function progressTrack(studentId: number, formData: FormData) {
