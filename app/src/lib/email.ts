@@ -29,7 +29,7 @@ export function buildAnnouncementHtml(params: {
   <p style="color:#444">Dear ${escapeHtml(recipientName)},</p>
   <p style="color:#444;white-space:pre-wrap">${escapeHtml(body)}</p>
   <hr style="border:none;border-top:1px solid #eee;margin:24px 0">
-  <p style="font-size:12px;color:#999">JLY Church</p>
+  <p style="font-size:12px;color:#999">JLYCC</p>
 </body>
 </html>`;
 }

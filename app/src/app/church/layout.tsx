@@ -10,9 +10,11 @@ export default function ChurchLayout({
       <nav className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
         <Link
           href="/church"
-          className="font-semibold text-gray-900 hover:text-gray-700"
+          className="flex items-center gap-2 font-semibold text-gray-900 hover:text-gray-700"
         >
-          JLY Church
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/jlycc-logo.png" alt="JLYCC" width={28} height={28} style={{ objectFit: "contain" }} />
+          JLYCC
         </Link>
         <div className="flex items-center gap-5">
           <Link

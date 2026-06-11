@@ -32,7 +32,7 @@ export default async function SignupPage() {
         {/* Logo */}
         <div className="text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icons/icon-192.png" alt="JLYCC" width={64} height={64} className="mx-auto" />
+          <img src="/jlycc-logo.png" alt="JLYCC" width={64} height={64} className="mx-auto" style={{ objectFit: "contain" }} />
         </div>
 
         <div className="card p-6 space-y-5">
@@ -41,7 +41,7 @@ export default async function SignupPage() {
               Create account
             </h1>
             <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
-              Join JLY Church and start your journey.
+              Join JLYCC and start your journey.
             </p>
           </div>
 

@@ -97,11 +97,15 @@ export default async function PortalPage({ params }: { params: { token: string }
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10 space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">
-          {memberRow.firstName} {memberRow.lastName}
-        </h1>
-        <p className="text-sm text-gray-500 mt-1">Member Portal</p>
+      <div className="flex items-center gap-4">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/jlycc-logo.png" alt="JLYCC" width={48} height={48} style={{ objectFit: "contain" }} />
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {memberRow.firstName} {memberRow.lastName}
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">JLYCC Member Portal</p>
+        </div>
       </div>
 
       <section className="bg-white border border-gray-200 rounded-lg p-5 space-y-2">

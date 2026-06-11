@@ -90,13 +90,13 @@ export default async function WelcomePage() {
       <div className="relative w-full max-w-md space-y-6">
         <div className="text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icons/icon-192.png" alt="JLYCC" width={64} height={64} className="mx-auto" />
+          <img src="/jlycc-logo.png" alt="JLYCC" width={64} height={64} className="mx-auto" style={{ objectFit: "contain" }} />
         </div>
 
         <div className="card p-6 space-y-5">
           <div>
             <h1 className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>
-              Welcome to JLY Church!
+              Welcome to JLYCC!
             </h1>
             <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
               Tell us a bit more about yourself to finish setting up.

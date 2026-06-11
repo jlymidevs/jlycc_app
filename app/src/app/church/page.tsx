@@ -34,7 +34,9 @@ export default async function ChurchHomePage() {
     <div className="max-w-3xl mx-auto px-4 py-16 space-y-16">
       {/* Hero */}
       <section className="text-center space-y-4">
-        <h1 className="text-4xl font-bold text-gray-900">JLY Church</h1>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/jlycc-logo.png" alt="JLYCC" width={96} height={96} className="mx-auto" style={{ objectFit: "contain" }} />
+        <h1 className="text-4xl font-bold text-gray-900">JLYCC</h1>
         <p className="text-lg text-gray-600">
           Love God. Love People. Change the World.
         </p>

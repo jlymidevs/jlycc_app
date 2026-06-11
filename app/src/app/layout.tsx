@@ -16,7 +16,7 @@ const body = Hanken_Grotesk({
 
 export const metadata: Metadata = {
   title: "JLYCC APP",
-  description: "JLY Church Admin Portal",
+  description: "JLYCC Admin Portal",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

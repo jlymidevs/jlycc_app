@@ -45,11 +45,11 @@ export default function SplashPage() {
         {/* Logo */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/icons/icon-512.png"
+          src="/jlycc-logo.png"
           alt="JLYCC"
           width={180}
           height={180}
-          style={{ borderRadius: 36, boxShadow: "0 0 80px rgba(31,138,139,0.3)" }}
+          style={{ objectFit: "contain", filter: "drop-shadow(0 0 40px rgba(200,224,75,0.35))" }}
         />
 
       </div>

@@ -29,9 +29,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       >
         {/* Brand */}
         <Link href="/members" className="mb-6 flex items-center gap-3 px-5">
-          <span className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl">
+          <span className="flex h-9 w-9 items-center justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/icons/icon-192.png" alt="JLYCC" width={36} height={36} />
+            <img src="/jlycc-logo.png" alt="JLYCC" width={36} height={36} style={{ objectFit: "contain" }} />
           </span>
           <span
             className="font-display text-lg font-bold tracking-tight"

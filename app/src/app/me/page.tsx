@@ -136,8 +136,8 @@ export default async function MePage() {
   );
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-10 space-y-8">
-      <div className="flex items-center justify-between">
+    <div className="max-w-3xl mx-auto px-4 py-10 space-y-6">
+      <div className="reveal flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
             {me.firstName} {me.lastName}
@@ -162,7 +162,7 @@ export default async function MePage() {
       </div>
 
       {/* Journey ladder */}
-      <section className="rounded-xl border border-gray-200 bg-white p-6 space-y-4">
+      <section className="card reveal d-1 p-6 space-y-4">
         <h2 className="text-lg font-semibold text-gray-900">Journey</h2>
         <ol className="flex flex-wrap items-center gap-2">
           {visibleLadder.map((s, i) => {
@@ -174,13 +174,14 @@ export default async function MePage() {
               <li key={s.stageCode} className="flex items-center gap-2">
                 {i > 0 && <span className="text-gray-300">→</span>}
                 <span
-                  className={`rounded-full px-3 py-1 text-xs font-medium ${
+                  className="rounded-full px-3 py-1 text-xs font-medium"
+                  style={
                     isCurrent
-                      ? "bg-blue-600 text-white"
+                      ? { background: "var(--lime)", color: "#1C2018", fontWeight: 700 }
                       : passed
-                        ? "bg-blue-50 text-blue-700"
-                        : "bg-gray-100 text-gray-500"
-                  }`}
+                        ? { background: "var(--lime-soft)", color: "var(--text-primary)" }
+                        : { background: "var(--bg-inset)", color: "var(--text-muted)" }
+                  }
                 >
                   {s.name}
                 </span>
@@ -200,27 +201,33 @@ export default async function MePage() {
       </section>
 
       {/* My attendance */}
-      <section className="rounded-xl border border-gray-200 bg-white p-6 space-y-4">
+      <section className="card reveal d-2 p-6 space-y-4">
         <h2 className="text-lg font-semibold text-gray-900">My attendance</h2>
         {attendanceStats.total === 0 ? (
           <p className="text-sm text-gray-500">No attendance recorded yet.</p>
         ) : (
           <>
             <div className="grid grid-cols-3 gap-4">
-              {[
-                { label: "Total", value: String(attendanceStats.total) },
-                { label: "This year", value: String(attendanceStats.thisYear) },
-                { label: "Last attended", value: attendanceStats.lastAttended ?? "—" },
-              ].map((card) => (
-                <div key={card.label}>
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {card.label}
-                  </p>
-                  <p className="mt-1 text-lg font-semibold text-gray-900">
-                    {card.value}
-                  </p>
-                </div>
-              ))}
+              <div className="card-lime card-hover px-4 py-3">
+                <p className="text-xs font-bold uppercase tracking-wider opacity-70">Total</p>
+                <p className="stat-number mt-1 text-3xl">{attendanceStats.total}</p>
+              </div>
+              <div className="card card-hover px-4 py-3">
+                <p className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                  This year
+                </p>
+                <p className="stat-number mt-1 text-3xl text-gray-900">
+                  {attendanceStats.thisYear}
+                </p>
+              </div>
+              <div className="card card-hover px-4 py-3">
+                <p className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                  Last attended
+                </p>
+                <p className="stat-number mt-1 text-lg text-gray-900 leading-9">
+                  {attendanceStats.lastAttended ?? "—"}
+                </p>
+              </div>
             </div>
             <ul className="divide-y divide-gray-100">
               {recentCheckIns.map((c) => (
@@ -240,7 +247,7 @@ export default async function MePage() {
       </section>
 
       {/* My ministries */}
-      <section className="rounded-xl border border-gray-200 bg-white p-6 space-y-3">
+      <section className="card reveal d-3 p-6 space-y-3">
         <h2 className="text-lg font-semibold text-gray-900">My ministries</h2>
         {sortedMemberships.length === 0 ? (
           <p className="text-sm text-gray-500">No ministries yet.</p>
@@ -259,7 +266,7 @@ export default async function MePage() {
       </section>
 
       {/* Join a ministry */}
-      <section className="rounded-xl border border-gray-200 bg-white p-6 space-y-4">
+      <section className="card reveal d-4 p-6 space-y-4">
         <h2 className="text-lg font-semibold text-gray-900">Join a ministry</h2>
 
         {requests.length > 0 && (
