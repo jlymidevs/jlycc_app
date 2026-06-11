@@ -8,8 +8,14 @@ async function staffLogin(page: import("@playwright/test").Page) {
   await page.goto("/login");
   await page.fill('input[name="email"]', STAFF_EMAIL);
   await page.fill('input[name="password"]', STAFF_PASSWORD);
-  await page.click('button[type="submit"]');
-  await page.waitForURL("/members");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  try {
+    await page.waitForURL("/members", { timeout: 10000 });
+  } catch {
+    // Click can land before hydration and get swallowed - retry once.
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await page.waitForURL("/members");
+  }
 }
 
 test.describe("Attendance dashboard", () => {
@@ -93,6 +99,9 @@ test.describe("Member QR code", () => {
     await page.waitForURL(/\/members\/\d+/);
 
     await expect(page.getByText("Attendance QR")).toBeVisible();
-    await expect(page.locator("svg")).toBeVisible();
+    // Scope to the QR section — the sidebar nav also renders SVG icons.
+    await expect(
+      page.locator("section, div").filter({ hasText: "Attendance QR" }).locator("svg").last()
+    ).toBeVisible();
   });
 });

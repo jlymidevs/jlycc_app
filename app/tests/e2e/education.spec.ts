@@ -8,8 +8,14 @@ async function staffLogin(page: import("@playwright/test").Page) {
   await page.goto("/login");
   await page.fill('input[name="email"]', STAFF_EMAIL);
   await page.fill('input[name="password"]', STAFF_PASSWORD);
-  await page.click('button[type="submit"]');
-  await page.waitForURL("/members");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  try {
+    await page.waitForURL("/members", { timeout: 10000 });
+  } catch {
+    // Click can land before hydration and get swallowed - retry once.
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await page.waitForURL("/members");
+  }
 }
 
 test.describe("BC student management", () => {
@@ -58,7 +64,7 @@ test.describe("ISU student management", () => {
     await staffLogin(page);
     await page.goto("/education/isu/students/new");
 
-    await page.fill('input[name="personId"]', "52");
+    await page.fill('input[name="personId"]', "2");
     await page.fill('input[name="enrolledOn"]', "2026-01-15");
     await page.getByRole("button", { name: "Register student" }).click();
 

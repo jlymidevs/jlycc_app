@@ -8,8 +8,14 @@ async function staffLogin(page: import("@playwright/test").Page) {
   await page.goto("/login");
   await page.fill('input[name="email"]', STAFF_EMAIL);
   await page.fill('input[name="password"]', STAFF_PASSWORD);
-  await page.click('button[type="submit"]');
-  await page.waitForURL("/members");
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  try {
+    await page.waitForURL("/members", { timeout: 10000 });
+  } catch {
+    // Click can land before hydration and get swallowed - retry once.
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await page.waitForURL("/members");
+  }
 }
 
 test.describe("Heartlink cohort management", () => {
@@ -62,7 +68,7 @@ test.describe("Heartlink cohort management", () => {
     await page.waitForURL(/\/programs\/heartlink\/\d+\/enroll/);
 
     // Use person ID 1 (seed data person)
-    await page.fill('input[name="personId"]', "51");
+    await page.fill('input[name="personId"]', "1");
     await page.getByRole("button", { name: "Enroll" }).click();
 
     await page.waitForURL(/\/programs\/heartlink\/\d+/);
@@ -155,7 +161,7 @@ test.describe("BAC initiative management", () => {
     await page.getByRole("link", { name: "Add participant" }).click();
     await page.waitForURL(/\/programs\/bac\/\d+\/participants/);
 
-    await page.fill('input[name="personId"]', "51");
+    await page.fill('input[name="personId"]', "1");
     await page.getByRole("button", { name: "Add participant" }).click();
 
     await page.waitForURL(/\/programs\/bac\/\d+/);

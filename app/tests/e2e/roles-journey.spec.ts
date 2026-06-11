@@ -13,8 +13,14 @@ async function login(
   await page.goto("/login");
   await page.fill('input[name="email"]', email);
   await page.fill('input[name="password"]', password);
-  await page.click('button[type="submit"]');
-  await page.waitForURL(waitFor);
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  try {
+    await page.waitForURL(waitFor, { timeout: 10000 });
+  } catch {
+    // Click can land before hydration and get swallowed - retry once.
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await page.waitForURL(waitFor);
+  }
 }
 
 test.describe("Signup and member profile", () => {
