@@ -16,6 +16,12 @@ import { and, eq, isNull } from "drizzle-orm";
 export default async function WelcomePage() {
   const session = await requireRole("MEMBER");
   const email = session.user!.email!;
+  const role = session.user!.role;
+
+  // Staff don't need profile completion — send them to their landing page
+  // (same destinations as the credentials login).
+  if (role === "ADMIN" || role === "SUPER_ADMIN") redirect("/members");
+  if (role === "MINISTRY_HEAD") redirect("/ministry");
 
   const [me] = await db
     .select({
