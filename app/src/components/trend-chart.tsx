@@ -1,6 +1,7 @@
 // app/src/components/trend-chart.tsx
 // Server-rendered SVG grouped bar chart for weekly attendance trends.
-// Blue bar = total check-ins, amber bar = FTV count.
+// Lime bar = total check-ins, deep-green bar = FTV count.
+// Colors come from theme tokens so the chart follows light/dark mode.
 import type { WeeklyBucket } from "@/lib/attendance-trends";
 
 const WIDTH = 800;
@@ -28,12 +29,22 @@ export default function TrendChart({ buckets }: { buckets: WeeklyBucket[] }) {
       role="img"
       aria-label="Weekly attendance trend"
     >
+      {/* Baseline */}
+      <line
+        x1={PAD_X}
+        y1={PAD_TOP + chartHeight}
+        x2={WIDTH - PAD_X}
+        y2={PAD_TOP + chartHeight}
+        stroke="var(--chart-grid)"
+        strokeWidth={1}
+      />
       {buckets.map((b, i) => {
         const cx = PAD_X + i * slot + slot / 2;
         const barH = (b.checkIns / max) * chartHeight;
         const ftvH = (b.ftv / max) * chartHeight;
         const barY = PAD_TOP + chartHeight - barH;
         const ftvY = PAD_TOP + chartHeight - ftvH;
+        const delay = `${Math.min(i * 0.04, 0.6)}s`;
         return (
           <g key={b.week}>
             <rect
@@ -41,24 +52,29 @@ export default function TrendChart({ buckets }: { buckets: WeeklyBucket[] }) {
               y={barY}
               width={barWidth}
               height={barH}
-              rx={2}
-              className="fill-blue-500"
+              rx={4}
+              fill="var(--chart-1)"
+              className="bar-animate"
+              style={{ animationDelay: delay, transformBox: "fill-box" }}
             />
             <rect
               x={cx + barWidth / 2 + 2}
               y={ftvY}
               width={ftvWidth}
               height={ftvH}
-              rx={1}
-              className="fill-amber-400"
+              rx={2}
+              fill="var(--chart-2)"
+              className="bar-animate"
+              style={{ animationDelay: delay, transformBox: "fill-box" }}
             />
             {i % labelEvery === 0 && (
               <text
                 x={cx}
                 y={barY - 4}
                 textAnchor="middle"
-                className="fill-gray-600"
+                fill="var(--text-secondary)"
                 fontSize={10}
+                fontWeight={600}
               >
                 {b.checkIns}
               </text>
@@ -68,7 +84,7 @@ export default function TrendChart({ buckets }: { buckets: WeeklyBucket[] }) {
                 x={cx}
                 y={HEIGHT - 8}
                 textAnchor="middle"
-                className="fill-gray-400"
+                fill="var(--chart-label)"
                 fontSize={9}
               >
                 {b.week.slice(5)}

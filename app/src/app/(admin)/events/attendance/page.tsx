@@ -63,21 +63,23 @@ export default async function AttendanceDashboardPage({
   const buckets = aggregateWeekly(summary);
   const totals = trendTotals(buckets);
 
+  const rangeLabel =
+    range === "week" ? "last 7 days" : range === "month" ? "last 30 days" : "last 365 days";
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Attendance Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-1">Weekly aggregates across all events</p>
-      </div>
-
-      {/* Filters */}
-      <form method="GET" className="flex flex-wrap gap-3 items-end">
+      {/* Header + filters */}
+      <div className="reveal flex flex-wrap items-end justify-between gap-4">
         <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Branch</label>
+          <h1 className="text-2xl font-bold text-gray-900">Attendance</h1>
+          <p className="mt-1 text-sm text-gray-500">Weekly aggregates across all events</p>
+        </div>
+        <form method="GET" className="flex flex-wrap items-end gap-2">
           <select
             name="branchId"
             defaultValue={selectedBranchId ?? ""}
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+            className="input-dark !w-auto !py-2 text-sm"
+            aria-label="Branch"
           >
             <option value="">All branches</option>
             {branches.map((b) => (
@@ -86,103 +88,101 @@ export default async function AttendanceDashboardPage({
               </option>
             ))}
           </select>
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Date range</label>
           <select
             name="range"
             defaultValue={range}
-            className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+            className="input-dark !w-auto !py-2 text-sm"
+            aria-label="Date range"
           >
             <option value="week">Last 7 days</option>
             <option value="month">Last 30 days</option>
             <option value="year">Last 365 days</option>
           </select>
-        </div>
-        <button
-          type="submit"
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          Filter
-        </button>
-      </form>
+          <button type="submit" className="btn-accent !py-2 !px-5">
+            Filter
+          </button>
+        </form>
+      </div>
 
-      {/* Weekly trend */}
-      <div className="space-y-4">
-        <h2 className="text-lg font-semibold text-gray-900">Weekly trend</h2>
-        {buckets.length === 0 ? (
-          <p className="text-sm text-gray-500">
-            No attendance data for the selected filters.
-          </p>
-        ) : (
-          <>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {[
-                { label: "Total check-ins", value: totals.totalCheckIns },
-                { label: "Avg per week", value: totals.avgPerWeek },
-                { label: "First-time visitors", value: totals.totalFtv },
-              ].map((card) => (
-                <div
-                  key={card.label}
-                  className="bg-white rounded-lg border border-gray-200 px-5 py-4"
-                >
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {card.label}
-                  </p>
-                  <p className="mt-1 text-2xl font-bold text-gray-900">
-                    {card.value}
-                  </p>
-                </div>
-              ))}
+      {buckets.length === 0 ? (
+        <div className="card reveal d-1 px-6 py-12 text-center">
+          <p className="text-sm text-gray-500">No attendance data for the selected filters.</p>
+        </div>
+      ) : (
+        <>
+          {/* Stat cards */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="card-lime reveal d-1 card-hover px-6 py-5">
+              <p className="text-xs font-bold uppercase tracking-wider opacity-70">
+                Total check-ins
+              </p>
+              <p className="stat-number mt-2 text-4xl">{totals.totalCheckIns}</p>
+              <p className="mt-1 text-xs font-medium opacity-70">{rangeLabel}</p>
             </div>
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <TrendChart buckets={buckets} />
-              <div className="mt-2 flex gap-4 text-xs text-gray-500">
+            <div className="card reveal d-2 card-hover px-6 py-5">
+              <p className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                Avg per week
+              </p>
+              <p className="stat-number mt-2 text-4xl text-gray-900">{totals.avgPerWeek}</p>
+              <p className="mt-1 text-xs font-medium text-gray-400">{rangeLabel}</p>
+            </div>
+            <div className="card reveal d-3 card-hover px-6 py-5">
+              <p className="text-xs font-bold uppercase tracking-wider text-gray-500">
+                First-time visitors
+              </p>
+              <p className="stat-number mt-2 text-4xl text-gray-900">{totals.totalFtv}</p>
+              <p className="mt-1 text-xs font-medium text-gray-400">{rangeLabel}</p>
+            </div>
+          </div>
+
+          {/* Weekly trend */}
+          <div className="card reveal d-4 p-5">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">Weekly trend</h2>
+              <div className="flex gap-4 text-xs text-gray-500">
                 <span className="flex items-center gap-1.5">
-                  <span className="inline-block h-2.5 w-2.5 rounded-sm bg-blue-500" />
+                  <span
+                    className="inline-block h-2.5 w-2.5 rounded-sm"
+                    style={{ background: "var(--chart-1)" }}
+                  />
                   Check-ins
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="inline-block h-2.5 w-2.5 rounded-sm bg-amber-400" />
+                  <span
+                    className="inline-block h-2.5 w-2.5 rounded-sm"
+                    style={{ background: "var(--chart-2)" }}
+                  />
                   First-time visitors
                 </span>
               </div>
             </div>
-          </>
-        )}
-      </div>
+            <TrendChart buckets={buckets} />
+          </div>
+        </>
+      )}
 
       {/* Table */}
-      {summary.length === 0 ? (
-        <p className="text-sm text-gray-500">No attendance data for the selected filters.</p>
-      ) : (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+      {summary.length > 0 && (
+        <div className="card reveal d-5 overflow-hidden">
+          <table className="table-dark min-w-full">
+            <thead>
               <tr>
-                {["Week of", "Event", "Branch", "Total", "Unique", "FTV"].map(
-                  (h) => (
-                    <th
-                      key={h}
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      {h}
-                    </th>
-                  )
-                )}
+                {["Week of", "Event", "Branch", "Total", "Unique", "FTV"].map((h) => (
+                  <th key={h} className="text-left">
+                    {h}
+                  </th>
+                ))}
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody>
               {summary.map((row, i) => (
                 <tr key={i}>
-                  <td className="px-6 py-3 text-sm text-gray-500">{row.week_start}</td>
-                  <td className="px-6 py-3 text-sm font-medium text-gray-900">
-                    {row.event_name}
-                  </td>
-                  <td className="px-6 py-3 text-sm text-gray-500">{row.branch_name}</td>
-                  <td className="px-6 py-3 text-sm text-gray-900">{row.total_check_ins}</td>
-                  <td className="px-6 py-3 text-sm text-gray-900">{row.unique_persons}</td>
-                  <td className="px-6 py-3 text-sm text-gray-900">{row.ftv_count}</td>
+                  <td className="text-gray-500">{row.week_start}</td>
+                  <td className="font-medium">{row.event_name}</td>
+                  <td className="text-gray-500">{row.branch_name}</td>
+                  <td>{row.total_check_ins}</td>
+                  <td>{row.unique_persons}</td>
+                  <td>{row.ftv_count}</td>
                 </tr>
               ))}
             </tbody>
