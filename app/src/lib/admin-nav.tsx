@@ -1,9 +1,11 @@
 // Admin sidebar nav items (icons inline so server layouts can pass them
 // to the client DashboardShell as serialized JSX).
 
+import { hasRole, type Role } from "@/lib/authz";
+
 export type ShellNavItem = { href: string; label: string; icon: React.ReactNode };
 
-export const adminNavItems: ShellNavItem[] = [
+const baseItems: ShellNavItem[] = [
   {
     href: "/members",
     label: "Members",
@@ -104,3 +106,49 @@ export const adminNavItems: ShellNavItem[] = [
     ),
   },
 ];
+
+const usersItem: ShellNavItem = {
+  href: "/users",
+  label: "Users",
+  icon: (
+    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+      <circle cx="12" cy="8" r="4" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 21v-1a6 6 0 016-6h4a6 6 0 016 6v1" />
+      <path strokeLinecap="round" d="M19 8h4M21 6v4" />
+    </svg>
+  ),
+};
+
+const myDashboardItem: ShellNavItem = {
+  href: "/me",
+  label: "My Dashboard",
+  icon: (
+    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l9-9 9 9" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10" />
+    </svg>
+  ),
+};
+
+const ministryDashboardItem: ShellNavItem = {
+  href: "/ministry",
+  label: "Ministry Dashboard",
+  icon: (
+    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+    </svg>
+  ),
+};
+
+/**
+ * Admin sidebar for a given role. Nav visibility is presentation only —
+ * middleware + requireRole still enforce access on every route.
+ */
+export function adminNavForRole(role: Role): ShellNavItem[] {
+  const items = [...baseItems];
+  if (hasRole(role, "SUPER_ADMIN")) items.push(usersItem);
+  items.push(myDashboardItem, ministryDashboardItem);
+  return items;
+}
