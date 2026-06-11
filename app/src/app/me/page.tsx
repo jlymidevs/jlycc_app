@@ -17,7 +17,9 @@ import { requireRole } from "@/lib/authz-server";
 import { nextStage, nextFreePriority, type StageRow } from "@/lib/journey";
 import { requestJoin } from "@/actions/join-requests";
 import { listActiveHeads } from "@/actions/account";
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { checkIn } from "@/schema/attendance";
+import { event } from "@/schema/events";
+import { and, asc, desc, eq, isNull, sql } from "drizzle-orm";
 
 export default async function MePage() {
   const session = await requireRole("MEMBER");
@@ -27,6 +29,7 @@ export default async function MePage() {
   const [me] = await db
     .select({
       memberId: member.memberId,
+      personId: member.personId,
       currentStage: member.currentStage,
       firstName: person.firstName,
       lastName: person.lastName,
@@ -95,6 +98,27 @@ export default async function MePage() {
     .innerJoin(ministry, eq(ministryChapter.ministryId, ministry.ministryId))
     .where(eq(joinRequest.memberId, me.memberId))
     .orderBy(asc(joinRequest.priority));
+
+  const [attendanceStats] = await db
+    .select({
+      total: sql<number>`count(*)::int`,
+      thisYear: sql<number>`count(*) filter (where date_part('year', ${checkIn.checkedInAt}) = date_part('year', now()))::int`,
+      lastAttended: sql<string | null>`to_char(max(${checkIn.checkedInAt}), 'YYYY-MM-DD')`,
+    })
+    .from(checkIn)
+    .where(eq(checkIn.personId, me.personId));
+
+  const recentCheckIns = await db
+    .select({
+      checkInId: checkIn.checkInId,
+      eventName: event.name,
+      checkedInAt: checkIn.checkedInAt,
+    })
+    .from(checkIn)
+    .innerJoin(event, eq(checkIn.eventId, event.eventId))
+    .where(eq(checkIn.personId, me.personId))
+    .orderBy(desc(checkIn.checkedInAt))
+    .limit(10);
 
   const heads = await listActiveHeads();
   const memberChapterIds = new Set(memberships.map((m) => m.chapterId));
@@ -172,6 +196,46 @@ export default async function MePage() {
           <p className="text-sm text-gray-600">
             You are at the top of the ladder. Keep leading!
           </p>
+        )}
+      </section>
+
+      {/* My attendance */}
+      <section className="rounded-xl border border-gray-200 bg-white p-6 space-y-4">
+        <h2 className="text-lg font-semibold text-gray-900">My attendance</h2>
+        {attendanceStats.total === 0 ? (
+          <p className="text-sm text-gray-500">No attendance recorded yet.</p>
+        ) : (
+          <>
+            <div className="grid grid-cols-3 gap-4">
+              {[
+                { label: "Total", value: String(attendanceStats.total) },
+                { label: "This year", value: String(attendanceStats.thisYear) },
+                { label: "Last attended", value: attendanceStats.lastAttended ?? "—" },
+              ].map((card) => (
+                <div key={card.label}>
+                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {card.label}
+                  </p>
+                  <p className="mt-1 text-lg font-semibold text-gray-900">
+                    {card.value}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <ul className="divide-y divide-gray-100">
+              {recentCheckIns.map((c) => (
+                <li
+                  key={c.checkInId}
+                  className="flex items-center justify-between py-2 text-sm"
+                >
+                  <span className="text-gray-900">{c.eventName}</span>
+                  <span className="text-gray-500">
+                    {c.checkedInAt.toISOString().split("T")[0]}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </>
         )}
       </section>
 
