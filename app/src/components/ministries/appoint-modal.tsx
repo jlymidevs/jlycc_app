@@ -1,7 +1,7 @@
 // app/src/components/ministries/appoint-modal.tsx
 "use client";
 
-import { useState, useTransition, useCallback } from "react";
+import { useState, useTransition, useEffect } from "react";
 import {
   searchEligibleMembers,
   appointNetworkHead,
@@ -33,21 +33,23 @@ export function AppointModal({
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  const handleSearch = useCallback(async (q: string) => {
-    setQuery(q);
-    setSelected(null);
-    if (q.trim().length < 2) {
+  useEffect(() => {
+    if (query.trim().length < 2) {
       setResults([]);
+      setSelected(null);
       return;
     }
     setSearching(true);
-    try {
-      const found = await searchEligibleMembers(q, type, chapterId);
-      setResults(found);
-    } finally {
-      setSearching(false);
-    }
-  }, [type, chapterId]);
+    const timer = setTimeout(async () => {
+      try {
+        const found = await searchEligibleMembers(query, type, chapterId);
+        setResults(found);
+      } finally {
+        setSearching(false);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [query, type, chapterId]);
 
   const handleConfirm = () => {
     if (!selected) return;
@@ -90,7 +92,7 @@ export function AppointModal({
           type="text"
           placeholder="Search by name…"
           value={query}
-          onChange={(e) => handleSearch(e.target.value)}
+          onChange={(e) => { setQuery(e.target.value); setSelected(null); }}
           className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           autoFocus
         />

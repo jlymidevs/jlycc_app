@@ -532,9 +532,19 @@ export async function removeMinistryHead(
         )
         .limit(1);
       if (account) {
+        const isNetworkHead = await db
+          .select({ leaderId: networkLeader.leaderId })
+          .from(networkLeader)
+          .where(
+            and(
+              eq(networkLeader.memberId, current.memberId as unknown as number),
+              isNull(networkLeader.endedAt)
+            )
+          )
+          .limit(1);
         await db
           .update(users)
-          .set({ role: "MEMBER" })
+          .set({ role: isNetworkHead.length > 0 ? "NETWORK_HEAD" : "MEMBER" })
           .where(eq(users.userId, account.userId));
       }
     }
