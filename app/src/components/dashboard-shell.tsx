@@ -9,8 +9,9 @@ import { logoutAction } from "@/actions/auth";
 import ThemeToggle from "@/components/theme-toggle";
 import type { ShellNavItem } from "@/lib/admin-nav";
 
-// Shared chrome for ALL dashboards (admin + member). Sidebar on desktop,
-// hamburger → drawer on mobile. Active nav pill animates between items.
+// Shared chrome for ALL dashboards (admin + member). Full sidebar on desktop,
+// always-visible icon rail on mobile (expandable to a labeled drawer) — the
+// sidebar is never fully hidden on any page. Active nav pill animates between items.
 export default function DashboardShell({
   navItems,
   portalLabel,
@@ -111,6 +112,49 @@ export default function DashboardShell({
     </LayoutGroup>
   );
 
+  // Icon-only nav for the mobile rail — sidebar stays visible on every viewport.
+  const railNav = (
+    <LayoutGroup id="rail">
+      <nav className="flex w-full flex-1 flex-col items-center gap-1 px-2">
+        {navItems.map((item) => {
+          const isActive = active === item.href;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              title={item.label}
+              aria-label={item.label}
+              className="group relative flex h-10 w-10 items-center justify-center rounded-xl"
+              style={{
+                color: isActive ? "var(--sidebar-icon-active)" : "var(--sidebar-icon)",
+              }}
+            >
+              {isActive && (
+                <motion.span
+                  layoutId="nav-pill-rail"
+                  className="absolute inset-0 rounded-xl"
+                  style={{ background: "var(--sidebar-active-bg)" }}
+                  transition={
+                    reduced
+                      ? { duration: 0 }
+                      : { type: "spring", stiffness: 400, damping: 32 }
+                  }
+                />
+              )}
+              {!isActive && (
+                <span
+                  className="absolute inset-0 rounded-xl opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                  style={{ background: "var(--bg-card-hover)" }}
+                />
+              )}
+              <span className="relative shrink-0">{item.icon}</span>
+            </Link>
+          );
+        })}
+      </nav>
+    </LayoutGroup>
+  );
+
   const userCard = (
     <div
       className="mx-3 mt-4 flex items-center gap-3 rounded-2xl p-3"
@@ -173,7 +217,42 @@ export default function DashboardShell({
         {userCard}
       </aside>
 
-      {/* Mobile drawer */}
+      {/* Mobile icon rail — always visible, never hidden */}
+      <aside
+        className="flex w-16 shrink-0 flex-col items-center py-4 md:hidden"
+        style={{
+          background: "var(--sidebar-bg)",
+          borderRight: "1px solid var(--border)",
+        }}
+      >
+        <Link href={brandHref} className="mb-4 flex h-9 w-9 items-center justify-center">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/jlycc-logo.png" alt="JLYCC" width={32} height={32} style={{ objectFit: "contain" }} />
+        </Link>
+        <button
+          ref={hamburgerRef}
+          type="button"
+          aria-label="Open menu"
+          title="Expand menu"
+          onClick={() => setDrawerOpen(true)}
+          className="mb-3 flex h-9 w-9 items-center justify-center rounded-xl"
+          style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
+        >
+          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path strokeLinecap="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        {railNav}
+        <span
+          className="mt-3 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+          style={{ background: "var(--lime)", color: "#1C2018" }}
+          title={user.name ?? user.email ?? "Member"}
+        >
+          {initials}
+        </span>
+      </aside>
+
+      {/* Mobile drawer (expanded labels view of the rail) */}
       <AnimatePresence>
         {drawerOpen && (
           <>
@@ -216,23 +295,9 @@ export default function DashboardShell({
             height: "60px",
           }}
         >
-          <div className="flex items-center gap-3">
-            <button
-              ref={hamburgerRef}
-              type="button"
-              aria-label="Open menu"
-              onClick={() => setDrawerOpen(true)}
-              className="flex h-9 w-9 items-center justify-center rounded-xl md:hidden"
-              style={{ border: "1px solid var(--border)", color: "var(--text-muted)" }}
-            >
-              <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-            <span className="font-display text-sm font-bold" style={{ color: "var(--text-primary)" }}>
-              {portalLabel}
-            </span>
-          </div>
+          <span className="font-display text-sm font-bold" style={{ color: "var(--text-primary)" }}>
+            {portalLabel}
+          </span>
           <div className="flex items-center gap-3">
             <ThemeToggle />
           </div>
