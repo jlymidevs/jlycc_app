@@ -23,7 +23,7 @@ test.describe("Attendance dashboard", () => {
     await staffLogin(page);
     await page.goto("/events/attendance");
     await expect(
-      page.getByRole("heading", { name: "Attendance Dashboard" })
+      page.getByRole("heading", { name: "Attendance" })
     ).toBeVisible();
     await expect(page.locator('select[name="branchId"]')).toBeVisible();
     await expect(page.locator('select[name="range"]')).toBeVisible();

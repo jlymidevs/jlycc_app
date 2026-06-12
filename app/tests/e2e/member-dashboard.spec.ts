@@ -76,7 +76,7 @@ test.describe("Member dashboard shell", () => {
 
   test("super admin reaches /users from sidebar, page renders in shell", async ({ page }) => {
     await login(page, "admin@jly.church", "changeme", "/members");
-    await expect(page.getByRole("link", { name: "My Dashboard", exact: true })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Users", exact: true })).toBeVisible();
     await page.getByRole("link", { name: "Users", exact: true }).click();
     await page.waitForURL("/users");
     await expect(page.getByRole("heading", { name: "Users" })).toBeVisible();

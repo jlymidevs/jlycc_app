@@ -4,7 +4,7 @@ test.describe("Public church homepage", () => {
   test("homepage loads with JLY Church heading", async ({ page }) => {
     await page.goto("/church");
     await expect(
-      page.getByRole("heading", { name: "JLY Church", level: 1 })
+      page.getByRole("heading", { name: "JLYCC", level: 1 })
     ).toBeVisible();
     await expect(page.getByText("Love God. Love People. Change the World.")).toBeVisible();
     await expect(page.getByRole("link", { name: "See all events" })).toBeVisible();
@@ -12,7 +12,7 @@ test.describe("Public church homepage", () => {
 
   test("nav shows JLY Church and Events links", async ({ page }) => {
     await page.goto("/church");
-    await expect(page.getByRole("link", { name: "JLY Church" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "JLYCC" })).toBeVisible();
     await expect(page.getByRole("navigation").getByRole("link", { name: "Events", exact: true })).toBeVisible();
   });
 
@@ -37,7 +37,7 @@ test.describe("Public church homepage", () => {
 
   test("nav is present on /church/events (layout applied)", async ({ page }) => {
     await page.goto("/church/events");
-    await expect(page.getByRole("link", { name: "JLY Church" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "JLYCC" })).toBeVisible();
     await expect(page.getByRole("navigation").getByRole("link", { name: "Events", exact: true })).toBeVisible();
   });
 });
