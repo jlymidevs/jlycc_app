@@ -12,19 +12,31 @@ describe("adminNavForRole", () => {
     expect(h).toContain("/me");
     expect(h).toContain("/ministry");
   });
-  it("SUPER_ADMIN additionally gets Users", () => {
-    const h = hrefs("SUPER_ADMIN");
-    expect(h).toHaveLength(13);
+  it("SUPER_ADMIN additionally gets Users and the All Dashboards section", () => {
+    const items = adminNavForRole("SUPER_ADMIN");
+    const h = items.map((i) => i.href);
     expect(h).toContain("/users");
+    const heading = items.find((i) => i.heading);
+    expect(heading?.label).toBe("All Dashboards");
+    // One link per role dashboard, after the heading.
+    for (const href of ["/members", "/network", "/ministry", "/me"]) {
+      expect(h.indexOf(href, h.indexOf("#all-dashboards"))).toBeGreaterThan(
+        h.indexOf("#all-dashboards")
+      );
+    }
   });
-  it("Users appears before the cross-links", () => {
+  it("Users appears before the All Dashboards section", () => {
     const h = hrefs("SUPER_ADMIN");
-    expect(h.indexOf("/users")).toBeLessThan(h.indexOf("/me"));
+    expect(h.indexOf("/users")).toBeLessThan(h.indexOf("#all-dashboards"));
   });
-  it("every item has a label and an icon", () => {
+  it("ADMIN does not get the All Dashboards section", () => {
+    expect(hrefs("ADMIN")).not.toContain("#all-dashboards");
+    expect(hrefs("ADMIN")).not.toContain("/network");
+  });
+  it("every non-heading item has a label and an icon", () => {
     for (const item of adminNavForRole("SUPER_ADMIN")) {
       expect(item.label.length).toBeGreaterThan(0);
-      expect(item.icon).toBeTruthy();
+      if (!item.heading) expect(item.icon).toBeTruthy();
     }
   });
 });

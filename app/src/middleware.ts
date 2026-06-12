@@ -17,6 +17,7 @@ const ADMIN_PREFIXES = [
   "/attendance",
   "/bac",
   "/ghl",
+  "/network",
 ];
 
 const ROLE_RANK: Record<string, number> = {
@@ -90,6 +91,7 @@ export const config = {
     "/attendance/:path*",
     "/bac/:path*",
     "/ghl/:path*",
+    "/network/:path*",
     "/users/:path*",
     "/ministry/:path*",
     "/me/:path*",

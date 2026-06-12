@@ -3,7 +3,13 @@
 
 import { hasRole, type Role } from "@/lib/authz";
 
-export type ShellNavItem = { href: string; label: string; icon: React.ReactNode };
+export type ShellNavItem = {
+  href: string;
+  label: string;
+  icon?: React.ReactNode;
+  /** Render as a non-navigating section heading (href only used as a key). */
+  heading?: boolean;
+};
 
 const baseItems: ShellNavItem[] = [
   {
@@ -142,13 +148,66 @@ const ministryDashboardItem: ShellNavItem = {
   ),
 };
 
+// "All Dashboards" section (SUPER_ADMIN): jump into every role's dashboard.
+const allDashboardsSection: ShellNavItem[] = [
+  { href: "#all-dashboards", label: "All Dashboards", heading: true },
+  {
+    href: "/members",
+    label: "Admin",
+    icon: (
+      <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+        <rect x="3" y="3" width="7" height="9" rx="1" />
+        <rect x="14" y="3" width="7" height="5" rx="1" />
+        <rect x="14" y="12" width="7" height="9" rx="1" />
+        <rect x="3" y="16" width="7" height="5" rx="1" />
+      </svg>
+    ),
+  },
+  {
+    href: "/network",
+    label: "Network Head",
+    icon: (
+      <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+        <circle cx="12" cy="5" r="3" />
+        <circle cx="5" cy="19" r="3" />
+        <circle cx="19" cy="19" r="3" />
+        <path strokeLinecap="round" d="M12 8v4m0 0l-5 4.5M12 12l5 4.5" />
+      </svg>
+    ),
+  },
+  {
+    href: "/ministry",
+    label: "Ministry Head",
+    icon: (
+      <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+      </svg>
+    ),
+  },
+  {
+    href: "/me",
+    label: "Member",
+    icon: (
+      <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l9-9 9 9" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10" />
+      </svg>
+    ),
+  },
+];
+
 /**
  * Admin sidebar for a given role. Nav visibility is presentation only —
  * middleware + requireRole still enforce access on every route.
  */
 export function adminNavForRole(role: Role): ShellNavItem[] {
   const items = [...baseItems];
-  if (hasRole(role, "SUPER_ADMIN")) items.push(usersItem);
-  items.push(myDashboardItem, ministryDashboardItem);
+  if (hasRole(role, "SUPER_ADMIN")) {
+    items.push(usersItem, ...allDashboardsSection);
+  } else {
+    items.push(myDashboardItem, ministryDashboardItem);
+  }
   return items;
 }

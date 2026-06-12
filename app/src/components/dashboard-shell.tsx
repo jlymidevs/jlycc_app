@@ -61,21 +61,35 @@ export default function DashboardShell({
     .slice(0, 2);
 
   // Longest-prefix match so /me/attendance doesn't also light up /me.
-  const active = navItems.reduce<string | null>((best, item) => {
+  // Tracked by index (first win) — the same href may appear twice (e.g.
+  // "Members" and "Admin Dashboard" both point at /members).
+  const activeIndex = navItems.reduce<number>((best, item, i) => {
+    if (item.heading) return best;
     const matches = pathname === item.href || pathname.startsWith(item.href + "/");
     if (!matches) return best;
-    if (!best || item.href.length > best.length) return item.href;
+    if (best === -1 || item.href.length > navItems[best].href.length) return i;
     return best;
-  }, null);
+  }, -1);
 
   const renderNav = (group: "desktop" | "drawer") => (
     <LayoutGroup id={group}>
       <nav className="flex w-full flex-1 flex-col gap-1 px-3">
-        {navItems.map((item) => {
-          const isActive = active === item.href;
+        {navItems.map((item, i) => {
+          if (item.heading) {
+            return (
+              <p
+                key={item.href}
+                className="mt-4 px-3 pb-1 text-[11px] font-bold uppercase tracking-wider"
+                style={{ color: "var(--text-muted)" }}
+              >
+                {item.label}
+              </p>
+            );
+          }
+          const isActive = activeIndex === i;
           return (
             <Link
-              key={item.href}
+              key={`${item.href}-${i}`}
               href={item.href}
               className="group relative flex h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium"
               style={{
@@ -116,11 +130,20 @@ export default function DashboardShell({
   const railNav = (
     <LayoutGroup id="rail">
       <nav className="flex w-full flex-1 flex-col items-center gap-1 px-2">
-        {navItems.map((item) => {
-          const isActive = active === item.href;
+        {navItems.map((item, i) => {
+          if (item.heading) {
+            return (
+              <span
+                key={item.href}
+                className="my-2 h-px w-8"
+                style={{ background: "var(--border)" }}
+              />
+            );
+          }
+          const isActive = activeIndex === i;
           return (
             <Link
-              key={item.href}
+              key={`${item.href}-${i}`}
               href={item.href}
               title={item.label}
               aria-label={item.label}
