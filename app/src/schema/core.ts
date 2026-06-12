@@ -8,6 +8,7 @@ import {
   timestamp,
   char,
   pgSchema,
+  primaryKey,
 } from "drizzle-orm/pg-core";
 
 export const coreSchema = pgSchema("core");
@@ -101,7 +102,8 @@ export const address = coreSchema.table("address", {
   city: text("city"),
   province: text("province"),
   postalCode: text("postal_code"),
-  countryCode: text("country_code").notNull(),
+  countryCode: char("country_code", { length: 2 }).notNull(),
+  // geom (POINT) — not mapped; use raw SQL when needed
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdateFn(() => new Date()),
 });
@@ -117,4 +119,4 @@ export const personAddress = coreSchema.table("person_address", {
   validFrom: date("valid_from").notNull(),
   validTo: date("valid_to"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (t) => [primaryKey({ columns: [t.personId, t.addressId, t.validFrom] })]);

@@ -7,7 +7,7 @@ COMMENT ON COLUMN app.users.profile_completed_at IS
 -- /me/profile saves city/province + country only; line1 becomes optional.
 ALTER TABLE core.address ALTER COLUMN line1 DROP NOT NULL;
 
-ALTER TABLE app.users DROP CONSTRAINT users_role_check;
+ALTER TABLE app.users DROP CONSTRAINT IF EXISTS users_role_check;
 ALTER TABLE app.users ADD CONSTRAINT users_role_check
   CHECK (role IN ('SUPER_ADMIN','ADMIN','NETWORK_HEAD','MINISTRY_HEAD','MEMBER'));
 
