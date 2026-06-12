@@ -50,6 +50,16 @@ async function markProfileCompleted(email: string) {
     await sql`
       update app.users set profile_completed_at = now() where email = ${email}
     `;
+    // Signup also files a ministry join request when a chapter was picked, and
+    // /welcome bounces to /me for EITHER the flag or an existing request.
+    // Delete the request so the flag is the only bounce path under test.
+    await sql`
+      delete from ministries.join_request jr
+      using membership.member m, app.users u
+      where jr.member_id = m.member_id
+        and m.person_id = u.person_id
+        and u.email = ${email}
+    `;
   } finally {
     await sql.end();
   }
@@ -84,6 +94,8 @@ test.describe("One-time welcome + my profile", () => {
     await expect(
       page.getByRole("heading", { name: "My Profile" })
     ).toBeVisible();
+    // Membership-stage chip renders on the profile page itself.
+    await expect(page.getByText("Regular Member")).toBeVisible();
     // Fresh members have no address row; page defaults country to PH, so the
     // province select renders.
     await page.selectOption('select[name="province"]', "Cavite");
