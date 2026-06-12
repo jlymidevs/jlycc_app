@@ -157,3 +157,25 @@ export async function updateMember(memberId: number, formData: FormData) {
   revalidatePath("/members");
   redirect(`/members/${memberId}`);
 }
+
+export async function softDeleteMember(memberId: number) {
+  await db
+    .update(member)
+    .set({ deletedAt: new Date() })
+    .where(eq(member.memberId, memberId));
+  revalidatePath("/members");
+}
+
+export async function restoreMember(memberId: number) {
+  await db
+    .update(member)
+    .set({ deletedAt: null })
+    .where(eq(member.memberId, memberId));
+  revalidatePath("/members");
+  revalidatePath("/members/trash");
+}
+
+export async function permanentDeleteMember(memberId: number) {
+  await db.delete(member).where(eq(member.memberId, memberId));
+  revalidatePath("/members/trash");
+}

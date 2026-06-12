@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { member } from "@/schema/membership";
 import { person, branch } from "@/schema/core";
 import { MemberSearch } from "@/components/members/member-search";
+import { MemberTrashButton } from "@/components/members/member-trash-button";
 import { eq, ilike, or, and, isNull, sql } from "drizzle-orm";
 import { Suspense } from "react";
 
@@ -66,7 +67,8 @@ async function MemberTable({
           <th className="py-3 pr-4 font-medium">Code</th>
           <th className="py-3 pr-4 font-medium">Stage</th>
           <th className="py-3 pr-4 font-medium">Branch</th>
-          <th className="py-3 font-medium">Status</th>
+          <th className="py-3 pr-4 font-medium">Status</th>
+          <th className="py-3 font-medium w-8"></th>
         </tr>
       </thead>
       <tbody>
@@ -90,7 +92,10 @@ async function MemberTable({
               </span>
             </td>
             <td className="py-3 pr-4 text-gray-600">{m.branchName}</td>
-            <td className="py-3 text-gray-600">{m.status}</td>
+            <td className="py-3 pr-4 text-gray-600">{m.status}</td>
+            <td className="py-3 text-right">
+              <MemberTrashButton memberId={m.memberId} />
+            </td>
           </tr>
         ))}
       </tbody>
@@ -109,7 +114,18 @@ export default async function MembersPage({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Members</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-gray-900">Members</h1>
+          <Link
+            href="/members/trash"
+            title="View trash"
+            className="rounded p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+              <path fillRule="evenodd" d="M15.312 11.424a5.5 5.5 0 0 1-9.201 2.466l-.312-.311h2.433a.75.75 0 0 0 0-1.5H3.989a.75.75 0 0 0-.75.75v4.242a.75.75 0 0 0 1.5 0v-2.43l.31.31a7 7 0 0 0 11.712-3.138.75.75 0 0 0-1.449-.39Zm1.23-3.723a.75.75 0 0 0 .219-.53V2.929a.75.75 0 0 0-1.5 0V5.36l-.31-.31A7 7 0 0 0 3.239 8.188a.75.75 0 1 0 1.448.389A5.5 5.5 0 0 1 13.89 6.11l.311.31h-2.432a.75.75 0 0 0 0 1.5h4.243a.75.75 0 0 0 .53-.219Z" clipRule="evenodd" />
+            </svg>
+          </Link>
+        </div>
         <Link
           href="/members/new"
           className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
