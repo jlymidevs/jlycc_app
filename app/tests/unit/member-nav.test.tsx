@@ -8,6 +8,7 @@ describe("memberNavForRole", () => {
   it("MEMBER sees base items only", () => {
     expect(hrefs("MEMBER")).toEqual([
       "/me",
+      "/me/profile",
       "/me/attendance",
       "/me/ministries",
       "/me/announcements",
