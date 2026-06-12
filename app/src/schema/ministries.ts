@@ -83,6 +83,7 @@ export const ministryMembership = ministriesSchema.table("ministry_membership", 
   isLeader: boolean("is_leader").notNull().default(false),
   leaderRole: leaderRoleEnum("leader_role"),
   priority: smallint("priority"),
+  isInnerCore: boolean("is_inner_core").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -108,4 +109,24 @@ export const joinRequest = ministriesSchema.table("join_request", {
   decidedByMemberId: bigint("decided_by_member_id", {
     mode: "number",
   }).references(() => member.memberId),
+});
+
+export const networkLeader = ministriesSchema.table("network_leader", {
+  leaderId: bigserial("leader_id", { mode: "number" }).primaryKey(),
+  networkId: bigint("network_id", { mode: "number" })
+    .notNull()
+    .references(() => network.networkId, { onDelete: "cascade" }),
+  memberId: bigint("member_id", { mode: "number" })
+    .notNull()
+    .references(() => member.memberId, { onDelete: "cascade" }),
+  appointedBy: bigint("appointed_by", { mode: "number" }).references(
+    () => member.memberId
+  ),
+  startedAt: timestamp("started_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  endedAt: timestamp("ended_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
 });
