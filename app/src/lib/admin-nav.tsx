@@ -1,11 +1,11 @@
-"use client";
+// Admin sidebar nav items (icons inline so server layouts can pass them
+// to the client DashboardShell as serialized JSX).
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { hasRole, type Role } from "@/lib/authz";
 
-type NavItem = { href: string; label: string; icon: React.ReactNode };
+export type ShellNavItem = { href: string; label: string; icon: React.ReactNode };
 
-const navItems: NavItem[] = [
+const baseItems: ShellNavItem[] = [
   {
     href: "/members",
     label: "Members",
@@ -107,49 +107,48 @@ const navItems: NavItem[] = [
   },
 ];
 
-export default function SidebarNav() {
-  const pathname = usePathname();
+const usersItem: ShellNavItem = {
+  href: "/users",
+  label: "Users",
+  icon: (
+    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+      <circle cx="12" cy="8" r="4" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 21v-1a6 6 0 016-6h4a6 6 0 016 6v1" />
+      <path strokeLinecap="round" d="M19 8h4M21 6v4" />
+    </svg>
+  ),
+};
 
-  // Longest-prefix match so /members/applications doesn't also light up /members
-  const active = navItems.reduce<string | null>((best, item) => {
-    const matches = pathname === item.href || pathname.startsWith(item.href + "/");
-    if (!matches) return best;
-    if (!best || item.href.length > best.length) return item.href;
-    return best;
-  }, null);
+const myDashboardItem: ShellNavItem = {
+  href: "/me",
+  label: "My Dashboard",
+  icon: (
+    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l9-9 9 9" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10" />
+    </svg>
+  ),
+};
 
-  return (
-    <nav className="flex w-full flex-1 flex-col gap-1 px-3">
-      {navItems.map((item, i) => {
-        const isActive = active === item.href;
-        return (
-          <Link
-            key={item.href}
-            href={item.href}
-            className="reveal group relative flex h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-all duration-200"
-            style={{
-              animationDelay: `${0.03 * i}s`,
-              background: isActive ? "var(--sidebar-active-bg)" : "transparent",
-              color: isActive ? "var(--sidebar-icon-active)" : "var(--sidebar-icon)",
-              fontWeight: isActive ? 700 : 500,
-            }}
-          >
-            {!isActive && (
-              <span
-                className="absolute inset-0 rounded-xl opacity-0 transition-opacity duration-200 group-hover:opacity-100"
-                style={{ background: "var(--bg-card-hover)" }}
-              />
-            )}
-            <span
-              className="relative shrink-0 transition-transform duration-200 group-hover:scale-110"
-              style={{ color: "inherit" }}
-            >
-              {item.icon}
-            </span>
-            <span className="relative truncate">{item.label}</span>
-          </Link>
-        );
-      })}
-    </nav>
-  );
+const ministryDashboardItem: ShellNavItem = {
+  href: "/ministry",
+  label: "Ministry Dashboard",
+  icon: (
+    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
+    </svg>
+  ),
+};
+
+/**
+ * Admin sidebar for a given role. Nav visibility is presentation only —
+ * middleware + requireRole still enforce access on every route.
+ */
+export function adminNavForRole(role: Role): ShellNavItem[] {
+  const items = [...baseItems];
+  if (hasRole(role, "SUPER_ADMIN")) items.push(usersItem);
+  items.push(myDashboardItem, ministryDashboardItem);
+  return items;
 }
