@@ -22,7 +22,7 @@ import { users } from "@/schema/app";
 import { isHeadEligible } from "@/lib/journey";
 import { requireRole } from "@/lib/authz-server";
 import { revalidatePath } from "next/cache";
-import { and, eq, isNull, ilike, or, count, asc } from "drizzle-orm";
+import { and, eq, isNull, ilike, or, count, asc, inArray } from "drizzle-orm";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -34,6 +34,7 @@ export type NetworkGroup = {
     name: string;
     code: string;
     targetDemographic: string | null;
+    headName: string | null;
   }[];
 };
 
@@ -96,6 +97,37 @@ export async function getMinistries(): Promise<NetworkGroup[]> {
     .innerJoin(network, eq(ministry.networkId, network.networkId))
     .orderBy(asc(network.name), asc(ministry.name));
 
+  if (rows.length === 0) return [];
+
+  const ministryIds = rows.map((r) => r.ministryId);
+  const heads = await db
+    .select({
+      ministryId: ministry.ministryId,
+      firstName: person.firstName,
+      lastName: person.lastName,
+    })
+    .from(ministryMembership)
+    .innerJoin(
+      ministryChapter,
+      eq(ministryMembership.chapterId, ministryChapter.chapterId)
+    )
+    .innerJoin(ministry, eq(ministryChapter.ministryId, ministry.ministryId))
+    .innerJoin(member, eq(ministryMembership.memberId, member.memberId))
+    .innerJoin(person, eq(member.personId, person.personId))
+    .where(
+      and(
+        inArray(ministry.ministryId, ministryIds),
+        eq(ministryMembership.isLeader, true),
+        eq(ministryMembership.leaderRole, "HEAD"),
+        isNull(ministryMembership.endedAt)
+      )
+    )
+    .limit(ministryIds.length);
+
+  const headMap = new Map(
+    heads.map((h) => [h.ministryId, `${h.lastName}, ${h.firstName}`])
+  );
+
   const grouped = new Map<
     number,
     { networkName: string; ministries: NetworkGroup["ministries"] }
@@ -111,6 +143,7 @@ export async function getMinistries(): Promise<NetworkGroup[]> {
       name: row.name,
       code: row.code,
       targetDemographic: row.targetDemographic,
+      headName: headMap.get(row.ministryId) ?? null,
     });
   }
 
