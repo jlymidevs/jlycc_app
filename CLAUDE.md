@@ -116,14 +116,18 @@ JLYCC App/
 ### Remaining (human actions)
 - **Resend domain**: verify a sending domain in Resend (DNS), then update `RESEND_FROM` (currently onboarding@resend.dev — test-only sends)
 
-## Git State (as of 2026-06-11)
+## Git State (as of 2026-06-12)
 
-- Active branch: `attendance-audit-dashboard` (HEAD `58109a9`) — all plan tasks done, verified (tests/tsc/build/visual vs local DB); pushed, PR #14 open to master
-- `master`: PRs #1–#13 merged; post-PR work committed directly to master
-- Untracked: `app/.env` (local secrets — never commit), `app/test-results/`, `JLYCC favicon_io/`, plan docs 12–16
-- `.worktrees/` has 4 stale worktrees (feature, plan6b, plan12, plan5)
-- Verified 2026-06-10: `tsc --noEmit` clean; unit tests 245/245 passing (vitest 4); prod build compiles
-- E2E: 12 spec files (calendar.spec.ts added; some skipped: accumulated test data, QR code) — calendar E2E not yet run (needs local DB)
+- **Member Dashboard Redesign: ALL TASKS DONE, ready for push + PR** — branch `member-dashboard-redesign` in worktree `.worktrees/member-dashboard-redesign` (HEAD `0a0403c`, working tree clean, 15 commits ahead of master). Plan: `docs/superpowers/plans/2026-06-11-member-dashboard-redesign.md`.
+  - Shared `DashboardShell` (admin + member), `/me` split into Overview/Attendance/Ministries/Announcements, framer-motion widgets, role-filtered nav, E2E `member-dashboard.spec.ts`
+  - Verified 2026-06-12: 293/293 unit, tsc + prod build clean, 11/11 E2E (member-dashboard 4, roles-journey 6, admin-smoke) vs local DB, visual check via dev server (admin sidebar, member nav role filter, mobile drawer)
+  - Includes fix for stale roles-journey assertion (`Welcome to JLY Church!` → `Welcome to JLYCC!` after branding rename `473c0f1`)
+  - **Remaining (needs approval): `git push -u origin member-dashboard-redesign` + open PR to master**
+- Main checkout on `master`, **ahead of origin by 2 commits** (redesign spec `f657d1e` + plan `2efd608`) — push when convenient
+- PR #14 (attendance-audit-dashboard) merged at `16cf436`; PRs #1–#14 merged. Post-merge hardening on master: middleware cookie security (`8a5aa30`), education redirect-swallow fix (`22bb12d`), db client HMR reuse (`86d75e5`), E2E harness hardening (`8de29b0`), lime ACRU redesign (`61f50d6`), JLYCC branding (`473c0f1`, `eb9fdd2`)
+- Untracked: `app/.env` (local secrets — never commit), `JLYCC favicon_io/` (icon source set)
+- `.worktrees/`: 3 entries — `member-dashboard-redesign` (ACTIVE), `feature/plan18-roles-member-journey` + `feature/plan9-scholarships` (stale, safe to prune after confirming merged)
+- E2E: 13 spec files (some skipped: accumulated test data, QR code)
 
 ## Known Issues / Risks
 
@@ -144,11 +148,11 @@ JLYCC App/
 
 ## Suggested Next Steps
 
-1. Plan 18 implementation (active)
-2. Deployment (Plan 16 remaining tasks)
+1. **Finish member dashboard redesign Tasks 9–13** (active — see Git State above)
+2. Push master (2 unpushed docs commits)
 3. Member giving/finance module
 4. E2E flaky test investigation (accumulated test data issue)
-5. Clean stale `.worktrees/` entries
+5. Clean stale `.worktrees/` entries (plan18, plan9-scholarships)
 
 ## Safety Notes
 
