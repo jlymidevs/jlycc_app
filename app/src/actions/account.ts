@@ -14,7 +14,9 @@ import { person, contactInfo } from "@/schema/core";
 import {
   signupSchema,
   completeProfileSchema,
+  updateProfileSchema,
 } from "@/lib/validations/account";
+import { address, personAddress } from "@/schema/core";
 import { provisionMemberProfile } from "@/lib/provision";
 import { requireRole } from "@/lib/authz-server";
 import { and, eq, isNull } from "drizzle-orm";
@@ -107,6 +109,54 @@ export async function signup(formData: FormData) {
   redirect("/login?registered=1");
 }
 
+/** Shared helper: update person basics + upsert mobile contact. */
+async function savePersonBasics(
+  personId: number,
+  d: {
+    firstName: string;
+    lastName: string;
+    mobile?: string;
+    dateOfBirth?: string;
+    gender?: "MALE" | "FEMALE" | "UNDISCLOSED";
+  }
+) {
+  await db
+    .update(person)
+    .set({
+      firstName: d.firstName,
+      lastName: d.lastName,
+      dateOfBirth: d.dateOfBirth ? d.dateOfBirth : null,
+      gender: d.gender ?? null,
+    })
+    .where(eq(person.personId, personId));
+
+  if (d.mobile) {
+    const [existingMobile] = await db
+      .select({ contactId: contactInfo.contactId })
+      .from(contactInfo)
+      .where(
+        and(
+          eq(contactInfo.personId, personId),
+          eq(contactInfo.type, "MOBILE")
+        )
+      )
+      .limit(1);
+    if (existingMobile) {
+      await db
+        .update(contactInfo)
+        .set({ value: d.mobile })
+        .where(eq(contactInfo.contactId, existingMobile.contactId));
+    } else {
+      await db.insert(contactInfo).values({
+        personId,
+        type: "MOBILE",
+        value: d.mobile,
+        isPrimary: false,
+      });
+    }
+  }
+}
+
 /**
  * Post-Google-signin profile completion (/welcome): update person details,
  * save mobile contact, optionally file a priority-1 ministry join request.
@@ -147,44 +197,7 @@ export async function completeProfile(formData: FormData) {
     memberId = r.memberId;
   }
 
-  await db
-    .update(person)
-    .set({
-      firstName: d.firstName,
-      lastName: d.lastName,
-      dateOfBirth: d.dateOfBirth ? d.dateOfBirth : null,
-      gender: d.gender ?? null,
-    })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .where(eq(person.personId, personId as any));
-
-  if (d.mobile) {
-    const [existingMobile] = await db
-      .select({ contactId: contactInfo.contactId })
-      .from(contactInfo)
-      .where(
-        and(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          eq(contactInfo.personId, personId as any),
-          eq(contactInfo.type, "MOBILE")
-        )
-      )
-      .limit(1);
-    if (existingMobile) {
-      await db
-        .update(contactInfo)
-        .set({ value: d.mobile })
-        .where(eq(contactInfo.contactId, existingMobile.contactId));
-    } else {
-      await db.insert(contactInfo).values({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        personId: personId as any,
-        type: "MOBILE",
-        value: d.mobile,
-        isPrimary: false,
-      });
-    }
-  }
+  await savePersonBasics(personId, d);
 
   await db
     .update(users)
@@ -229,4 +242,82 @@ export async function completeProfile(formData: FormData) {
 
   revalidatePath("/me");
   redirect("/me");
+}
+
+/** /me/profile self-service save: person basics + current HOME address. */
+export async function updateMyProfile(formData: FormData) {
+  const session = await requireRole("MEMBER");
+  const email = session.user?.email;
+  if (!email) redirect("/login");
+
+  const raw = {
+    firstName: formData.get("firstName"),
+    lastName: formData.get("lastName"),
+    mobile: (formData.get("mobile") as string | null) ?? "",
+    dateOfBirth: (formData.get("dateOfBirth") as string | null) ?? "",
+    gender: formData.get("gender") || undefined,
+    countryCode: (formData.get("countryCode") as string | null) ?? "",
+    province: (formData.get("province") as string | null) ?? "",
+    city: (formData.get("city") as string | null) ?? "",
+  };
+  const parsed = updateProfileSchema.safeParse(raw);
+  if (!parsed.success) {
+    redirect("/me/profile?err=1");
+    return;
+  }
+  const d = parsed.data;
+
+  const [u] = await db
+    .select({ userId: users.userId, personId: users.personId })
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
+  if (!u?.personId) redirect("/welcome");
+  const personId = u.personId;
+
+  await savePersonBasics(personId, d);
+
+  // Address upsert: current HOME row (valid_to IS NULL).
+  if (d.countryCode) {
+    const [current] = await db
+      .select({ addressId: personAddress.addressId })
+      .from(personAddress)
+      .where(
+        and(
+          eq(personAddress.personId, personId),
+          eq(personAddress.type, "HOME"),
+          isNull(personAddress.validTo)
+        )
+      )
+      .limit(1);
+    if (current) {
+      await db
+        .update(address)
+        .set({
+          city: d.city || null,
+          province: d.province || null,
+          countryCode: d.countryCode,
+        })
+        .where(eq(address.addressId, current.addressId));
+    } else {
+      const [created] = await db
+        .insert(address)
+        .values({
+          city: d.city || null,
+          province: d.province || null,
+          countryCode: d.countryCode,
+        })
+        .returning({ addressId: address.addressId });
+      await db.insert(personAddress).values({
+        personId,
+        addressId: created.addressId,
+        type: "HOME",
+        validFrom: new Date().toISOString().slice(0, 10),
+      });
+    }
+  }
+
+  revalidatePath("/me/profile");
+  revalidatePath("/me");
+  redirect("/me/profile?saved=1");
 }

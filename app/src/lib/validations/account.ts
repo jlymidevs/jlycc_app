@@ -33,6 +33,15 @@ export const completeProfileSchema = z.object({
   chapterId: z.number().int().positive().optional(),
 });
 
+export const updateProfileSchema = completeProfileSchema
+  .omit({ chapterId: true })
+  .extend({
+    countryCode: z.string().length(2, "Country required").toUpperCase(),
+    province: z.string().trim().max(80).optional().or(z.literal("")),
+    city: z.string().trim().max(80).optional().or(z.literal("")),
+  });
+
 export type SignupInput = z.infer<typeof signupSchema>;
 export type JoinRequestInput = z.infer<typeof joinRequestSchema>;
 export type CompleteProfileInput = z.infer<typeof completeProfileSchema>;
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
