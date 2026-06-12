@@ -8,7 +8,13 @@ import {
   provisionUserProfile,
 } from "@/actions/users";
 
-const ROLE_OPTIONS = ["MEMBER", "MINISTRY_HEAD", "ADMIN", "SUPER_ADMIN"];
+const ROLE_OPTIONS = [
+  "MEMBER",
+  "MINISTRY_HEAD",
+  "NETWORK_HEAD",
+  "ADMIN",
+  "SUPER_ADMIN",
+];
 
 export default function UserRoleControls({
   userId,
