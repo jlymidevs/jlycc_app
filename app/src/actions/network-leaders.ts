@@ -3,11 +3,12 @@
 
 import { db } from "@/lib/db";
 import { users } from "@/schema/app";
-import { network, networkLeader, ministryMembership } from "@/schema/ministries";
+import { network, networkLeader, ministry, ministryChapter, ministryMembership } from "@/schema/ministries";
 import { member } from "@/schema/membership";
 import { person } from "@/schema/core";
 import { requireRole } from "@/lib/authz-server";
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { applyChapterHeadChange } from "@/actions/ministries";
+import { and, asc, eq, inArray, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 /** Resolve the acting user's member_id (for appointed_by). Nullable. */
@@ -134,6 +135,42 @@ export async function removeNetworkHead(formData: FormData) {
 
   revalidatePath("/users");
   return { success: true };
+}
+
+/** Active network ids the acting user heads. */
+export async function myNetworkIds(): Promise<number[]> {
+  const session = await requireRole("NETWORK_HEAD");
+  const rows = await db
+    .select({ networkId: networkLeader.networkId })
+    .from(networkLeader)
+    .innerJoin(member, eq(networkLeader.memberId, member.memberId))
+    .innerJoin(users, eq(users.personId, member.personId))
+    .where(and(eq(users.email, session.user!.email!), isNull(networkLeader.endedAt)));
+  return rows.map((r) => r.networkId);
+}
+
+/** Network head appoints/removes a chapter HEAD within their own network. */
+export async function setChapterHeadAsNetworkHead(formData: FormData) {
+  await requireRole("NETWORK_HEAD");
+  const membershipId = Number(formData.get("membershipId"));
+  const makeHead = formData.get("makeHead") === "1";
+  const myNets = await myNetworkIds();
+
+  // Ownership: the membership's chapter must belong to one of my networks.
+  const [target] = await db
+    .select({ networkId: ministry.networkId })
+    .from(ministryMembership)
+    .innerJoin(ministryChapter, eq(ministryMembership.chapterId, ministryChapter.chapterId))
+    .innerJoin(ministry, eq(ministryChapter.ministryId, ministry.ministryId))
+    .where(eq(ministryMembership.membershipId, membershipId))
+    .limit(1);
+  if (!target || !myNets.includes(target.networkId)) {
+    return { error: "That chapter is not in your network" };
+  }
+
+  const result = await applyChapterHeadChange(membershipId, makeHead);
+  revalidatePath("/network-head");
+  return result;
 }
 
 /** Networks with current head + eligible appointees, for the /users panel. */

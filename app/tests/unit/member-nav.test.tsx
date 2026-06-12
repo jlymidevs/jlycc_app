@@ -17,10 +17,17 @@ describe("memberNavForRole", () => {
   });
   it("MINISTRY_HEAD also sees ministry dashboard", () => {
     expect(hrefs("MINISTRY_HEAD")).toContain("/ministry");
+    expect(hrefs("MINISTRY_HEAD")).not.toContain("/network-head");
     expect(hrefs("MINISTRY_HEAD")).not.toContain("/members");
   });
-  it("ADMIN sees ministry dashboard and admin portal", () => {
+  it("NETWORK_HEAD sees ministry dashboard and network dashboard", () => {
+    expect(hrefs("NETWORK_HEAD")).toContain("/ministry");
+    expect(hrefs("NETWORK_HEAD")).toContain("/network-head");
+    expect(hrefs("NETWORK_HEAD")).not.toContain("/members");
+  });
+  it("ADMIN sees ministry dashboard, network dashboard and admin portal", () => {
     expect(hrefs("ADMIN")).toContain("/ministry");
+    expect(hrefs("ADMIN")).toContain("/network-head");
     expect(hrefs("ADMIN")).toContain("/members");
   });
   it("SUPER_ADMIN sees everything ADMIN sees", () => {
