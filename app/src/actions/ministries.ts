@@ -122,7 +122,7 @@ export async function getMinistries(): Promise<NetworkGroup[]> {
         isNull(ministryMembership.endedAt)
       )
     )
-    .limit(ministryIds.length);
+;
 
   const headMap = new Map(
     heads.map((h) => [h.ministryId, `${h.lastName}, ${h.firstName}`])
