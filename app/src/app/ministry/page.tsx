@@ -200,6 +200,7 @@ export default async function MinistryDashboardPage({
                   </td>
                   <td className="py-2">
                     {nextPromotionStage(m.currentStage) ? (
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       <form action={promoteMember as any}>
                         <input type="hidden" name="membershipId" value={m.membershipId} />
                         <button type="submit" className="text-xs text-blue-600 hover:text-blue-800 underline">

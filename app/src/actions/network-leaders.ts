@@ -8,7 +8,7 @@ import { member } from "@/schema/membership";
 import { person } from "@/schema/core";
 import { requireRole } from "@/lib/authz-server";
 import { applyChapterHeadChange } from "@/actions/ministries";
-import { and, asc, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, eq, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 
 /** Resolve the acting user's member_id (for appointed_by). Nullable. */
