@@ -11,7 +11,7 @@ describe("memberNavForRole", () => {
       "/me/attendance",
       "/me/ministries",
       "/me/announcements",
-      "/church/calendar",
+      "/me/calendar",
     ]);
   });
   it("MINISTRY_HEAD also sees ministry dashboard", () => {

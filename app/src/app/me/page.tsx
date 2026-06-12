@@ -154,7 +154,7 @@ export default async function MePage() {
               <p className="text-sm" style={{ color: "var(--text-muted)" }}>
                 {new Intl.DateTimeFormat("en-PH", { timeZone: "Asia/Manila", dateStyle: "medium" }).format(nextEvent.startsAt)}
               </p>
-              <Link href="/church/calendar" className="mt-2 inline-block text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
+              <Link href="/me/calendar" className="mt-2 inline-block text-sm font-medium" style={{ color: "var(--text-secondary)" }}>
                 View calendar →
               </Link>
             </div>
