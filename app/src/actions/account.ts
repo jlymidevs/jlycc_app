@@ -186,6 +186,11 @@ export async function completeProfile(formData: FormData) {
     }
   }
 
+  await db
+    .update(users)
+    .set({ profileCompletedAt: new Date() })
+    .where(eq(users.userId, u.userId));
+
   // Optional priority-1 ministry join request (skip if any request/membership exists).
   if (d.chapterId) {
     if (memberId == null) {

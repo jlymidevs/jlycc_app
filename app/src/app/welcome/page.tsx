@@ -21,7 +21,15 @@ export default async function WelcomePage() {
   // Staff don't need profile completion — send them to their landing page
   // (same destinations as the credentials login).
   if (role === "ADMIN" || role === "SUPER_ADMIN") redirect("/members");
+  if (role === "NETWORK_HEAD") redirect("/network-head");
   if (role === "MINISTRY_HEAD") redirect("/ministry");
+
+  const [account] = await db
+    .select({ profileCompletedAt: users.profileCompletedAt })
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
+  if (account?.profileCompletedAt) redirect("/me");
 
   const [me] = await db
     .select({
