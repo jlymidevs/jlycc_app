@@ -13,6 +13,8 @@ import {
 } from "@/schema/ministries";
 import { requireRole } from "@/lib/authz-server";
 import { headChapterIds } from "@/actions/join-requests";
+import { promoteMember } from "@/actions/promotion";
+import { nextPromotionStage } from "@/lib/stage-promotion";
 import RequestDecisionButtons from "@/components/request-decision-buttons";
 import { ListSearch } from "@/components/members/list-search";
 import { and, asc, desc, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm";
@@ -175,7 +177,8 @@ export default async function MinistryDashboardPage({
                 <th className="py-2 pr-4 font-medium">Ministry</th>
                 <th className="py-2 pr-4 font-medium">Priority</th>
                 <th className="py-2 pr-4 font-medium">Stage</th>
-                <th className="py-2 font-medium">Last attendance</th>
+                <th className="py-2 pr-4 font-medium">Last attendance</th>
+                <th className="py-2 font-medium">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -187,13 +190,25 @@ export default async function MinistryDashboardPage({
                   <td className="py-2 pr-4 text-gray-600">{m.ministryName}</td>
                   <td className="py-2 pr-4 text-gray-600">{ordinal(m.priority)}</td>
                   <td className="py-2 pr-4 text-gray-600">{m.currentStage}</td>
-                  <td className="py-2 text-gray-600">
+                  <td className="py-2 pr-4 text-gray-600">
                     {m.lastCheckIn
                       ? new Date(m.lastCheckIn).toLocaleDateString("en-PH", {
                           timeZone: "Asia/Manila",
                           dateStyle: "medium",
                         })
                       : "—"}
+                  </td>
+                  <td className="py-2">
+                    {nextPromotionStage(m.currentStage) ? (
+                      <form action={promoteMember as any}>
+                        <input type="hidden" name="membershipId" value={m.membershipId} />
+                        <button type="submit" className="text-xs text-blue-600 hover:text-blue-800 underline">
+                          Promote to {nextPromotionStage(m.currentStage) === "JOSHUA_GENERATION" ? "Joshua Generation" : "Inner Core"}
+                        </button>
+                      </form>
+                    ) : (
+                      <span className="text-xs text-gray-400">—</span>
+                    )}
                   </td>
                 </tr>
               ))}

@@ -6,6 +6,7 @@ import {
   boolean,
   timestamp,
   integer,
+  date,
   pgSchema,
   jsonb,
 } from "drizzle-orm/pg-core";
@@ -126,3 +127,14 @@ export const regularMemberApplication = membershipSchema.table(
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdateFn(() => new Date()),
   }
 );
+
+export const lifecycleStageHistory = membershipSchema.table("lifecycle_stage_history", {
+  historyId: bigserial("history_id", { mode: "number" }).primaryKey(),
+  memberId: bigint("member_id", { mode: "number" }).notNull().references(() => member.memberId),
+  fromStage: text("from_stage"),
+  toStage: text("to_stage").notNull(),
+  changedAt: timestamp("changed_at", { withTimezone: true }).notNull().defaultNow(),
+  effectiveFrom: date("effective_from"),
+  changedByPersonId: bigint("changed_by_person_id", { mode: "number" }),
+  reason: text("reason"),
+});
