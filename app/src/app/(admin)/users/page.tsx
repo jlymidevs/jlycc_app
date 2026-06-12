@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 import { db } from "@/lib/db";
 import { users } from "@/schema/app";
 import { requireRole } from "@/lib/authz-server";
-import { asc, ilike, or } from "drizzle-orm";
+import { asc, ilike, isNotNull, isNull, and, eq, or } from "drizzle-orm";
 import Link from "next/link";
 import UserRoleControls from "@/components/user-role-controls";
 import { ListSearch } from "@/components/members/list-search";
@@ -14,6 +14,14 @@ import {
   removeNetworkHead,
 } from "@/actions/network-leaders";
 import { getUserContext, getUserBasic } from "@/actions/users-context";
+
+function fmtLogin(d: Date | null | undefined): string {
+  if (!d) return "—";
+  return new Date(d).toLocaleDateString("en-PH", {
+    timeZone: "Asia/Manila",
+    dateStyle: "medium",
+  });
+}
 
 const ordinal = (p: number | null) =>
   p == null ? "—" : p === 1 ? "1st" : p === 2 ? "2nd" : p === 3 ? "3rd" : `${p}th`;
@@ -27,27 +35,43 @@ export default async function UsersPage({
   const query = typeof searchParams.q === "string" ? searchParams.q.trim() : "";
   const selectedPersonId = searchParams.user ? Number(searchParams.user) : null;
 
-  const [nh, rows, modalCtx, modalUser] = await Promise.all([
-    networkHeadOverview(),
-    db
-      .select({
-        userId: users.userId,
-        email: users.email,
-        name: users.name,
-        role: users.role,
-        personId: users.personId,
-        isActive: users.isActive,
-      })
-      .from(users)
-      .where(
-        query.length > 0
-          ? or(ilike(users.email, `%${query}%`), ilike(users.name, `%${query}%`))
-          : undefined
-      )
-      .orderBy(asc(users.email)),
-    selectedPersonId ? getUserContext(selectedPersonId) : Promise.resolve(null),
-    selectedPersonId ? getUserBasic(selectedPersonId) : Promise.resolve(null),
-  ]);
+  const searchFilter =
+    query.length > 0
+      ? or(ilike(users.email, `%${query}%`), ilike(users.name, `%${query}%`))
+      : undefined;
+
+  const userCols = {
+    userId: users.userId,
+    email: users.email,
+    name: users.name,
+    role: users.role,
+    personId: users.personId,
+    isActive: users.isActive,
+    lastLoginAt: users.lastLoginAt,
+    archivedAt: users.archivedAt,
+  };
+
+  const [nh, activeRows, suspendedRows, archivedRows, modalCtx, modalUser] =
+    await Promise.all([
+      networkHeadOverview(),
+      db
+        .select(userCols)
+        .from(users)
+        .where(and(eq(users.isActive, true), isNull(users.archivedAt), searchFilter))
+        .orderBy(asc(users.email)),
+      db
+        .select(userCols)
+        .from(users)
+        .where(and(eq(users.isActive, false), isNull(users.archivedAt), searchFilter))
+        .orderBy(asc(users.email)),
+      db
+        .select(userCols)
+        .from(users)
+        .where(and(isNotNull(users.archivedAt), searchFilter))
+        .orderBy(asc(users.email)),
+      selectedPersonId ? getUserContext(selectedPersonId) : Promise.resolve(null),
+      selectedPersonId ? getUserBasic(selectedPersonId) : Promise.resolve(null),
+    ]);
 
   const closeHref = query ? `/users?q=${encodeURIComponent(query)}` : "/users";
 
@@ -76,19 +100,19 @@ export default async function UsersPage({
               <th className="py-2 pr-4 font-medium">Email</th>
               <th className="py-2 pr-4 font-medium">Name</th>
               <th className="py-2 pr-4 font-medium">Role</th>
-              <th className="py-2 pr-4 font-medium">Status</th>
+              <th className="py-2 pr-4 font-medium">Last login</th>
               <th className="py-2 text-right font-medium">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {rows.length === 0 && (
+            {activeRows.length === 0 && (
               <tr>
                 <td colSpan={5} className="py-4 text-sm" style={{ color: "var(--text-muted)" }}>
-                  {query ? `No users match "${query}".` : "No users."}
+                  {query ? `No active users match "${query}".` : "No active users."}
                 </td>
               </tr>
             )}
-            {rows.map((u) => (
+            {activeRows.map((u) => (
               <tr key={u.userId} style={{ borderBottom: "1px solid var(--border)" }}>
                 <td className="py-2 pr-4">
                   {u.personId != null ? (
@@ -105,17 +129,8 @@ export default async function UsersPage({
                 </td>
                 <td className="py-2 pr-4" style={{ color: "var(--text-secondary)" }}>{u.name ?? "—"}</td>
                 <td className="py-2 pr-4" style={{ color: "var(--text-secondary)" }}>{u.role}</td>
-                <td className="py-2 pr-4">
-                  <span
-                    className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
-                    style={
-                      u.isActive
-                        ? { background: "var(--lime-soft)", color: "var(--text-primary)" }
-                        : { background: "var(--bg-inset)", color: "var(--text-muted)" }
-                    }
-                  >
-                    {u.isActive ? "ACTIVE" : "INACTIVE"}
-                  </span>
+                <td className="py-2 pr-4 text-xs" style={{ color: "var(--text-muted)" }}>
+                  {fmtLogin(u.lastLoginAt)}
                 </td>
                 <td className="py-2">
                   <UserRoleControls
@@ -124,6 +139,7 @@ export default async function UsersPage({
                     isActive={u.isActive}
                     hasProfile={u.personId != null}
                     isSelf={u.email === session.user?.email}
+                    archivedAt={u.archivedAt}
                   />
                 </td>
               </tr>
@@ -131,6 +147,100 @@ export default async function UsersPage({
           </tbody>
         </table>
       </div>
+
+      {/* Suspended users */}
+      {suspendedRows.length > 0 && (
+        <details className="card p-0 overflow-hidden">
+          <summary
+            className="cursor-pointer select-none px-6 py-4 text-sm font-medium flex items-center justify-between"
+            style={{ color: "var(--text-secondary)" }}
+          >
+            <span>Suspended ({suspendedRows.length})</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="details-chevron">
+              <path strokeLinecap="round" d="M6 9l6 6 6-6" />
+            </svg>
+          </summary>
+          <div className="overflow-x-auto px-6 pb-4">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr style={{ borderBottom: "1px solid var(--border)", color: "var(--text-muted)" }}>
+                  <th className="py-2 pr-4 font-medium">Email</th>
+                  <th className="py-2 pr-4 font-medium">Name</th>
+                  <th className="py-2 pr-4 font-medium">Role</th>
+                  <th className="py-2 text-right font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {suspendedRows.map((u) => (
+                  <tr key={u.userId} style={{ borderBottom: "1px solid var(--border)" }}>
+                    <td className="py-2 pr-4" style={{ color: "var(--text-muted)" }}>{u.email}</td>
+                    <td className="py-2 pr-4" style={{ color: "var(--text-muted)" }}>{u.name ?? "—"}</td>
+                    <td className="py-2 pr-4" style={{ color: "var(--text-muted)" }}>{u.role}</td>
+                    <td className="py-2">
+                      <UserRoleControls
+                        userId={u.userId}
+                        role={u.role}
+                        isActive={false}
+                        hasProfile={u.personId != null}
+                        isSelf={u.email === session.user?.email}
+                        archivedAt={null}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
+      )}
+
+      {/* Archived users */}
+      {archivedRows.length > 0 && (
+        <details className="card p-0 overflow-hidden">
+          <summary
+            className="cursor-pointer select-none px-6 py-4 text-sm font-medium flex items-center justify-between"
+            style={{ color: "var(--text-muted)" }}
+          >
+            <span>Archived ({archivedRows.length})</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="details-chevron">
+              <path strokeLinecap="round" d="M6 9l6 6 6-6" />
+            </svg>
+          </summary>
+          <div className="overflow-x-auto px-6 pb-4">
+            <table className="w-full text-left text-sm">
+              <thead>
+                <tr style={{ borderBottom: "1px solid var(--border)", color: "var(--text-muted)" }}>
+                  <th className="py-2 pr-4 font-medium">Email</th>
+                  <th className="py-2 pr-4 font-medium">Name</th>
+                  <th className="py-2 pr-4 font-medium">Archived</th>
+                  <th className="py-2 text-right font-medium">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {archivedRows.map((u) => (
+                  <tr key={u.userId} style={{ borderBottom: "1px solid var(--border)" }}>
+                    <td className="py-2 pr-4" style={{ color: "var(--text-muted)" }}>{u.email}</td>
+                    <td className="py-2 pr-4" style={{ color: "var(--text-muted)" }}>{u.name ?? "—"}</td>
+                    <td className="py-2 pr-4 text-xs" style={{ color: "var(--text-muted)" }}>
+                      {fmtLogin(u.archivedAt)}
+                    </td>
+                    <td className="py-2">
+                      <UserRoleControls
+                        userId={u.userId}
+                        role={u.role}
+                        isActive={false}
+                        hasProfile={u.personId != null}
+                        isSelf={u.email === session.user?.email}
+                        archivedAt={u.archivedAt}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </details>
+      )}
 
       <div className="card overflow-x-auto p-6 space-y-4">
         <div>

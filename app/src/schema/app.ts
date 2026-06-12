@@ -22,6 +22,8 @@ export const users = appSchema.table("users", {
     .references(() => person.personId),
   isActive: boolean("is_active").notNull().default(true),
   profileCompletedAt: timestamp("profile_completed_at", { withTimezone: true }),
+  lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
+  archivedAt: timestamp("archived_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
