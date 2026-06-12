@@ -27,6 +27,7 @@ export default async function EditMemberPage({
         middleName: person.middleName,
         lastName: person.lastName,
         gender: person.gender,
+        dateOfBirth: person.dateOfBirth,
         maritalStatus: person.maritalStatus,
       })
       .from(member)
@@ -75,6 +76,7 @@ export default async function EditMemberPage({
             middleName: row.middleName ?? undefined,
             lastName: row.lastName,
             gender: row.gender ?? undefined,
+            dateOfBirth: row.dateOfBirth ?? undefined,
             branchId: row.branchId,
             currentStage: row.currentStage,
             joinedAt: row.joinedAt.toISOString().split("T")[0],

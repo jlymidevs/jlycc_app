@@ -8,6 +8,7 @@ export type MemberFormProps = {
     middleName?: string;
     lastName?: string;
     gender?: string;
+    dateOfBirth?: string;
     maritalStatus?: string;
     email?: string;
     mobile?: string;
@@ -79,6 +80,17 @@ export function MemberForm({
             <option value="FEMALE">Female</option>
             <option value="UNDISCLOSED">Undisclosed</option>
           </select>
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Birthday
+          </label>
+          <input
+            name="dateOfBirth"
+            type="date"
+            defaultValue={defaultValues.dateOfBirth}
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+          />
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">
