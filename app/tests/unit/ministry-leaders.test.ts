@@ -1,4 +1,3 @@
-// app/tests/unit/ministry-leaders.test.ts
 import { describe, it, expect } from "vitest";
 import { buildLeaderSearchWhere } from "@/lib/ministry-leader-eligibility";
 

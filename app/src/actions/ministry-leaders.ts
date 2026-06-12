@@ -18,6 +18,8 @@ import {
   buildLeaderSearchWhere,
   type AppointmentType,
 } from "@/lib/ministry-leader-eligibility";
+
+export { buildLeaderSearchWhere, type AppointmentType };
 import { revalidatePath } from "next/cache";
 import { and, eq, isNull, ilike, or, inArray } from "drizzle-orm";
 
