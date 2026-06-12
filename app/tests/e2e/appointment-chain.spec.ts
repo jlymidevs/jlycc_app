@@ -35,6 +35,7 @@ test.describe("Network-head appointment chain", () => {
     const hash = bcrypt.hashSync("password123", 10);
 
     let memberId: number;
+    let personId: number | null = null;
     let leaderId: number | null = null;
 
     try {
@@ -43,6 +44,7 @@ test.describe("Network-head appointment chain", () => {
         VALUES ('Net', ${"Head" + stamp})
         RETURNING person_id
       `;
+      personId = p.person_id;
       const [b] = await sql`
         SELECT branch_id FROM core.branch WHERE code = 'E2E-MAIN'
       `;
@@ -133,6 +135,7 @@ test.describe("Network-head appointment chain", () => {
         `;
         await sql4`DELETE FROM app.users WHERE email = ${email}`;
         await sql4`DELETE FROM membership.member WHERE member_id = ${memberId!}`;
+        if (personId) await sql4`DELETE FROM core.person WHERE person_id = ${personId}`;
       } finally {
         await sql4.end();
       }
@@ -150,6 +153,8 @@ test.describe("Ministry-head stage promotion", () => {
     const headEmail = `e2e-mhead-${stamp}@example.com`;
     let headMemberId: number;
     let promotableMemberId: number;
+    let headPersonId: number | null = null;
+    let promotablePersonId: number | null = null;
 
     try {
       const [b] = await sql`
@@ -175,6 +180,7 @@ test.describe("Ministry-head stage promotion", () => {
         RETURNING member_id
       `;
       headMemberId = hm.member_id;
+      headPersonId = hp.person_id;
       await sql`
         INSERT INTO app.users (email, name, password_hash, role, person_id)
         VALUES (${headEmail}, ${"Min Head " + stamp}, ${hash}, 'MINISTRY_HEAD', ${hp.person_id})
@@ -196,6 +202,7 @@ test.describe("Ministry-head stage promotion", () => {
         RETURNING member_id
       `;
       promotableMemberId = mm.member_id;
+      promotablePersonId = mp.person_id;
       await sql`
         INSERT INTO ministries.ministry_membership (chapter_id, member_id, joined_at)
         VALUES (${ch.chapter_id}, ${mm.member_id}, now())
@@ -245,9 +252,19 @@ test.describe("Ministry-head stage promotion", () => {
         `;
         await sql3`DELETE FROM app.users WHERE email = ${headEmail}`;
         await sql3`
+          DELETE FROM membership.lifecycle_stage_history
+          WHERE member_id IN (${headMemberId!}, ${promotableMemberId!})
+        `;
+        await sql3`
           DELETE FROM membership.member
           WHERE member_id IN (${headMemberId!}, ${promotableMemberId!})
         `;
+        if (headPersonId) {
+          await sql3`DELETE FROM core.person WHERE person_id = ${headPersonId}`;
+        }
+        if (promotablePersonId) {
+          await sql3`DELETE FROM core.person WHERE person_id = ${promotablePersonId}`;
+        }
       } finally {
         await sql3.end();
       }
