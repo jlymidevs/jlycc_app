@@ -14,10 +14,17 @@ import { person, contactInfo } from "@/schema/core";
 import {
   signupSchema,
   completeProfileSchema,
+  updateProfileSchema,
 } from "@/lib/validations/account";
+import { address, personAddress } from "@/schema/core";
 import { provisionMemberProfile } from "@/lib/provision";
 import { requireRole } from "@/lib/authz-server";
 import { and, eq, isNull } from "drizzle-orm";
+
+/** YYYY-MM-DD in Asia/Manila — the app's operating timezone. */
+function manilaToday(): string {
+  return new Date().toLocaleDateString("sv", { timeZone: "Asia/Manila" });
+}
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -107,6 +114,54 @@ export async function signup(formData: FormData) {
   redirect("/login?registered=1");
 }
 
+/** Shared helper: update person basics + upsert mobile contact. */
+async function savePersonBasics(
+  personId: number,
+  d: {
+    firstName: string;
+    lastName: string;
+    mobile?: string;
+    dateOfBirth?: string;
+    gender?: "MALE" | "FEMALE" | "UNDISCLOSED";
+  }
+) {
+  await db
+    .update(person)
+    .set({
+      firstName: d.firstName,
+      lastName: d.lastName,
+      dateOfBirth: d.dateOfBirth ? d.dateOfBirth : null,
+      gender: d.gender ?? null,
+    })
+    .where(eq(person.personId, personId));
+
+  if (d.mobile) {
+    const [existingMobile] = await db
+      .select({ contactId: contactInfo.contactId })
+      .from(contactInfo)
+      .where(
+        and(
+          eq(contactInfo.personId, personId),
+          eq(contactInfo.type, "MOBILE")
+        )
+      )
+      .limit(1);
+    if (existingMobile) {
+      await db
+        .update(contactInfo)
+        .set({ value: d.mobile })
+        .where(eq(contactInfo.contactId, existingMobile.contactId));
+    } else {
+      await db.insert(contactInfo).values({
+        personId,
+        type: "MOBILE",
+        value: d.mobile,
+        isPrimary: false,
+      });
+    }
+  }
+}
+
 /**
  * Post-Google-signin profile completion (/welcome): update person details,
  * save mobile contact, optionally file a priority-1 ministry join request.
@@ -147,44 +202,12 @@ export async function completeProfile(formData: FormData) {
     memberId = r.memberId;
   }
 
-  await db
-    .update(person)
-    .set({
-      firstName: d.firstName,
-      lastName: d.lastName,
-      dateOfBirth: d.dateOfBirth ? d.dateOfBirth : null,
-      gender: d.gender ?? null,
-    })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .where(eq(person.personId, personId as any));
+  await savePersonBasics(personId, d);
 
-  if (d.mobile) {
-    const [existingMobile] = await db
-      .select({ contactId: contactInfo.contactId })
-      .from(contactInfo)
-      .where(
-        and(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          eq(contactInfo.personId, personId as any),
-          eq(contactInfo.type, "MOBILE")
-        )
-      )
-      .limit(1);
-    if (existingMobile) {
-      await db
-        .update(contactInfo)
-        .set({ value: d.mobile })
-        .where(eq(contactInfo.contactId, existingMobile.contactId));
-    } else {
-      await db.insert(contactInfo).values({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        personId: personId as any,
-        type: "MOBILE",
-        value: d.mobile,
-        isPrimary: false,
-      });
-    }
-  }
+  await db
+    .update(users)
+    .set({ profileCompletedAt: new Date() })
+    .where(eq(users.userId, u.userId));
 
   // Optional priority-1 ministry join request (skip if any request/membership exists).
   if (d.chapterId) {
@@ -224,4 +247,96 @@ export async function completeProfile(formData: FormData) {
 
   revalidatePath("/me");
   redirect("/me");
+}
+
+/** /me/profile self-service save: person basics + current HOME address. */
+export async function updateMyProfile(formData: FormData) {
+  const session = await requireRole("MEMBER");
+  const email = session.user?.email;
+  if (!email) redirect("/login");
+
+  const raw = {
+    firstName: formData.get("firstName"),
+    lastName: formData.get("lastName"),
+    mobile: (formData.get("mobile") as string | null) ?? "",
+    dateOfBirth: (formData.get("dateOfBirth") as string | null) ?? "",
+    gender: formData.get("gender") || undefined,
+    countryCode: (formData.get("countryCode") as string | null) ?? "",
+    province: (formData.get("province") as string | null) ?? "",
+    city: (formData.get("city") as string | null) ?? "",
+  };
+  const parsed = updateProfileSchema.safeParse(raw);
+  if (!parsed.success) {
+    redirect("/me/profile?err=1");
+    return;
+  }
+  const d = parsed.data;
+
+  const [u] = await db
+    .select({ userId: users.userId, personId: users.personId })
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
+  if (!u?.personId) redirect("/welcome");
+  const personId = u.personId;
+
+  await savePersonBasics(personId, d);
+
+  // Address upsert: history-preserving — close old row, insert new if values changed.
+  const today = manilaToday();
+  const [current] = await db
+    .select({
+      paAddressId: personAddress.addressId,
+      city: address.city,
+      province: address.province,
+      countryCode: address.countryCode,
+    })
+    .from(personAddress)
+    .innerJoin(address, eq(personAddress.addressId, address.addressId))
+    .where(
+      and(
+        eq(personAddress.personId, personId),
+        eq(personAddress.type, "HOME"),
+        isNull(personAddress.validTo)
+      )
+    )
+    .limit(1);
+
+  const newCity = d.city || null;
+  const newProvince = d.province || null;
+  const unchanged =
+    current &&
+    current.city === newCity &&
+    current.province === newProvince &&
+    current.countryCode === d.countryCode;
+
+  if (!unchanged) {
+    if (current) {
+      // Close the old row instead of mutating the (reusable) address record.
+      await db
+        .update(personAddress)
+        .set({ validTo: today })
+        .where(
+          and(
+            eq(personAddress.personId, personId),
+            eq(personAddress.addressId, current.paAddressId),
+            isNull(personAddress.validTo)
+          )
+        );
+    }
+    const [created] = await db
+      .insert(address)
+      .values({ city: newCity, province: newProvince, countryCode: d.countryCode })
+      .returning({ addressId: address.addressId });
+    await db.insert(personAddress).values({
+      personId,
+      addressId: created.addressId,
+      type: "HOME",
+      validFrom: today,
+    });
+  }
+
+  revalidatePath("/me/profile");
+  revalidatePath("/me");
+  redirect("/me/profile?saved=1");
 }

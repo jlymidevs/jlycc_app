@@ -103,6 +103,20 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return session;
     },
   },
+  events: {
+    async signIn({ user }) {
+      if (user.email) {
+        try {
+          await db
+            .update(users)
+            .set({ lastLoginAt: new Date() })
+            .where(eq(users.email, user.email));
+        } catch {
+          // non-critical — don't break auth if this fails
+        }
+      }
+    },
+  },
   pages: {
     signIn: "/login",
   },

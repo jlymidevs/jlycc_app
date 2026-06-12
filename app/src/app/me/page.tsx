@@ -82,13 +82,23 @@ export default async function MePage() {
 
   const next = nextStage(ladder, me.currentStage);
   const greeting = greetingForHour(manilaHour(new Date()));
+  const stageName =
+    ladder.find((s) => s.stageCode === me.currentStage)?.name ?? me.currentStage;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 px-2 py-6 md:px-4">
       <MotionCard lift={false}>
-        <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
-          {greeting}, {me.firstName}
-        </h1>
+        <div className="flex flex-wrap items-center gap-2">
+          <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
+            {greeting}, {me.firstName}
+          </h1>
+          <span
+            className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+            style={{ background: "var(--lime-soft)", color: "var(--text-primary)" }}
+          >
+            {stageName}
+          </span>
+        </div>
         <p className="text-sm" style={{ color: "var(--text-muted)" }}>
           My christian journey
         </p>

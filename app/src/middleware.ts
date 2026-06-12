@@ -23,8 +23,9 @@ const ADMIN_PREFIXES = [
 const ROLE_RANK: Record<string, number> = {
   MEMBER: 0,
   MINISTRY_HEAD: 1,
-  ADMIN: 2,
-  SUPER_ADMIN: 3,
+  NETWORK_HEAD: 2,
+  ADMIN: 3,
+  SUPER_ADMIN: 4,
 };
 
 function rank(role: unknown): number {
@@ -39,13 +40,15 @@ export default async function middleware(req: NextRequest) {
   );
   const isUsersRoute = path === "/users" || path.startsWith("/users/");
   const isMinistryRoute = path === "/ministry" || path.startsWith("/ministry/");
+  const isNetworkHeadRoute =
+    path === "/network-head" || path.startsWith("/network-head/");
   const isMeRoute =
     path === "/me" ||
     path.startsWith("/me/") ||
     path === "/welcome" ||
     path.startsWith("/welcome/");
 
-  if (!(isAdminRoute || isUsersRoute || isMinistryRoute || isMeRoute)) {
+  if (!(isAdminRoute || isUsersRoute || isMinistryRoute || isNetworkHeadRoute || isMeRoute)) {
     return NextResponse.next();
   }
 
@@ -73,6 +76,10 @@ export default async function middleware(req: NextRequest) {
     const dest = rank(role) >= ROLE_RANK.MINISTRY_HEAD ? "/ministry" : "/me";
     return NextResponse.redirect(new URL(dest, req.url));
   }
+  if (isNetworkHeadRoute && rank(role) < ROLE_RANK.NETWORK_HEAD) {
+    const dest = rank(role) >= ROLE_RANK.MINISTRY_HEAD ? "/ministry" : "/me";
+    return NextResponse.redirect(new URL(dest, req.url));
+  }
   if (isMinistryRoute && rank(role) < ROLE_RANK.MINISTRY_HEAD) {
     return NextResponse.redirect(new URL("/me", req.url));
   }
@@ -92,6 +99,7 @@ export const config = {
     "/bac/:path*",
     "/ghl/:path*",
     "/network/:path*",
+    "/network-head/:path*",
     "/users/:path*",
     "/ministry/:path*",
     "/me/:path*",

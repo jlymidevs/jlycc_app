@@ -109,3 +109,17 @@ export const joinRequest = ministriesSchema.table("join_request", {
     mode: "number",
   }).references(() => member.memberId),
 });
+
+export const networkLeader = ministriesSchema.table("network_leader", {
+  leaderId: bigserial("leader_id", { mode: "number" }).primaryKey(),
+  networkId: bigint("network_id", { mode: "number" })
+    .notNull()
+    .references(() => network.networkId),
+  memberId: bigint("member_id", { mode: "number" })
+    .notNull()
+    .references(() => member.memberId),
+  appointedBy: bigint("appointed_by", { mode: "number" }).references(() => member.memberId),
+  startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+  endedAt: timestamp("ended_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});

@@ -8,6 +8,7 @@ import {
   timestamp,
   char,
   pgSchema,
+  primaryKey,
 } from "drizzle-orm/pg-core";
 
 export const coreSchema = pgSchema("core");
@@ -87,3 +88,35 @@ export const contactInfo = coreSchema.table("contact_info", {
   verifiedAt: timestamp("verified_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const addressTypeEnum = coreSchema.enum("address_type", [
+  "HOME",
+  "WORK",
+  "MAILING",
+]);
+
+export const address = coreSchema.table("address", {
+  addressId: bigserial("address_id", { mode: "number" }).primaryKey(),
+  line1: text("line1"),
+  line2: text("line2"),
+  city: text("city"),
+  province: text("province"),
+  postalCode: text("postal_code"),
+  countryCode: char("country_code", { length: 2 }).notNull(),
+  // geom (POINT) — not mapped; use raw SQL when needed
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdateFn(() => new Date()),
+});
+
+export const personAddress = coreSchema.table("person_address", {
+  personId: bigint("person_id", { mode: "number" })
+    .notNull()
+    .references(() => person.personId, { onDelete: "cascade" }),
+  addressId: bigint("address_id", { mode: "number" })
+    .notNull()
+    .references(() => address.addressId),
+  type: addressTypeEnum("type").notNull(),
+  validFrom: date("valid_from").notNull(),
+  validTo: date("valid_to"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [primaryKey({ columns: [t.personId, t.addressId, t.validFrom] })]);

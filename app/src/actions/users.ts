@@ -44,6 +44,41 @@ export async function setUserActive(userId: string, isActive: boolean) {
   return { ok: true };
 }
 
+export async function archiveUser(userId: string) {
+  const session = await requireRole("SUPER_ADMIN");
+  const [target] = await db
+    .select({ email: users.email })
+    .from(users)
+    .where(eq(users.userId, userId))
+    .limit(1);
+  if (!target) return { errors: { user: ["User not found"] } };
+  if (target.email === session.user?.email) {
+    return { errors: { user: ["You cannot archive yourself"] } };
+  }
+  await db
+    .update(users)
+    .set({ isActive: false, archivedAt: new Date() })
+    .where(eq(users.userId, userId));
+  revalidatePath("/users");
+  return { ok: true };
+}
+
+export async function reactivateUser(userId: string) {
+  await requireRole("SUPER_ADMIN");
+  const [target] = await db
+    .select({ email: users.email })
+    .from(users)
+    .where(eq(users.userId, userId))
+    .limit(1);
+  if (!target) return { errors: { user: ["User not found"] } };
+  await db
+    .update(users)
+    .set({ isActive: true, archivedAt: null })
+    .where(eq(users.userId, userId));
+  revalidatePath("/users");
+  return { ok: true };
+}
+
 /** Provision (or re-link) the member profile for a legacy user. */
 export async function provisionUserProfile(userId: string) {
   await requireRole("SUPER_ADMIN");

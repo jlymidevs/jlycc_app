@@ -430,22 +430,16 @@ export async function endMembership(
   }
 }
 
-export async function setLeaderRole(
+/** Shared by admin setLeaderRole (HEAD path) and network-head scoped appointment. */
+export async function applyChapterHeadChange(
   membershipId: number,
-  isLeader: boolean,
-  leaderRole?: string
+  makeHead: boolean
 ): Promise<{ success: true } | { error: string }> {
-  await requireRole("ADMIN");
-  if (isLeader && !leaderRole) {
-    return { error: "Leader role required" };
-  }
-
   try {
     // Load the membership + member stage + linked account.
     const [row] = await db
       .select({
         memberId: ministryMembership.memberId,
-        chapterId: ministryMembership.chapterId,
         currentStage: member.currentStage,
         personId: member.personId,
       })
@@ -457,7 +451,7 @@ export async function setLeaderRole(
     if (!row) return { error: "Membership not found" };
 
     // Eligibility: only Inner Core / Joshua Generation can be HEAD.
-    if (isLeader && leaderRole === "HEAD" && !isHeadEligible(row.currentStage)) {
+    if (makeHead && !isHeadEligible(row.currentStage)) {
       return {
         error:
           "Only Inner Core or Joshua Generation members can be appointed ministry head",
@@ -467,10 +461,8 @@ export async function setLeaderRole(
     await db
       .update(ministryMembership)
       .set({
-        isLeader,
-        leaderRole: isLeader
-          ? (leaderRole as "HEAD" | "ASSISTANT_HEAD" | "COORDINATOR")
-          : null,
+        isLeader: makeHead,
+        leaderRole: makeHead ? "HEAD" : null,
       })
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .where(eq(ministryMembership.membershipId, membershipId as any));
@@ -482,13 +474,13 @@ export async function setLeaderRole(
       .where(eq(users.personId, row.personId))
       .limit(1);
     if (account) {
-      if (isLeader && leaderRole === "HEAD" && account.role === "MEMBER") {
+      if (makeHead && account.role === "MEMBER") {
         await db
           .update(users)
           .set({ role: "MINISTRY_HEAD" })
           .where(eq(users.userId, account.userId));
       }
-      if ((!isLeader || leaderRole !== "HEAD") && account.role === "MINISTRY_HEAD") {
+      if (!makeHead && account.role === "MINISTRY_HEAD") {
         // Demote only when they lead no other chapter.
         const stillLeads = await db
           .select({ membershipId: ministryMembership.membershipId })
@@ -508,6 +500,71 @@ export async function setLeaderRole(
             .set({ role: "MEMBER" })
             .where(eq(users.userId, account.userId));
         }
+      }
+    }
+
+    return { success: true };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to update leader role" };
+  }
+}
+
+export async function setLeaderRole(
+  membershipId: number,
+  isLeader: boolean,
+  leaderRole?: string
+): Promise<{ success: true } | { error: string }> {
+  await requireRole("ADMIN");
+  if (isLeader && !leaderRole) {
+    return { error: "Leader role required" };
+  }
+
+  try {
+    if (isLeader && leaderRole === "HEAD") {
+      const result = await applyChapterHeadChange(membershipId, true);
+      if ("error" in result) return result;
+    } else if (!isLeader || leaderRole !== "HEAD") {
+      // Non-HEAD roles: update directly without role sync.
+      const [row] = await db
+        .select({ membershipId: ministryMembership.membershipId })
+        .from(ministryMembership)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .where(eq(ministryMembership.membershipId, membershipId as any))
+        .limit(1);
+      if (!row) return { error: "Membership not found" };
+
+      // If removing HEAD, use applyChapterHeadChange for role sync.
+      const [cur] = await db
+        .select({ isLeader: ministryMembership.isLeader, leaderRole: ministryMembership.leaderRole })
+        .from(ministryMembership)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .where(eq(ministryMembership.membershipId, membershipId as any))
+        .limit(1);
+      if (cur?.isLeader && cur?.leaderRole === "HEAD" && (!isLeader || leaderRole !== "HEAD")) {
+        const result = await applyChapterHeadChange(membershipId, false);
+        if ("error" in result) return result;
+        // Now re-set with the new non-HEAD role if applicable.
+        if (isLeader && leaderRole) {
+          await db
+            .update(ministryMembership)
+            .set({
+              isLeader,
+              leaderRole: leaderRole as "HEAD" | "ASSISTANT_HEAD" | "COORDINATOR",
+            })
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .where(eq(ministryMembership.membershipId, membershipId as any));
+        }
+      } else {
+        await db
+          .update(ministryMembership)
+          .set({
+            isLeader,
+            leaderRole: isLeader
+              ? (leaderRole as "HEAD" | "ASSISTANT_HEAD" | "COORDINATOR")
+              : null,
+          })
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .where(eq(ministryMembership.membershipId, membershipId as any));
       }
     }
 
