@@ -20,6 +20,11 @@ import { address, personAddress } from "@/schema/core";
 import { provisionMemberProfile } from "@/lib/provision";
 import { requireRole } from "@/lib/authz-server";
 import { and, eq, isNull } from "drizzle-orm";
+
+/** YYYY-MM-DD in Asia/Manila — the app's operating timezone. */
+function manilaToday(): string {
+  return new Date().toLocaleDateString("sv", { timeZone: "Asia/Manila" });
+}
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -277,44 +282,58 @@ export async function updateMyProfile(formData: FormData) {
 
   await savePersonBasics(personId, d);
 
-  // Address upsert: current HOME row (valid_to IS NULL).
-  if (d.countryCode) {
-    const [current] = await db
-      .select({ addressId: personAddress.addressId })
-      .from(personAddress)
-      .where(
-        and(
-          eq(personAddress.personId, personId),
-          eq(personAddress.type, "HOME"),
-          isNull(personAddress.validTo)
-        )
+  // Address upsert: history-preserving — close old row, insert new if values changed.
+  const today = manilaToday();
+  const [current] = await db
+    .select({
+      paAddressId: personAddress.addressId,
+      city: address.city,
+      province: address.province,
+      countryCode: address.countryCode,
+    })
+    .from(personAddress)
+    .innerJoin(address, eq(personAddress.addressId, address.addressId))
+    .where(
+      and(
+        eq(personAddress.personId, personId),
+        eq(personAddress.type, "HOME"),
+        isNull(personAddress.validTo)
       )
-      .limit(1);
+    )
+    .limit(1);
+
+  const newCity = d.city || null;
+  const newProvince = d.province || null;
+  const unchanged =
+    current &&
+    current.city === newCity &&
+    current.province === newProvince &&
+    current.countryCode === d.countryCode;
+
+  if (!unchanged) {
     if (current) {
+      // Close the old row instead of mutating the (reusable) address record.
       await db
-        .update(address)
-        .set({
-          city: d.city || null,
-          province: d.province || null,
-          countryCode: d.countryCode,
-        })
-        .where(eq(address.addressId, current.addressId));
-    } else {
-      const [created] = await db
-        .insert(address)
-        .values({
-          city: d.city || null,
-          province: d.province || null,
-          countryCode: d.countryCode,
-        })
-        .returning({ addressId: address.addressId });
-      await db.insert(personAddress).values({
-        personId,
-        addressId: created.addressId,
-        type: "HOME",
-        validFrom: new Date().toISOString().slice(0, 10),
-      });
+        .update(personAddress)
+        .set({ validTo: today })
+        .where(
+          and(
+            eq(personAddress.personId, personId),
+            eq(personAddress.addressId, current.paAddressId),
+            isNull(personAddress.validTo)
+          )
+        );
     }
+    const [created] = await db
+      .insert(address)
+      .values({ city: newCity, province: newProvince, countryCode: d.countryCode })
+      .returning({ addressId: address.addressId });
+    await db.insert(personAddress).values({
+      personId,
+      addressId: created.addressId,
+      type: "HOME",
+      validFrom: today,
+    });
   }
 
   revalidatePath("/me/profile");
