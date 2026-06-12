@@ -4,11 +4,17 @@ export const dynamic = "force-dynamic";
 import { db } from "@/lib/db";
 import { users } from "@/schema/app";
 import { requireRole } from "@/lib/authz-server";
-import { asc } from "drizzle-orm";
+import { asc, ilike, or } from "drizzle-orm";
 import UserRoleControls from "@/components/user-role-controls";
+import { ListSearch } from "@/components/members/list-search";
 
-export default async function UsersPage() {
+export default async function UsersPage({
+  searchParams,
+}: {
+  searchParams: { q?: string };
+}) {
   const session = await requireRole("SUPER_ADMIN");
+  const query = typeof searchParams.q === "string" ? searchParams.q.trim() : "";
 
   const rows = await db
     .select({
@@ -20,6 +26,11 @@ export default async function UsersPage() {
       isActive: users.isActive,
     })
     .from(users)
+    .where(
+      query.length > 0
+        ? or(ilike(users.email, `%${query}%`), ilike(users.name, `%${query}%`))
+        : undefined
+    )
     .orderBy(asc(users.email));
 
   return (
@@ -33,6 +44,13 @@ export default async function UsersPage() {
         </p>
       </div>
 
+      <ListSearch
+        action="/users"
+        defaultValue={query}
+        placeholder="Search by email or name…"
+        variant="lime"
+      />
+
       <div className="card overflow-x-auto p-6">
         <table className="w-full text-left text-sm">
           <thead>
@@ -45,6 +63,13 @@ export default async function UsersPage() {
             </tr>
           </thead>
           <tbody>
+            {rows.length === 0 && (
+              <tr>
+                <td colSpan={5} className="py-4 text-sm" style={{ color: "var(--text-muted)" }}>
+                  {query ? `No users match "${query}".` : "No users."}
+                </td>
+              </tr>
+            )}
             {rows.map((u) => (
               <tr key={u.userId} style={{ borderBottom: "1px solid var(--border)" }}>
                 <td className="py-2 pr-4" style={{ color: "var(--text-primary)" }}>{u.email}</td>

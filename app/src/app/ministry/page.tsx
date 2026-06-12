@@ -14,13 +14,19 @@ import {
 import { requireRole } from "@/lib/authz-server";
 import { headChapterIds } from "@/actions/join-requests";
 import RequestDecisionButtons from "@/components/request-decision-buttons";
-import { and, asc, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { ListSearch } from "@/components/members/list-search";
+import { and, asc, desc, eq, ilike, inArray, isNull, or, sql } from "drizzle-orm";
 
 const ordinal = (p: number | null) =>
   p == null ? "—" : p === 1 ? "1st" : p === 2 ? "2nd" : p === 3 ? "3rd" : `${p}th`;
 
-export default async function MinistryDashboardPage() {
+export default async function MinistryDashboardPage({
+  searchParams,
+}: {
+  searchParams: { q?: string };
+}) {
   await requireRole("MINISTRY_HEAD");
+  const query = typeof searchParams.q === "string" ? searchParams.q.trim() : "";
   const chapters = await headChapterIds();
 
   if (chapters.length === 0) {
@@ -85,7 +91,13 @@ export default async function MinistryDashboardPage() {
     .where(
       and(
         inArray(ministryMembership.chapterId, chapters),
-        isNull(ministryMembership.endedAt)
+        isNull(ministryMembership.endedAt),
+        query.length > 0
+          ? or(
+              ilike(person.firstName, `%${query}%`),
+              ilike(person.lastName, `%${query}%`)
+            )
+          : undefined
       )
     )
     .orderBy(asc(ministry.name), desc(ministryMembership.isLeader));
@@ -147,9 +159,14 @@ export default async function MinistryDashboardPage() {
 
       {/* Roster / monitoring */}
       <section className="rounded-xl border border-gray-200 bg-white p-6 space-y-3">
-        <h2 className="text-lg font-semibold text-gray-900">My members</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold text-gray-900">My members</h2>
+          <ListSearch action="/ministry" defaultValue={query} />
+        </div>
         {roster.length === 0 ? (
-          <p className="text-sm text-gray-500">No members yet.</p>
+          <p className="text-sm text-gray-500">
+            {query ? `No members match "${query}".` : "No members yet."}
+          </p>
         ) : (
           <table className="w-full text-left text-sm">
             <thead>

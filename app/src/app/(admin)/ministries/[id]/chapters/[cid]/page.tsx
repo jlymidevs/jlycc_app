@@ -11,6 +11,7 @@ import {
   endMembership,
   setLeaderRole,
 } from "@/actions/ministries";
+import { ListSearch } from "@/components/members/list-search";
 
 const STATUS_COLORS: Record<string, string> = {
   ACTIVE: "bg-green-100 text-green-700",
@@ -29,7 +30,7 @@ export default async function ChapterDetailPage({
   searchParams,
 }: {
   params: { id: string; cid: string };
-  searchParams: { q?: string; addErr?: string; endErr?: string; leaderErr?: string };
+  searchParams: { q?: string; rq?: string; addErr?: string; endErr?: string; leaderErr?: string };
 }) {
   const ministryId = Number(params.id);
   const chapterId = Number(params.cid);
@@ -39,6 +40,17 @@ export default async function ChapterDetailPage({
 
   const query = typeof searchParams.q === "string" ? searchParams.q : "";
   const memberResults = query.length >= 2 ? await searchMembers(query) : [];
+
+  const rosterQuery = typeof searchParams.rq === "string" ? searchParams.rq.trim() : "";
+  const rosterLower = rosterQuery.toLowerCase();
+  const visibleMembers =
+    rosterLower.length > 0
+      ? chapter.activeMembers.filter(
+          (m) =>
+            `${m.firstName} ${m.lastName}`.toLowerCase().includes(rosterLower) ||
+            (m.memberCode ?? "").toLowerCase().includes(rosterLower)
+        )
+      : chapter.activeMembers;
 
   const addErr =
     typeof searchParams.addErr === "string" ? searchParams.addErr : undefined;
@@ -172,9 +184,18 @@ export default async function ChapterDetailPage({
 
       {/* Active Members */}
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-gray-900">
-          Active Members ({chapter.activeMembers.length})
-        </h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold text-gray-900">
+            Active Members ({chapter.activeMembers.length})
+          </h2>
+          <ListSearch
+            action={`/ministries/${ministryId}/chapters/${chapterId}`}
+            paramName="rq"
+            defaultValue={rosterQuery}
+            placeholder="Filter by name or code…"
+            preserveParams={{ q: query }}
+          />
+        </div>
 
         {endErr && (
           <p className="rounded-md bg-red-50 px-4 py-2 text-sm text-red-700">
@@ -187,8 +208,12 @@ export default async function ChapterDetailPage({
           </p>
         )}
 
-        {chapter.activeMembers.length === 0 ? (
-          <p className="text-sm text-gray-500">No active members.</p>
+        {visibleMembers.length === 0 ? (
+          <p className="text-sm text-gray-500">
+            {rosterQuery
+              ? `No active members match "${rosterQuery}".`
+              : "No active members."}
+          </p>
         ) : (
           <div className="overflow-x-auto rounded-lg border border-gray-200">
             <table className="w-full text-sm">
@@ -209,7 +234,7 @@ export default async function ChapterDetailPage({
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {chapter.activeMembers.map((m) => (
+                {visibleMembers.map((m) => (
                   <tr key={m.membershipId} className="bg-white">
                     <td className="px-4 py-3">
                       <p className="font-medium text-gray-900">
@@ -318,6 +343,9 @@ export default async function ChapterDetailPage({
 
         {/* Member search */}
         <form method="GET" className="flex items-center gap-2">
+          {rosterQuery.length > 0 && (
+            <input type="hidden" name="rq" value={rosterQuery} />
+          )}
           <input
             type="text"
             name="q"
