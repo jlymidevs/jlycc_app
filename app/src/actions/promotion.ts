@@ -59,8 +59,8 @@ export async function promoteMember(formData: FormData) {
           .set({ changedByPersonId: actor.personId, reason: "Promoted by ministry head" })
           .where(eq(lifecycleStageHistory.historyId, latest.historyId));
       }
-    } catch {
-      // History stamp failed silently — promotion itself succeeded
+    } catch (err) {
+      console.error("Failed to stamp promotion history row:", err);
     }
   }
 
