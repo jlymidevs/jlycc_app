@@ -19,9 +19,10 @@ import {
   type AppointmentType,
 } from "@/lib/ministry-leader-eligibility";
 
-export { buildLeaderSearchWhere, type AppointmentType };
 import { revalidatePath } from "next/cache";
 import { and, eq, isNull, ilike, or, inArray } from "drizzle-orm";
+
+export { buildLeaderSearchWhere, type AppointmentType };
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -209,6 +210,8 @@ export async function searchEligibleMembers(
   const { requiresHeadEligible, requiresChapterMember } =
     buildLeaderSearchWhere(type);
 
+  if (requiresChapterMember && !chapterId) return [];
+
   let rows;
 
   if (requiresChapterMember && chapterId) {
@@ -305,7 +308,7 @@ export async function appointNetworkHead(
       .from(users)
       .where(eq(users.personId, mem.personId))
       .limit(1);
-    if (account && account.role === "MEMBER") {
+    if (account && (account.role === "MEMBER" || account.role === "MINISTRY_HEAD")) {
       await db
         .update(users)
         .set({ role: "NETWORK_HEAD" })
@@ -372,9 +375,21 @@ export async function removeNetworkHead(
           )
           .limit(1);
         if (account) {
+          const isMinistryHead = await db
+            .select({ membershipId: ministryMembership.membershipId })
+            .from(ministryMembership)
+            .where(
+              and(
+                eq(ministryMembership.memberId, current.memberId as unknown as number),
+                eq(ministryMembership.isLeader, true),
+                eq(ministryMembership.leaderRole, "HEAD"),
+                isNull(ministryMembership.endedAt)
+              )
+            )
+            .limit(1);
           await db
             .update(users)
-            .set({ role: "MEMBER" })
+            .set({ role: isMinistryHead.length > 0 ? "MINISTRY_HEAD" : "MEMBER" })
             .where(eq(users.userId, account.userId));
         }
       }
