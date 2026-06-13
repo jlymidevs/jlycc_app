@@ -13,7 +13,6 @@ import {
 } from "@/schema/ministries";
 import { users } from "@/schema/app";
 import { requireRole } from "@/lib/authz-server";
-import { isHeadEligible } from "@/lib/journey";
 import {
   buildLeaderSearchWhere,
   type AppointmentType,
@@ -202,71 +201,40 @@ export async function getLeadersSidebarData(): Promise<NetworkLeadersData[]> {
 
 export async function searchEligibleMembers(
   query: string,
+  // type/chapterId kept for call-site compatibility; open appointment ignores
+  // them and lists any member with a record.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   type: AppointmentType,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   chapterId?: number
 ): Promise<EligibleMember[]> {
-  if (!query || query.trim().length < 2) return [];
-  const q = `%${query.trim()}%`;
-  const { requiresHeadEligible, requiresChapterMember } =
-    buildLeaderSearchWhere(type);
-
-  if (requiresChapterMember && !chapterId) return [];
-
-  let rows;
-
-  if (requiresChapterMember && chapterId) {
-    rows = await db
-      .select({
-        memberId: member.memberId,
-        memberCode: member.memberCode,
-        firstName: person.firstName,
-        lastName: person.lastName,
-        currentStage: member.currentStage,
-        branchName: branch.name,
-      })
-      .from(ministryMembership)
-      .innerJoin(member, eq(ministryMembership.memberId, member.memberId))
-      .innerJoin(person, eq(member.personId, person.personId))
-      .innerJoin(
-        ministryChapter,
-        eq(ministryMembership.chapterId, ministryChapter.chapterId)
-      )
-      .innerJoin(branch, eq(ministryChapter.branchId, branch.branchId))
-      .where(
-        and(
-          eq(ministryMembership.chapterId, chapterId as unknown as number),
-          isNull(ministryMembership.endedAt),
-          isNull(member.deletedAt),
-          or(ilike(person.firstName, q), ilike(person.lastName, q))
-        )
-      )
-      .limit(10);
-  } else {
-    rows = await db
-      .select({
-        memberId: member.memberId,
-        memberCode: member.memberCode,
-        firstName: person.firstName,
-        lastName: person.lastName,
-        currentStage: member.currentStage,
-        branchName: branch.name,
-      })
-      .from(member)
-      .innerJoin(person, eq(member.personId, person.personId))
-      .innerJoin(branch, eq(member.branchId, branch.branchId))
-      .where(
-        and(
-          isNull(member.deletedAt),
-          eq(member.status, "ACTIVE" as unknown as "ACTIVE"),
-          or(ilike(person.firstName, q), ilike(person.lastName, q))
-        )
-      )
-      .limit(10);
+  const q = query.trim();
+  const conds = [isNull(member.deletedAt)];
+  if (q.length >= 2) {
+    const like = `%${q}%`;
+    const nameMatch = or(
+      ilike(person.firstName, like),
+      ilike(person.lastName, like),
+      ilike(member.memberCode, like)
+    );
+    if (nameMatch) conds.push(nameMatch);
   }
 
-  return requiresHeadEligible
-    ? rows.filter((r) => isHeadEligible(r.currentStage))
-    : rows;
+  return db
+    .select({
+      memberId: member.memberId,
+      memberCode: member.memberCode,
+      firstName: person.firstName,
+      lastName: person.lastName,
+      currentStage: member.currentStage,
+      branchName: branch.name,
+    })
+    .from(member)
+    .innerJoin(person, eq(member.personId, person.personId))
+    .innerJoin(branch, eq(member.branchId, branch.branchId))
+    .where(and(...conds))
+    .orderBy(person.lastName, person.firstName)
+    .limit(q.length >= 2 ? 25 : 100);
 }
 
 // ─── Mutations ────────────────────────────────────────────────────────────────
@@ -284,8 +252,6 @@ export async function appointNetworkHead(
     .limit(1);
 
   if (!mem) return { error: "Member not found" };
-  if (!isHeadEligible(mem.currentStage))
-    return { error: "Member must be Inner Core or Joshua Generation" };
 
   try {
     await db
@@ -408,14 +374,19 @@ export async function appointMinistryHead(
 ): Promise<{ success: true } | { error: string }> {
   await requireRole("ADMIN");
 
+  // Open appointment: any member can be made head. Verify the member exists;
+  // if they aren't yet a chapter member, enroll them as part of appointing.
+  const [mem] = await db
+    .select({ personId: member.personId })
+    .from(member)
+    .where(eq(member.memberId, memberId as unknown as number))
+    .limit(1);
+
+  if (!mem) return { error: "Member not found" };
+
   const [membership] = await db
-    .select({
-      membershipId: ministryMembership.membershipId,
-      currentStage: member.currentStage,
-      personId: member.personId,
-    })
+    .select({ membershipId: ministryMembership.membershipId })
     .from(ministryMembership)
-    .innerJoin(member, eq(ministryMembership.memberId, member.memberId))
     .where(
       and(
         eq(ministryMembership.chapterId, chapterId as unknown as number),
@@ -424,10 +395,6 @@ export async function appointMinistryHead(
       )
     )
     .limit(1);
-
-  if (!membership) return { error: "Member is not an active chapter member" };
-  if (!isHeadEligible(membership.currentStage))
-    return { error: "Member must be Inner Core or Joshua Generation" };
 
   try {
     await db
@@ -442,20 +409,30 @@ export async function appointMinistryHead(
         )
       );
 
-    await db
-      .update(ministryMembership)
-      .set({ isLeader: true, leaderRole: "HEAD" })
-      .where(
-        eq(
-          ministryMembership.membershipId,
-          membership.membershipId as unknown as number
-        )
-      );
+    if (membership) {
+      await db
+        .update(ministryMembership)
+        .set({ isLeader: true, leaderRole: "HEAD" })
+        .where(
+          eq(
+            ministryMembership.membershipId,
+            membership.membershipId as unknown as number
+          )
+        );
+    } else {
+      await db.insert(ministryMembership).values({
+        chapterId: chapterId as unknown as number,
+        memberId: memberId as unknown as number,
+        joinedAt: new Date(),
+        isLeader: true,
+        leaderRole: "HEAD",
+      });
+    }
 
     const [account] = await db
       .select({ userId: users.userId, role: users.role })
       .from(users)
-      .where(eq(users.personId, membership.personId))
+      .where(eq(users.personId, mem.personId))
       .limit(1);
     if (account && account.role === "MEMBER") {
       await db
@@ -562,6 +539,16 @@ export async function appointInnerCore(
 ): Promise<{ success: true } | { error: string }> {
   await requireRole("ADMIN");
 
+  // Open appointment: enroll the member into the chapter if needed, then flag
+  // them as inner core.
+  const [mem] = await db
+    .select({ memberId: member.memberId })
+    .from(member)
+    .where(eq(member.memberId, memberId as unknown as number))
+    .limit(1);
+
+  if (!mem) return { error: "Member not found" };
+
   const [membership] = await db
     .select({ membershipId: ministryMembership.membershipId })
     .from(ministryMembership)
@@ -574,18 +561,25 @@ export async function appointInnerCore(
     )
     .limit(1);
 
-  if (!membership) return { error: "Member is not an active chapter member" };
-
   try {
-    await db
-      .update(ministryMembership)
-      .set({ isInnerCore: true })
-      .where(
-        eq(
-          ministryMembership.membershipId,
-          membership.membershipId as unknown as number
-        )
-      );
+    if (membership) {
+      await db
+        .update(ministryMembership)
+        .set({ isInnerCore: true })
+        .where(
+          eq(
+            ministryMembership.membershipId,
+            membership.membershipId as unknown as number
+          )
+        );
+    } else {
+      await db.insert(ministryMembership).values({
+        chapterId: chapterId as unknown as number,
+        memberId: memberId as unknown as number,
+        joinedAt: new Date(),
+        isInnerCore: true,
+      });
+    }
 
     revalidatePath("/ministries");
     return { success: true };
