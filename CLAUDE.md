@@ -2,163 +2,364 @@
 
 ## Project Overview
 
-Church membership, events, and attendance management system for JLY Church.
-Two surfaces: **admin portal** (staff, auth-required) and **public church pages** (no auth).
+JLYCC App is a church operations platform for JLY Church.
+
+It appears to combine:
+- a **staff/admin portal** for membership, ministries, events, attendance, programs, education, missions, announcements, and user management
+- a **member-facing surface** (`/me`, `/portal/[token]`, `/welcome`, `/signup`)
+- a **public church site** (`/church`, `/church/events`, `/church/calendar`)
+- a **PostgreSQL/Flyway database layer** with extensive SQL migrations and pgTAP-style DB tests
+- a small **Python ETL/staging loader** for CSV import into the `staging` schema
 
 ## Tech Stack
 
 | Layer | Technology |
-|-------|-----------|
-| Framework | Next.js 14 (App Router) |
+|---|---|
+| Frontend / App | Next.js 14 App Router |
 | Language | TypeScript (strict) |
 | Styling | Tailwind CSS |
-| ORM | Drizzle ORM |
-| Database | PostgreSQL 16 |
-| Auth | NextAuth.js v5 (credentials + Google OAuth with DB allowlist) |
-| Email | Resend SDK |
-| CRM | GoHighLevel (REST, no SDK — `src/lib/ghl.ts`) |
+| Animation | framer-motion |
+| Auth | NextAuth.js v5 beta |
 | Validation | Zod |
-| Unit Tests | Vitest |
-| E2E Tests | Playwright |
-| DB Migrations | Flyway (SQL) |
+| ORM / DB access | Drizzle ORM + `postgres` |
+| Database | PostgreSQL 16 |
+| Migrations | Flyway SQL |
+| Unit tests | Vitest |
+| E2E tests | Playwright |
+| Email | Resend |
+| CRM integration | GoHighLevel REST integration |
+| ETL | Python (`psycopg2`, `pandas`, `gspread`) |
+| Package manager | npm (`app/package-lock.json` present) |
+| Deployment target | Vercel app + Neon Postgres are referenced in docs/history |
 
 ## Important Commands
 
+### App
 ```bash
-# Dev
-cd app && npm run dev          # Start dev server (localhost:3000)
-cd app && npm run build        # Production build
-cd app && npx tsc --noEmit     # TypeScript check
-
-# Tests
-cd app && npx vitest run       # Unit tests
-cd app && npx playwright test  # E2E tests
-
-# Database (local dev only)
-cd db && docker compose up -d  # Start PostgreSQL + run Flyway migrations
+cd app
+npm run dev
+npm run build
+npm run start
+npm run lint
+npx tsc --noEmit
+npx vitest run
+npx playwright test
 ```
 
-## Folder Structure
-
+### Database
+```bash
+cd db
+docker compose up -d postgres
+docker compose run --rm pgtap_installer
+docker compose run --rm flyway migrate
+./tests/run_tests.sh
 ```
+
+### ETL
+```bash
+cd etl
+python loader.py --csv path/to/file.csv
+```
+
+## Folder Structure Summary
+
+```text
 JLYCC App/
-├── app/                        # Next.js application
+├── app/                      # Next.js application
 │   ├── src/
-│   │   ├── actions/            # Server actions (auth, members, events, attendance, registrations)
-│   │   ├── app/
-│   │   │   ├── (admin)/        # Protected admin routes (members, events, attendance, programs, education, ministries, missions, announcements)
-│   │   │   ├── church/         # Public routes (no auth)
-│   │   │   │   ├── events/     # Public events list + detail
-│   │   │   │   ├── layout.tsx  # Shared public nav
-│   │   │   │   └── page.tsx    # Church homepage, hero + 5 upcoming events
-│   │   │   ├── portal/[token]/ # Public member self-service portal
-│   │   │   ├── login/          # Staff login
-│   │   │   └── api/auth/       # NextAuth API route
-│   │   ├── components/         # QrScanner, member-form, member-search
-│   │   ├── lib/                # auth.ts, db.ts, email.ts, portal-token.ts, validations/
-│   │   └── schema/             # Drizzle schemas (core, membership, events, attendance, programs, education, ministries, missions, communications, app)
+│   │   ├── actions/         # Server actions for major modules
+│   │   ├── app/             # App Router pages and route groups
+│   │   ├── components/      # Shared UI components
+│   │   ├── lib/             # Auth, DB, helpers, validation, integrations
+│   │   └── schema/          # Drizzle schema definitions
 │   ├── tests/
-│   │   ├── e2e/                # Playwright E2E (13 spec files)
-│   │   └── unit/               # Vitest unit tests (13 test files, 216 tests)
-│   ├── .env.example            # Required env vars template
+│   │   ├── e2e/             # Playwright specs
+│   │   └── unit/            # Vitest unit tests
+│   ├── .env.example
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── playwright.config.ts
+│   ├── vitest.config.ts
+│   ├── tailwind.config.ts
 │   └── drizzle.config.ts
 ├── db/
-│   ├── migrations/             # 75 Flyway SQL migrations (V001–V069) + repeatable seeds
-│   └── docker-compose.yml      # Local PostgreSQL 16 + Flyway
-├── etl/                        # Python CSV → staging.stg_person loader (uses DATABASE_URL env)
-├── JLYCC favicon_io/           # Favicon/PWA icon set (untracked)
-└── docs/superpowers/
-    ├── plans/                  # Implementation plans (Plans 1–17; 12–16 untracked)
-    └── specs/                  # Architecture specs (incl. church calendar design)
+│   ├── migrations/          # Flyway migrations + repeatable seeds
+│   ├── staging/             # Standalone SQL staging pipeline scripts
+│   ├── tests/               # DB test SQL + run_tests.sh
+│   ├── docker-compose.yml
+│   ├── flyway.conf
+│   └── README.md
+├── docs/
+│   └── superpowers/
+│       ├── plans/           # Implementation plans / handoff plans
+│       ├── specs/           # Design specs
+│       └── screenshots/     # UI screenshots
+├── etl/                     # Python CSV → staging loader
+├── JLYCC favicon_io/        # Favicon source assets (currently untracked)
+├── .worktrees/              # Local git worktree folders
+└── CLAUDE.md                # This handoff file
 ```
 
-## Current Progress
+## Main Modules / Features Observed
 
-### Completed (PRs #1–#12)
-- **Plan 1 — Foundation**: DB schema (66 migrations, 10 schemas)
-- **Plan 5 — Web App**: Next.js app scaffold, NextAuth, Drizzle, member CRUD (PR #1)
-- **Plan 6a — Events**: Event CRUD, registration, organizer assignment (PR #2)
-- **Plan 6b — Attendance**: QR scanner, check-in, FTV capture, attendance dashboard (PR #3)
-- **Plan 6c — Public Homepage**: `church/layout.tsx` + `church/page.tsx` (PR #4)
-- **Plan 7 — Programs / BAC**: Heartlink + BAC admin modules (PR #5)
-- **Plan 8 — Education (BC + ISU)**: Bible College + ISU admin modules (PR #6)
-- **Plan 9 — Ministries**: networks/ministry/chapter/membership admin module (PR #7)
-- **Plan 10 — Scholarships**: missions scholarships CRUD admin module (PR #8)
-- **Plan 11 — Membership Extensions**: applications queue, extended member detail (Roles/PCM/Application sections) (PR #9)
-- **Plan 12 — Member Self-Service Portal**: `/portal/[token]` public page, portal link on admin member detail (PR #10)
-- **Plan 13 — Communications**: announcements module, fan-out recipients, admin pages (PR #11)
-- **Plan 14 — Email Delivery**: Resend SDK, email send on publish, `delivered_at` tracking (PR #12)
-- **Plan 17 — Church Calendar**: public `/church/calendar` month grid + agenda list, add-to-calendar (Google URL + ICS download route), recurring series admin (create/cancel) materializing WEEKLY/MONTHLY `event` rows ~3 months ahead in Asia/Manila time (PR #13)
-- **Plan 18 — Roles & Member Journey**: 4-role access (Super Admin/Admin/Ministry Head/Member), self-signup, universal member profiles (/me), FB-style ministry join requests with priority ranks, head dashboard (/ministry), super-admin user management (/users), head eligibility = Inner Core/Joshua Generation (branch `plan18-roles-member-journey`)
-- **Member Dashboard Redesign** (2026-06-12, branch `member-dashboard-redesign`): admin + member dashboards share one client `DashboardShell` (sidebar, topbar, mobile drawer, animated nav pill); `/me` split into Overview / Attendance / Ministries / Announcements pages; framer-motion widgets (`MotionCard`, `AnimatedNumber`, `JourneyLadder`); role-filtered member nav (`memberNavForRole`). New E2E `member-dashboard.spec.ts` (4 tests). Verified: 293/293 unit, tsc + prod build clean, 11/11 E2E (member-dashboard, roles-journey, admin-smoke) vs local DB, visual check (admin shell, member shell, mobile drawer). Plan: `docs/superpowers/plans/2026-06-11-member-dashboard-redesign.md`. **Admin shell unification** (same branch, 2026-06-12): `/users` moved into `(admin)` route group (URL unchanged, renders in shell, lime restyle), admin nav now role-filtered via `adminNavForRole` — Users link SUPER_ADMIN-only + My Dashboard/Ministry Dashboard cross-links; nav is UI-only, middleware/requireRole untouched. Verified: 297/297 unit, tsc + build clean, 12/12 E2E. Spec: `docs/superpowers/specs/2026-06-12-admin-shell-unification-design.md`, plan: `docs/superpowers/plans/2026-06-12-admin-shell-unification.md`
-- **Attendance Audit Dashboard** (2026-06-11, branch `attendance-audit-dashboard`, ready for PR): weekly trend stat cards + server-rendered SVG bar chart on `/events/attendance`, "My attendance" section on `/me`. New: `app/src/lib/attendance-trends.ts` (pure helpers, 7 unit tests), `app/src/components/trend-chart.tsx`. Zero new deps, no migrations. Verified 2026-06-11: 278/278 unit tests, tsc clean, prod build clean. Plan: `docs/superpowers/plans/2026-06-11-attendance-audit-dashboard.md`
+### Admin / staff areas
+- Members CRUD, edit, applications queue, trash / restore flow
+- Events CRUD, registrations, attendance, recurring series
+- Programs: Heartlink and BAC
+- Education: BC and ISU
+- Ministries and chapter membership management
+- Missions scholarships
+- Announcements / communications
+- GHL integration page
+- Users / roles / activation
+- Network dashboard (`/network`)
 
-### Completed after PR #12 (committed directly to master, no PRs)
-- **Auth hardening**: middleware now protects ALL admin routes (`b1b6103`) — Plan 16 Task 1 done
-- **Google OAuth**: provider added with DB allowlist check (`8bfee2b`)
-- **UI overhaul**: dark dashboard redesign + PWA setup (`ff4e77f`), animated splash on root (`bc0f971`), soft teal brand palette (`73f17a5`), split login layout with video panel (`fd6cf70`)
-- **GHL integration**: bidirectional contact sync + SMS messaging (`b9672f3`) — `src/lib/ghl.ts`, `src/actions/ghl.ts`, `/ghl` admin page, V067 migration adds `core.person.ghl_contact_id`
+### Member-facing areas
+- `/me` dashboard
+- `/me/attendance`
+- `/me/ministries`
+- `/me/announcements`
+- `/me/calendar`
+- `/welcome`
+- `/signup`
+- `/portal/[token]`
 
-### Deployed (2026-06-11)
-- **Live on Vercel**: https://jlycc-app-xi.vercel.app (project `jlycc-app`, CLI deploys from `app/`)
-- **Neon DB** (prod): migrated through V069, Flyway baselined at 069, lifecycle stages + NCR region + MAIN branch seeded; `admin@jly.church` = SUPER_ADMIN
-- **Vercel prod env vars set**: DATABASE_URL(+READER), AUTH_SECRET, RESEND_API_KEY, RESEND_FROM (=onboarding@resend.dev — no verified Resend domain yet), GHL_*, PORTAL_SECRET, AUTH_TRUST_HOST, APP_BASE_URL
-- E2E verified vs local DB: roles-journey 4/4, calendar 6/6
+### Public-facing areas
+- `/church`
+- `/church/events`
+- `/church/calendar`
+- `/church/events/[id]`
+- ICS / add-to-calendar flow is referenced in docs and route structure
 
-### Google OAuth (live 2026-06-11)
-- Web OAuth client created in JLYCC Google Cloud project; creds in Vercel prod env + local `app/.env`
-- "Continue with Google" on /login + /signup; new Google users → MEMBER + /welcome profile completion
-- Old desktop client (`App/JLYCC/client_secrets.json`) is for the YouTube script — NOT usable for web auth
+### Database domains present in schema/migrations
+- `core`
+- `membership`
+- `ministries`
+- `events`
+- `attendance`
+- `programs`
+- `education`
+- `missions`
+- `communications`
+- `app`
+- `staging`
 
-### Accounts (prod, 2026-06-11)
-- **SUPER_ADMIN: jlymi.devs@gmail.com** (password set + Google); `admin@jly.church` demoted to ADMIN (V068 seed still names admin@jly.church — prod overridden by data change, fresh local rebuilds get the old super admin)
-- 4 other ADMIN accounts are Google-only (no password)
+## Current State of Progress
 
-### Remaining (human actions)
-- **Resend domain**: verify a sending domain in Resend (DNS), then update `RESEND_FROM` (currently onboarding@resend.dev — test-only sends)
+### Clearly implemented on current `master`
+Evidence from routes, actions, schema, tests, and recent git history indicates these are already present:
+- Core app scaffold and auth system
+- Member management including trash / restore / purge
+- Events, registrations, attendance, and calendar pages
+- Programs, education, scholarships, ministries modules
+- Announcements / email integration
+- Public church pages and member dashboard areas
+- User management page
+- Recent DB work for `V070`–`V074` has been committed on `master`
 
-## Git State (as of 2026-06-12)
+### In progress / partial on current working tree
+There is active unfinished work around the ministries leaders redesign:
+- Untracked file: `app/src/actions/ministry-leaders.ts`
+- Untracked tests:
+  - `app/tests/unit/ministry-leaders.test.ts`
+  - `app/tests/unit/stage-promotion.test.ts`
+- Existing ministries page is still the older simple grouped-card layout:
+  - `app/src/app/(admin)/ministries/page.tsx`
+- The redesign plan/spec exist:
+  - `docs/superpowers/specs/2026-06-12-ministries-leaders-redesign.md`
+  - `docs/superpowers/plans/2026-06-12-ministries-leaders-redesign.md`
 
-- **Member Dashboard Redesign: ALL TASKS DONE, ready for push + PR** — branch `member-dashboard-redesign` in worktree `.worktrees/member-dashboard-redesign` (HEAD `0a0403c`, working tree clean, 15 commits ahead of master). Plan: `docs/superpowers/plans/2026-06-11-member-dashboard-redesign.md`.
-  - Shared `DashboardShell` (admin + member), `/me` split into Overview/Attendance/Ministries/Announcements, framer-motion widgets, role-filtered nav, E2E `member-dashboard.spec.ts`
-  - Verified 2026-06-12: 293/293 unit, tsc + prod build clean, 11/11 E2E (member-dashboard 4, roles-journey 6, admin-smoke) vs local DB, visual check via dev server (admin sidebar, member nav role filter, mobile drawer)
-  - Includes fix for stale roles-journey assertion (`Welcome to JLY Church!` → `Welcome to JLYCC!` after branding rename `473c0f1`)
-  - **Remaining (needs approval): `git push -u origin member-dashboard-redesign` + open PR to master**
-- Main checkout on `master`, **ahead of origin by 2 commits** (redesign spec `f657d1e` + plan `2efd608`) — push when convenient
-- PR #14 (attendance-audit-dashboard) merged at `16cf436`; PRs #1–#14 merged. Post-merge hardening on master: middleware cookie security (`8a5aa30`), education redirect-swallow fix (`22bb12d`), db client HMR reuse (`86d75e5`), E2E harness hardening (`8de29b0`), lime ACRU redesign (`61f50d6`), JLYCC branding (`473c0f1`, `eb9fdd2`)
-- Untracked: `app/.env` (local secrets — never commit), `JLYCC favicon_io/` (icon source set)
-- `.worktrees/`: 3 entries — `member-dashboard-redesign` (ACTIVE), `feature/plan18-roles-member-journey` + `feature/plan9-scholarships` (stale, safe to prune after confirming merged)
-- E2E: 13 spec files (some skipped: accumulated test data, QR code)
+### Important branch/worktree context visible from git history
+A separate feature branch exists with much more appointment-hierarchy work:
+- `feature/profile-appointment-hierarchy`
+- visible commits include:
+  - `feat(users): appoint/remove network heads with role sync`
+  - `feat(network-head): dashboard with scoped ministry-head appointment`
+  - `feat(ministry): one-step stage promotion up to Inner Core`
+  - related E2E and user-context commits
+
+That means current `master` contains only part of that broader feature set, while the feature branch appears materially ahead in appointment-chain implementation.
+
+## Git State (audited now)
+
+### Branch / ahead status
+- Current branch: `master`
+- Status: `master...origin/master [ahead 4]`
+
+### Modified files
+- `.claude/launch.json`
+- `CLAUDE.md`
+
+### Untracked files
+- `app/src/actions/ministry-leaders.ts`
+- `app/tests/unit/ministry-leaders.test.ts`
+- `app/tests/unit/stage-promotion.test.ts`
+
+### Recent commits on `master`
+- `f104a31` — `feat(db): V074 is_inner_core column; Drizzle networkLeader table + isInnerCore field`
+- `db91a20` — `feat(db): V073 ministries.network_leader appointment table`
+- `a9bdbac` — ministries leaders redesign plan doc
+- `9d792cf` — ministries leaders redesign spec doc
+- `f6a55c3` — member trash / restore / purge
+
+### Important recent-history observation
+Commit `db91a20` added `V070`, `V071`, `V072`, and `V073` migrations to `master`, but the corresponding app-layer implementation is not fully present on `master`.
+
+## Technical Health Check
+
+### Dependency / script status
+- `npm run lint` currently succeeds with no ESLint errors.
+- TypeScript is **not** clean right now.
+- Unit tests are **not** clean right now.
+
+### Verified issues found during audit
+
+#### 1) Missing file breaks typecheck
+Verified via `npx tsc --noEmit`:
+- `tests/unit/stage-promotion.test.ts` imports `@/lib/stage-promotion`
+- `app/src/lib/stage-promotion.ts` does **not** exist
+- current TypeScript error:
+  - `TS2307: Cannot find module '@/lib/stage-promotion'`
+
+#### 2) New ministry-leaders unit test is not runnable as written
+Verified via Vitest:
+- `tests/unit/ministry-leaders.test.ts` imports from `@/actions/ministry-leaders`
+- that action file drags in app/server auth dependencies
+- Vitest currently fails with:
+  - `Cannot find module '.../node_modules/next/server' imported from next-auth/lib/env.js`
+
+This suggests the pure helper under test should likely be moved into a dependency-light helper module, or the test harness needs a safer boundary.
+
+#### 3) Schema / app-state mismatch around role hierarchy
+Current app role ladder still reflects only four roles:
+- `app/src/lib/authz.ts` roles = `MEMBER`, `MINISTRY_HEAD`, `ADMIN`, `SUPER_ADMIN`
+- `app/src/components/user-role-controls.tsx` role options also omit `NETWORK_HEAD`
+- `app/src/middleware.ts` has no `NETWORK_HEAD` route handling
+
+But `db/migrations/V070__profile_completed_network_head_role.sql` expands the DB role check to include `NETWORK_HEAD`.
+
+This means database migrations on `master` are ahead of current app-layer role handling.
+
+#### 4) `profile_completed_at` migration is present, but app schema / usage are not fully aligned on `master`
+- `V070__profile_completed_network_head_role.sql` adds `app.users.profile_completed_at`
+- current `app/src/schema/app.ts` does **not** expose `profileCompletedAt`
+- current search of app code did not show active runtime use of `profileCompletedAt`
+
+So part of the welcome/profile-completion feature was merged into migrations, but not fully into current `master` app code.
+
+#### 5) Duplicate / overlapping network leader migrations exist
+Current migration set includes both:
+- `V071__ministries_network_leader.sql` — creates `ministries.network_leader`
+- `V073__ministries_network_leader.sql` — alters/re-adds FKs and comments on the same table
+
+This may be intentional as a follow-up migration, but it is easy to misread and should be treated carefully when continuing migration work.
+
+#### 6) Existing ministries page does not yet match approved redesign docs
+- Current page is a simple grouped card list
+- Approved design expects a 2-column ministries + leaders layout with appointment controls
+
+#### 7) `ministries.ts` action file contains multiple `as any` / `eslint-disable` suppressions
+These are not immediate build failures, but they are risk markers for future refactors and type drift.
+
+## Tests Present
+
+### App tests
+- Unit tests: 27 files currently detected under `app/tests/unit`
+- E2E tests: 15 Playwright spec files detected under `app/tests/e2e`
+
+### DB tests
+- 58 SQL test files detected under `db/tests`
+- `db/tests/run_tests.sh` executes all SQL files inside the Docker Postgres container
+
+### What was actually run in this audit
+Ran successfully:
+- `npm run lint`
+
+Ran and failed:
+- `npx tsc --noEmit`
+- `npx vitest run tests/unit/ministry-leaders.test.ts tests/unit/stage-promotion.test.ts`
+
+Not run during this audit:
+- full app build
+- full unit test suite
+- Playwright suite
+- DB migration / DB tests
+
+## Config / Environment / Deployment Files Observed
+
+### App config
+- `app/package.json`
+- `app/tsconfig.json`
+- `app/next.config.mjs`
+- `app/drizzle.config.ts`
+- `app/playwright.config.ts`
+- `app/vitest.config.ts`
+- `app/tailwind.config.ts`
+- `app/postcss.config.mjs`
+- `app/.eslintrc.json`
+- `app/.env.example`
+
+### DB / infra config
+- `db/docker-compose.yml`
+- `db/flyway.conf`
+- many Flyway migration files in `db/migrations/`
+
+### Deployment references
+- No `vercel.json` found in `app/`
+- deployment to Vercel and Neon is documented in plans / prior handoff notes, but configuration appears to rely on environment/platform settings rather than repo-local config files
 
 ## Known Issues / Risks
 
-- **Middleware MUST live at `app/src/middleware.ts`** — Next.js ignores `middleware.ts` at the project root when `src/` exists (route guards were silently dead until 2026-06-11). Middleware is edge runtime: decode JWT via `getToken`, never import `@/lib/auth` (postgres driver breaks on edge).
-- **Local `.env` points at NEON (prod)** — `npm run dev` and E2E hit prod unless you override: `DATABASE_URL=postgresql://jly_admin:localdevpassword@localhost:5432/jly` (same for `_READER`). Never run Playwright against the Neon URL.
-- Flyway-on-Neon: history baselined at 069 via dockerized Flyway; bind-mounting `db/migrations` from Git Bash on Windows may silently mount empty — verify "validated N migrations" count in output.
-- `app/.env` exists locally (untracked, now gitignored, contains secrets) — never commit; create from `app/.env.example` on new machines
-- GHL Location ID hardcoded as display text in `src/app/(admin)/ghl/page.tsx` (UI only, API uses env var)
-- `RESEND_API_KEY` + `RESEND_FROM` must be set in prod env for email delivery to work
-- `flyway.conf` + `docker-compose.yml` have hardcoded local dev credentials — do NOT use in production
-- `jly-church-db.zip` in root is untracked binary — gitignore or delete; `jly-church-db/` folder is an empty stub
-- `CLAUDE.md` at repo root (parent folder) is for a different project (DMerch) — this file is the correct one
+- Local untracked app work exists; do not overwrite it blindly.
+- Current `master` appears to contain **partial merge state** from the appointment-hierarchy effort.
+- Database migrations and application code are currently **out of sync** in some areas (`NETWORK_HEAD`, `profile_completed_at`).
+- `app/.env` likely exists locally and is intentionally untracked; never commit env files.
+- `db/docker-compose.yml` and `db/flyway.conf` contain hardcoded local-dev credentials; local-only.
+- There is a parent-folder `CLAUDE.md` for a different project; ignore it and use this file.
+- `.worktrees/` exists locally; do not delete or prune without confirming which worktrees are still needed.
+- Playwright config intentionally forces local DB URLs for E2E; preserve that safety behavior.
 
-## Pending Tasks
+## Pending Tasks / Likely Next Work Areas
 
-1. **Resend domain verification** — see Remaining (human actions) above
-2. **Password change UI** — jlymi.devs@gmail.com runs on an agent-issued temp password; no self-service change page exists yet
+### Highest-confidence unfinished work
+1. Finish the ministries leaders redesign on top of current documented plan
+2. Resolve the missing `stage-promotion` helper / tests
+3. Reconcile role hierarchy across DB migrations, authz helpers, middleware, and user role controls
+4. Decide whether to continue from current `master` or port/cherry-pick from `feature/profile-appointment-hierarchy`
+
+### Secondary follow-up areas
+- Verify whether `profile_completed_at` should be restored into current app schema and `/welcome` flow on `master`
+- Verify `/network` vs future `/network-head` route strategy
+- Run broader verification after the above is reconciled:
+  - typecheck
+  - targeted Vitest
+  - full Vitest
+  - build
+  - then E2E on local DB only
 
 ## Suggested Next Steps
 
-1. **Finish member dashboard redesign Tasks 9–13** (active — see Git State above)
-2. Push master (2 unpushed docs commits)
-3. Member giving/finance module
-4. E2E flaky test investigation (accumulated test data issue)
-5. Clean stale `.worktrees/` entries (plan18, plan9-scholarships)
+Safest continuation path:
 
-## Safety Notes
+1. **Do not start coding blindly on current `master`.**
+2. First compare current `master` with `feature/profile-appointment-hierarchy` for these files/areas:
+   - authz role ladder
+   - middleware
+   - users role controls
+   - network / ministry head actions
+   - stage promotion helper
+   - `/network-head` dashboard
+3. Decide whether to:
+   - cherry-pick missing commits from the feature branch, or
+   - re-implement only the needed pieces on `master`
+4. Only after that, continue the ministries leaders redesign and fix the broken tests.
 
-- Do NOT delete `db/migrations/` — Flyway is idempotent but history matters
-- Do NOT touch `app/src/schema/` without a corresponding migration in `db/migrations/`
-- Do NOT commit `.env` files
-- `app/.next/` is build output — safe to delete if build issues arise
-- All new destructive DB changes need a new versioned migration (V067+)
+## Safety Notes Before Making Changes
+
+- Do **not** delete migrations.
+- Do **not** change `app/src/schema/*` without corresponding migration awareness.
+- Do **not** run E2E against production / Neon URLs.
+- Do **not** commit `.env` files or other secrets.
+- Do **not** discard untracked work until it has been reviewed.
+- Treat `V070`–`V074` as partially integrated work; verify app-layer parity before extending them.
+- Prefer small, reviewable steps: inspect → reconcile branch differences → fix type/test blockers → continue feature work.

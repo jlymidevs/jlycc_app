@@ -26,6 +26,16 @@
         "$env:DATABASE_URL='postgresql://jly_admin:localdevpassword@localhost:5432/jly'; $env:DATABASE_URL_READER=$env:DATABASE_URL; $env:PORT='3001'; npm run dev --prefix '.worktrees/member-dashboard-redesign/app' -- -p 3001"
       ],
       "port": 3001
+    },
+    {
+      "name": "jlycc-worktree-profile-localdb",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": [
+        "-NoProfile",
+        "-Command",
+        "$env:DATABASE_URL='postgresql://jly_admin:localdevpassword@localhost:5432/jly'; $env:DATABASE_URL_READER=$env:DATABASE_URL; $env:PORT='3002'; npm run dev --prefix '.worktrees/profile-appointment-hierarchy/app' -- -p 3002"
+      ],
+      "port": 3002
     }
   ]
 }
