@@ -1,5 +1,7 @@
 db/.flyway/
 .superpowers/
+.vercel/
+backups/
 
 # OS noise
 .DS_Store
