@@ -699,3 +699,64 @@ export async function addNetwork(
     return { error: e instanceof Error ? e.message : "Failed to add network" };
   }
 }
+
+export async function deleteMinistry(
+  ministryId: number
+): Promise<{ success: true } | { error: string }> {
+  await requireRole("ADMIN");
+
+  try {
+    const chapters = await db
+      .select({ chapterId: ministryChapter.chapterId })
+      .from(ministryChapter)
+      .where(eq(ministryChapter.ministryId, ministryId as unknown as number));
+    const chapterIds = chapters.map((c) => c.chapterId);
+
+    if (chapterIds.length > 0) {
+      await db
+        .delete(ministryMembership)
+        .where(inArray(ministryMembership.chapterId, chapterIds));
+    }
+    await db
+      .delete(ministryChapter)
+      .where(eq(ministryChapter.ministryId, ministryId as unknown as number));
+    await db
+      .delete(ministry)
+      .where(eq(ministry.ministryId, ministryId as unknown as number));
+
+    revalidatePath("/ministries");
+    return { success: true };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to delete ministry" };
+  }
+}
+
+export async function deleteNetwork(
+  networkId: number
+): Promise<{ success: true } | { error: string }> {
+  await requireRole("ADMIN");
+
+  const existing = await db
+    .select({ ministryId: ministry.ministryId })
+    .from(ministry)
+    .where(eq(ministry.networkId, networkId as unknown as number))
+    .limit(1);
+
+  if (existing.length > 0) {
+    return { error: "Delete the ministries in this network first" };
+  }
+
+  try {
+    await db
+      .delete(networkLeader)
+      .where(eq(networkLeader.networkId, networkId as unknown as number));
+    await db
+      .delete(network)
+      .where(eq(network.networkId, networkId as unknown as number));
+
+    revalidatePath("/ministries");
+    return { success: true };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to delete network" };
+  }
+}
