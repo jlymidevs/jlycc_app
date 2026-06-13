@@ -17,6 +17,8 @@ import {
   buildLeaderSearchWhere,
   type AppointmentType,
 } from "@/lib/ministry-leader-eligibility";
+import { roleForLeadershipState } from "@/lib/ministry-dashboard-sync";
+import type { Role } from "@/lib/authz";
 
 import { revalidatePath } from "next/cache";
 import { and, eq, isNull, ilike, or, inArray } from "drizzle-orm";
@@ -73,6 +75,69 @@ export type NetworkLeadersData = {
   networkHead: NetworkLeaderInfo | null;
   chapters: ChapterLeaders[];
 };
+
+async function syncDashboardRole(memberId: number, personId?: number) {
+  let linkedPersonId = personId;
+  if (linkedPersonId == null) {
+    const [mem] = await db
+      .select({ personId: member.personId })
+      .from(member)
+      .where(eq(member.memberId, memberId as unknown as number))
+      .limit(1);
+    linkedPersonId = mem?.personId;
+  }
+
+  if (linkedPersonId == null) return;
+
+  const [account] = await db
+    .select({ userId: users.userId, role: users.role })
+    .from(users)
+    .where(eq(users.personId, linkedPersonId))
+    .limit(1);
+
+  if (!account) return;
+
+  const activeMinistryHead = await db
+    .select({ membershipId: ministryMembership.membershipId })
+    .from(ministryMembership)
+    .where(
+      and(
+        eq(ministryMembership.memberId, memberId as unknown as number),
+        eq(ministryMembership.isLeader, true),
+        eq(ministryMembership.leaderRole, "HEAD"),
+        isNull(ministryMembership.endedAt)
+      )
+    )
+    .limit(1);
+
+  const activeNetworkHead = await db
+    .select({ leaderId: networkLeader.leaderId })
+    .from(networkLeader)
+    .where(
+      and(
+        eq(networkLeader.memberId, memberId as unknown as number),
+        isNull(networkLeader.endedAt)
+      )
+    )
+    .limit(1);
+
+  const nextRole = roleForLeadershipState(account.role as Role, {
+    isActiveMinistryHead: activeMinistryHead.length > 0,
+    isActiveNetworkHead: activeNetworkHead.length > 0,
+  });
+
+  if (nextRole !== account.role) {
+    await db.update(users).set({ role: nextRole }).where(eq(users.userId, account.userId));
+  }
+}
+
+function revalidateMinistryDashboards() {
+  revalidatePath("/ministries");
+  revalidatePath("/me");
+  revalidatePath("/me/ministries");
+  revalidatePath("/ministry");
+  revalidatePath("/network-head");
+}
 
 // ─── Queries ─────────────────────────────────────────────────────────────────
 
@@ -254,6 +319,20 @@ export async function appointNetworkHead(
   if (!mem) return { error: "Member not found" };
 
   try {
+    const currentHeads = await db
+      .select({
+        memberId: networkLeader.memberId,
+        personId: member.personId,
+      })
+      .from(networkLeader)
+      .innerJoin(member, eq(networkLeader.memberId, member.memberId))
+      .where(
+        and(
+          eq(networkLeader.networkId, networkId as unknown as number),
+          isNull(networkLeader.endedAt)
+        )
+      );
+
     await db
       .update(networkLeader)
       .set({ endedAt: new Date() })
@@ -269,19 +348,12 @@ export async function appointNetworkHead(
       memberId: memberId as unknown as number,
     });
 
-    const [account] = await db
-      .select({ userId: users.userId, role: users.role })
-      .from(users)
-      .where(eq(users.personId, mem.personId))
-      .limit(1);
-    if (account && (account.role === "MEMBER" || account.role === "MINISTRY_HEAD")) {
-      await db
-        .update(users)
-        .set({ role: "NETWORK_HEAD" })
-        .where(eq(users.userId, account.userId));
+    for (const head of currentHeads) {
+      await syncDashboardRole(head.memberId, head.personId);
     }
+    await syncDashboardRole(memberId, mem.personId);
 
-    revalidatePath("/ministries");
+    revalidateMinistryDashboards();
     return { success: true };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Failed to appoint" };
@@ -316,52 +388,9 @@ export async function removeNetworkHead(
       .set({ endedAt: new Date() })
       .where(eq(networkLeader.leaderId, current.leaderId as unknown as number));
 
-    const [mem] = await db
-      .select({ personId: member.personId })
-      .from(member)
-      .where(eq(member.memberId, current.memberId as unknown as number))
-      .limit(1);
-    if (mem) {
-      const stillLeads = await db
-        .select({ leaderId: networkLeader.leaderId })
-        .from(networkLeader)
-        .where(
-          and(
-            eq(networkLeader.memberId, current.memberId as unknown as number),
-            isNull(networkLeader.endedAt)
-          )
-        )
-        .limit(1);
-      if (stillLeads.length === 0) {
-        const [account] = await db
-          .select({ userId: users.userId })
-          .from(users)
-          .where(
-            and(eq(users.personId, mem.personId), eq(users.role, "NETWORK_HEAD"))
-          )
-          .limit(1);
-        if (account) {
-          const isMinistryHead = await db
-            .select({ membershipId: ministryMembership.membershipId })
-            .from(ministryMembership)
-            .where(
-              and(
-                eq(ministryMembership.memberId, current.memberId as unknown as number),
-                eq(ministryMembership.isLeader, true),
-                eq(ministryMembership.leaderRole, "HEAD"),
-                isNull(ministryMembership.endedAt)
-              )
-            )
-            .limit(1);
-          await db
-            .update(users)
-            .set({ role: isMinistryHead.length > 0 ? "MINISTRY_HEAD" : "MEMBER" })
-            .where(eq(users.userId, account.userId));
-        }
-      }
-    }
+    await syncDashboardRole(current.memberId);
 
-    revalidatePath("/ministries");
+    revalidateMinistryDashboards();
     return { success: true };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Failed to remove" };
@@ -397,6 +426,22 @@ export async function appointMinistryHead(
     .limit(1);
 
   try {
+    const currentHeads = await db
+      .select({
+        memberId: ministryMembership.memberId,
+        personId: member.personId,
+      })
+      .from(ministryMembership)
+      .innerJoin(member, eq(ministryMembership.memberId, member.memberId))
+      .where(
+        and(
+          eq(ministryMembership.chapterId, chapterId as unknown as number),
+          eq(ministryMembership.isLeader, true),
+          eq(ministryMembership.leaderRole, "HEAD"),
+          isNull(ministryMembership.endedAt)
+        )
+      );
+
     await db
       .update(ministryMembership)
       .set({ isLeader: false, leaderRole: null })
@@ -429,19 +474,12 @@ export async function appointMinistryHead(
       });
     }
 
-    const [account] = await db
-      .select({ userId: users.userId, role: users.role })
-      .from(users)
-      .where(eq(users.personId, mem.personId))
-      .limit(1);
-    if (account && account.role === "MEMBER") {
-      await db
-        .update(users)
-        .set({ role: "MINISTRY_HEAD" })
-        .where(eq(users.userId, account.userId));
+    for (const head of currentHeads) {
+      await syncDashboardRole(head.memberId, head.personId);
     }
+    await syncDashboardRole(memberId, mem.personId);
 
-    revalidatePath("/ministries");
+    revalidateMinistryDashboards();
     return { success: true };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Failed to appoint" };
@@ -484,49 +522,9 @@ export async function removeMinistryHead(
         )
       );
 
-    const stillLeads = await db
-      .select({ membershipId: ministryMembership.membershipId })
-      .from(ministryMembership)
-      .where(
-        and(
-          eq(ministryMembership.memberId, current.memberId as unknown as number),
-          eq(ministryMembership.isLeader, true),
-          eq(ministryMembership.leaderRole, "HEAD"),
-          isNull(ministryMembership.endedAt)
-        )
-      )
-      .limit(1);
+    await syncDashboardRole(current.memberId, current.personId);
 
-    if (stillLeads.length === 0) {
-      const [account] = await db
-        .select({ userId: users.userId })
-        .from(users)
-        .where(
-          and(
-            eq(users.personId, current.personId),
-            eq(users.role, "MINISTRY_HEAD")
-          )
-        )
-        .limit(1);
-      if (account) {
-        const isNetworkHead = await db
-          .select({ leaderId: networkLeader.leaderId })
-          .from(networkLeader)
-          .where(
-            and(
-              eq(networkLeader.memberId, current.memberId as unknown as number),
-              isNull(networkLeader.endedAt)
-            )
-          )
-          .limit(1);
-        await db
-          .update(users)
-          .set({ role: isNetworkHead.length > 0 ? "NETWORK_HEAD" : "MEMBER" })
-          .where(eq(users.userId, account.userId));
-      }
-    }
-
-    revalidatePath("/ministries");
+    revalidateMinistryDashboards();
     return { success: true };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Failed to remove" };
@@ -581,7 +579,7 @@ export async function appointInnerCore(
       });
     }
 
-    revalidatePath("/ministries");
+    revalidateMinistryDashboards();
     return { success: true };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Failed to appoint" };
@@ -604,7 +602,7 @@ export async function removeInnerCore(
         )
       );
 
-    revalidatePath("/ministries");
+    revalidateMinistryDashboards();
     return { success: true };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Failed to remove" };

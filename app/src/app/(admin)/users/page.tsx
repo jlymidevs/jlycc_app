@@ -37,7 +37,7 @@ export default async function UsersPage({
     <div className="mx-auto max-w-5xl space-y-6 px-2 py-6 md:px-4">
       <div>
         <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
-          Users
+          Power Users
         </h1>
         <p className="text-sm" style={{ color: "var(--text-muted)" }}>
           Accounts, roles, and access
