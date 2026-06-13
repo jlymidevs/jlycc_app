@@ -64,9 +64,9 @@ export function LeaderSlot({
         <button
           type="button"
           onClick={() => setShowModal(true)}
-          className="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1"
+          className="inline-flex items-center gap-1 rounded-md border border-dashed border-gray-300 px-2 py-1 text-xs font-medium text-lime-700 hover:border-lime-300 hover:bg-lime-50"
         >
-          <span className="text-base leading-none">+</span> Appoint
+          <span className="text-sm leading-none">+</span> Add inner core
         </button>
         {showModal && (
           <AppointModal
@@ -84,14 +84,16 @@ export function LeaderSlot({
   if (!head) {
     return (
       <>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-400 italic">Vacant</span>
+        <div className="mt-1 flex items-center justify-between gap-2 rounded-md bg-amber-50 px-2 py-1.5">
+          <span className="text-sm font-medium italic text-amber-800">
+            Vacant
+          </span>
           <button
             type="button"
             onClick={() => setShowModal(true)}
-            className="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1"
+            className="inline-flex items-center gap-1 rounded-md bg-white px-2 py-1 text-xs font-semibold text-lime-700 shadow-sm ring-1 ring-inset ring-lime-200 hover:bg-lime-50"
           >
-            <span className="text-base leading-none">+</span> Appoint
+            <span className="text-sm leading-none">+</span> Appoint
           </button>
         </div>
         {showModal && (
@@ -108,16 +110,19 @@ export function LeaderSlot({
   }
 
   return (
-    <div className="flex items-center justify-between gap-2">
-      <span className="text-sm text-gray-800 font-medium">
-        {head.lastName}, {head.firstName}
-      </span>
+    <div className="mt-1 flex items-center justify-between gap-2 rounded-md bg-gray-50 px-2 py-1.5">
+      <div className="min-w-0">
+        <p className="truncate text-sm font-semibold text-gray-900">
+          {head.lastName}, {head.firstName}
+        </p>
+        <p className="text-[11px] text-gray-500">{head.memberCode}</p>
+      </div>
       <button
         type="button"
         disabled={pending}
         onClick={handleRemove}
         title="Remove"
-        className="text-gray-400 hover:text-red-500 text-xs disabled:opacity-40 transition-colors flex-shrink-0"
+        className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-md text-gray-400 transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
       >
         ×
       </button>

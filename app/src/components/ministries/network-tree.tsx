@@ -6,44 +6,75 @@ import { CloseMinistryButton } from "./close-ministry-button";
 
 export function NetworkTree({ groups }: { groups: NetworkGroup[] }) {
   if (groups.length === 0) {
-    return <p className="text-sm text-gray-400">No ministries found.</p>;
+    return (
+      <div className="rounded-lg border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-500">
+        No ministries found.
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5">
       {groups.map((group) => (
-        <section key={group.networkId} className="space-y-2">
-          <h2 className="text-base font-bold text-gray-800 border-b border-gray-200 pb-1">
-            {group.networkName}
-          </h2>
-
-          <div className="space-y-1">
-            {group.ministries.map((m) => (
-              <div
-                key={m.ministryId}
-                className="flex items-start justify-between group rounded-lg px-3 py-2 hover:bg-gray-50"
-              >
-                <div>
-                  <Link
-                    href={`/ministries/${m.ministryId}`}
-                    className="text-sm font-medium text-blue-600 hover:underline"
-                  >
-                    {m.name}
-                  </Link>
-                  <p className="text-xs text-gray-400 mt-0.5">
-                    {m.headName ?? (
-                      <span className="italic">Vacant</span>
-                    )}
-                  </p>
-                </div>
-                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                  <CloseMinistryButton ministryId={m.ministryId} />
-                </div>
-              </div>
-            ))}
+        <section
+          key={group.networkId}
+          className="overflow-hidden rounded-lg border border-gray-200 bg-white"
+        >
+          <div className="flex flex-col gap-1 border-b border-gray-200 bg-gray-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-base font-bold text-gray-900">
+                {group.networkName}
+              </h2>
+              <p className="text-xs text-gray-500">
+                {group.ministries.length} ministries
+              </p>
+            </div>
+            <AddMinistryForm networkId={group.networkId} />
           </div>
 
-          <AddMinistryForm networkId={group.networkId} />
+          <div className="divide-y divide-gray-100">
+            {group.ministries.length === 0 ? (
+              <div className="px-4 py-6 text-sm text-gray-500">
+                No ministries in this network yet.
+              </div>
+            ) : (
+              group.ministries.map((m) => (
+                <div
+                  key={m.ministryId}
+                  className="group grid gap-3 px-4 py-3 transition-colors hover:bg-lime-50/40 sm:grid-cols-[minmax(0,1fr)_220px_36px] sm:items-center"
+                >
+                  <div className="min-w-0">
+                    <Link
+                      href={`/ministries/${m.ministryId}`}
+                      className="block truncate text-sm font-semibold text-gray-950 hover:text-lime-700"
+                    >
+                      {m.name}
+                    </Link>
+                    <p className="mt-1 text-xs text-gray-500">Main chapter</p>
+                  </div>
+
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                      Ministry Head
+                    </p>
+                    {m.headName ? (
+                      <p className="mt-1 truncate text-sm font-medium text-gray-800">
+                        {m.headName}
+                      </p>
+                    ) : (
+                      <p className="mt-1 text-sm italic text-amber-700">
+                        Vacant
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex justify-end sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100">
+                    <CloseMinistryButton ministryId={m.ministryId} />
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </section>
       ))}
     </div>
