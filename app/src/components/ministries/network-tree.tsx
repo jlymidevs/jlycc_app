@@ -2,7 +2,8 @@
 import Link from "next/link";
 import { NetworkGroup } from "@/actions/ministries";
 import { AddMinistryForm } from "./add-ministry-form";
-import { CloseMinistryButton } from "./close-ministry-button";
+import { DeleteMinistryButton } from "./delete-ministry-button";
+import { DeleteNetworkButton } from "./delete-network-button";
 
 export function NetworkTree({ groups }: { groups: NetworkGroup[] }) {
   if (groups.length === 0) {
@@ -29,7 +30,14 @@ export function NetworkTree({ groups }: { groups: NetworkGroup[] }) {
                 {group.ministries.length} ministries
               </p>
             </div>
-            <AddMinistryForm networkId={group.networkId} />
+            <div className="flex items-center gap-2">
+              <AddMinistryForm networkId={group.networkId} />
+              <DeleteNetworkButton
+                networkId={group.networkId}
+                networkName={group.networkName}
+                hasMinistries={group.ministries.length > 0}
+              />
+            </div>
           </div>
 
           <div className="divide-y divide-gray-100">
@@ -69,7 +77,10 @@ export function NetworkTree({ groups }: { groups: NetworkGroup[] }) {
                   </div>
 
                   <div className="flex justify-end sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100">
-                    <CloseMinistryButton ministryId={m.ministryId} />
+                    <DeleteMinistryButton
+                      ministryId={m.ministryId}
+                      ministryName={m.name}
+                    />
                   </div>
                 </div>
               ))
