@@ -700,6 +700,46 @@ export async function addNetwork(
   }
 }
 
+export async function renameMinistry(
+  ministryId: number,
+  name: string
+): Promise<{ success: true } | { error: string }> {
+  await requireRole("ADMIN");
+  const trimmed = name.trim();
+  if (!trimmed) return { error: "Ministry name required" };
+
+  try {
+    await db
+      .update(ministry)
+      .set({ name: trimmed })
+      .where(eq(ministry.ministryId, ministryId as unknown as number));
+    revalidatePath("/ministries");
+    return { success: true };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to rename ministry" };
+  }
+}
+
+export async function renameNetwork(
+  networkId: number,
+  name: string
+): Promise<{ success: true } | { error: string }> {
+  await requireRole("ADMIN");
+  const trimmed = name.trim();
+  if (!trimmed) return { error: "Network name required" };
+
+  try {
+    await db
+      .update(network)
+      .set({ name: trimmed })
+      .where(eq(network.networkId, networkId as unknown as number));
+    revalidatePath("/ministries");
+    return { success: true };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to rename network" };
+  }
+}
+
 export async function deleteMinistry(
   ministryId: number
 ): Promise<{ success: true } | { error: string }> {
