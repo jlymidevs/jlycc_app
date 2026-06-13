@@ -16,3 +16,10 @@ Desktop.ini
 .worktrees/
 jly-church-db.zip
 app/test-results/
+
+# DB dumps / backups — may contain real prod data, never commit
+backups/
+*.sql.bak
+# GCP service-account keys — never commit
+*-key.json
+jlycc-cloudsql-key.json
