@@ -1,55 +1,53 @@
-# Codex Prompt — Neon → GCP Cloud SQL Migration
+# Codex Prompt — Neon → Supabase Migration
 
 Copy-paste the block below to Codex. Fill in the `<...>` placeholders first.
 
 ```
 You are working in the JLYCC App repo (Next.js on Vercel, Postgres DB).
 
-TASK: Migrate the production database from Neon (PostgreSQL 18.4) to Google
-Cloud SQL for PostgreSQL. This is DATABASE-ONLY. The app stays on Vercel —
-do NOT touch Vercel hosting, Cloud Run, or CI/CD. The only app-code file you
-may change is app/src/lib/db.ts.
+TASK: Migrate the production database from Neon (PostgreSQL 18.4) to a managed
+Supabase Postgres project. This is DATABASE-ONLY. The app stays on Vercel —
+do NOT touch Vercel hosting or CI/CD. NO app-code change is needed: the app
+reads process.env.DATABASE_URL, so this is dump → restore → env swap.
 
-SOURCE OF TRUTH: Follow docs/MIGRATE_NEON_TO_CLOUDSQL.md exactly, step by step
-(Steps 1–10). Do not skip steps or reorder them. If that file is not present,
-check out branch `docs/cloudsql-migration-runbook` first.
+SOURCE OF TRUTH: Follow docs/MIGRATE_NEON_TO_SUPABASE.md exactly, step by step
+(Steps 1–6). Do not skip or reorder steps. If that file is not present, check
+out branch `docs/cloudsql-migration-runbook` first.
 
 CONTEXT YOU NEED FROM ME:
-- GCP project id: <FILL IN>
-- Billing / Google-for-Nonprofits credits are attached to that project: <yes/no>
-- gcloud is installed and `gcloud auth login` is done: <yes/no>
-- App DB password to set (DB_PASS): <generate a strong one>
+- Supabase project created in region Southeast Asia (Singapore): <yes/no>
+- Supabase Postgres version chosen (pick newest, ideally 17): <fill in>
+- Supabase DIRECT connection string (port 5432): <fill in>
+- Supabase TRANSACTION POOLER string (port 6543): <fill in>
 - Neon connection string is in app/.env as DATABASE_URL (do not print it).
 
-CONNECTIVITY DECISION (already made): use the Cloud SQL Node Connector
-(@google-cloud/cloud-sql-connector), no public IP for the app path. Service
-account with roles/cloudsql.client.
+KEY FACTS:
+- app/src/lib/db.ts already uses postgres-js with prepare:false, which is what
+  the Supabase transaction pooler needs → no code change.
+- The dump carries the full schema + flyway_schema_history, so Supabase lands
+  at V075 immediately. Flyway is only for FUTURE migrations.
+- App connection = pooler (6543). Restore + Flyway = direct (5432).
 
 HARD RULES:
-1. DB only. No Vercel/hosting/CI changes.
-2. Never commit secrets: app/.env, the service-account key JSON, any password,
-   or DB dumps in backups/. Confirm they stay gitignored.
+1. DB only. No Vercel/CI changes. No db.ts change.
+2. Never commit secrets: app/.env, any password, or DB dumps in backups/.
+   Confirm they stay gitignored.
 3. Do not delete or edit any V0xx Flyway migration file.
-4. Do NOT drop or disable Neon. Keep it intact as the rollback until Cloud SQL
+4. Do NOT drop or disable Neon. Keep it intact as the rollback until Supabase
    is verified stable.
-5. Before cutover, `cd app && npx tsc --noEmit && npm run build` MUST pass.
-   Never ship a broken build. The db.ts example in the runbook uses top-level
-   await — if it breaks the build, refactor to an async getDb() accessor (or
-   the public-IP+SSL fallback noted in the doc) so it compiles.
-6. If POSTGRES_18 is unavailable in region asia-southeast1, use POSTGRES_17 and
-   confirm the logical restore succeeds.
-7. After the restore, verify (runbook Step 8): network_leader table exists,
+5. Use postgres:18 Docker image for pg_dump/psql (Neon is PG18).
+6. Restore via the DIRECT (5432) string, not the pooler.
+7. After restore, verify (runbook Step 4): network_leader table exists,
    is_inner_core column exists, networks = Eagles/Wave/Wind, 17 ministries,
    17 active chapters, flyway version = 075. Cross-check row counts vs Neon.
-8. If ANYTHING in verification is unexpected, STOP and report — do not force
-   the Vercel cutover.
+8. If the restore reports real errors (not just "already exists"), or if
+   verification is unexpected, STOP and report — do not force the cutover.
 
 DELIVERABLES:
-- Cloud SQL instance provisioned + data restored + verified.
-- app/src/lib/db.ts switched to the Cloud SQL Connector (build passing).
-- Exact Vercel env-var changes listed for me to apply (Step 7).
-- A short report: what you ran, verification output, and the rollback steps.
+- Supabase project restored + verified.
+- The exact DATABASE_URL value (pooler 6543) for me to set in Vercel.
+- A short report: what you ran, verification output, and rollback steps.
 
 Work in small steps. Show me the verification output before recommending the
-Vercel cutover.
+Vercel DATABASE_URL swap.
 ```
