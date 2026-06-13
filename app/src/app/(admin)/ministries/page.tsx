@@ -5,6 +5,7 @@ import { getMinistries } from "@/actions/ministries";
 import { getLeadersSidebarData } from "@/actions/ministry-leaders";
 import { NetworkTree } from "@/components/ministries/network-tree";
 import { LeadersSidebar } from "@/components/ministries/leaders-sidebar";
+import { AddNetworkForm } from "@/components/ministries/add-network-form";
 
 export default async function MinistriesPage() {
   const [groups, leadersData] = await Promise.all([
@@ -18,8 +19,9 @@ export default async function MinistriesPage() {
 
       <div className="flex gap-8 items-start">
         {/* Left: Network + ministry tree */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 space-y-4">
           <NetworkTree groups={groups} />
+          <AddNetworkForm />
         </div>
 
         {/* Right: Sticky leaders panel */}

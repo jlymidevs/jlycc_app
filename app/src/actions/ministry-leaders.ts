@@ -679,3 +679,29 @@ export async function closeMinistry(
     return { error: e instanceof Error ? e.message : "Failed to close ministry" };
   }
 }
+
+export async function addNetwork(
+  name: string
+): Promise<{ success: true; networkId: number } | { error: string }> {
+  await requireRole("ADMIN");
+
+  const trimmed = name.trim();
+  if (!trimmed) return { error: "Network name required" };
+
+  try {
+    const code = trimmed.toUpperCase().replace(/\s+/g, "_").slice(0, 20);
+
+    const [newNetwork] = await db
+      .insert(network)
+      .values({
+        code: `${code}_${Date.now().toString(36).toUpperCase()}`,
+        name: trimmed,
+      })
+      .returning({ networkId: network.networkId });
+
+    revalidatePath("/ministries");
+    return { success: true, networkId: newNetwork.networkId };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to add network" };
+  }
+}
