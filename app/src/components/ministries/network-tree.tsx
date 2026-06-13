@@ -1,9 +1,15 @@
 // app/src/components/ministries/network-tree.tsx
 import Link from "next/link";
 import { NetworkGroup } from "@/actions/ministries";
-import { CloseMinistryButton } from "./close-ministry-button";
+import { DeleteMinistryButton } from "./delete-ministry-button";
 
-export function NetworkTree({ groups }: { groups: NetworkGroup[] }) {
+export function NetworkTree({
+  groups,
+  canDeleteMinistries,
+}: {
+  groups: NetworkGroup[];
+  canDeleteMinistries: boolean;
+}) {
   if (groups.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-500">
@@ -76,7 +82,9 @@ export function NetworkTree({ groups }: { groups: NetworkGroup[] }) {
                             >
                               + Appoint
                             </Link>
-                            <CloseMinistryButton ministryId={m.ministryId} />
+                            {canDeleteMinistries ? (
+                              <DeleteMinistryButton ministryId={m.ministryId} />
+                            ) : null}
                           </div>
                         </td>
                       </tr>

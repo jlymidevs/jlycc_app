@@ -11,6 +11,7 @@ import {
   ministryMembership,
   networkLeader,
 } from "@/schema/ministries";
+import { eventType } from "@/schema/events";
 import { users } from "@/schema/app";
 import { requireRole } from "@/lib/authz-server";
 import { isHeadEligible } from "@/lib/journey";
@@ -677,6 +678,40 @@ export async function closeMinistry(
     return { success: true };
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Failed to close ministry" };
+  }
+}
+
+export async function deleteMinistry(
+  ministryId: number
+): Promise<{ success: true } | { error: string }> {
+  await requireRole("SUPER_ADMIN");
+
+  try {
+    const [existing] = await db
+      .select({ ministryId: ministry.ministryId })
+      .from(ministry)
+      .where(eq(ministry.ministryId, ministryId as unknown as number))
+      .limit(1);
+
+    if (!existing) return { error: "Ministry not found" };
+
+    await db
+      .update(eventType)
+      .set({ ministryId: null })
+      .where(eq(eventType.ministryId, ministryId as unknown as number));
+
+    await db
+      .delete(ministryChapter)
+      .where(eq(ministryChapter.ministryId, ministryId as unknown as number));
+
+    await db
+      .delete(ministry)
+      .where(eq(ministry.ministryId, ministryId as unknown as number));
+
+    revalidatePath("/ministries");
+    return { success: true };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Failed to delete ministry" };
   }
 }
 

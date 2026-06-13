@@ -2,11 +2,16 @@
 export const dynamic = "force-dynamic";
 
 import { getMinistries } from "@/actions/ministries";
+import { auth } from "@/lib/auth";
+import type { Role } from "@/lib/authz";
+import { canDeleteMinistries } from "@/lib/ministry-permissions";
 import { AddMinistryForm } from "@/components/ministries/add-ministry-form";
 import { AddNetworkForm } from "@/components/ministries/add-network-form";
 import { NetworkTree } from "@/components/ministries/network-tree";
 
 export default async function MinistriesPage() {
+  const session = await auth();
+  const role = (session?.user?.role ?? "MEMBER") as Role;
   const groups = await getMinistries();
   const primaryNetworkId =
     groups.find((group) => group.networkName === "Eagles")?.networkId ??
@@ -23,7 +28,10 @@ export default async function MinistriesPage() {
       </div>
 
       <div className="space-y-4">
-        <NetworkTree groups={groups} />
+        <NetworkTree
+          groups={groups}
+          canDeleteMinistries={canDeleteMinistries(role)}
+        />
         <AddNetworkForm />
       </div>
     </div>
