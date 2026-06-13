@@ -84,6 +84,15 @@ export type MemberSearchResult = {
 // ─── Queries ─────────────────────────────────────────────────────────────────
 
 export async function getMinistries(): Promise<NetworkGroup[]> {
+  // All networks first, so freshly-created (still empty) networks still render
+  // in the tree with their "Add ministry" control.
+  const nets = await db
+    .select({ networkId: network.networkId, networkName: network.name })
+    .from(network)
+    .orderBy(asc(network.name));
+
+  if (nets.length === 0) return [];
+
   const rows = await db
     .select({
       ministryId: ministry.ministryId,
@@ -97,48 +106,46 @@ export async function getMinistries(): Promise<NetworkGroup[]> {
     .innerJoin(network, eq(ministry.networkId, network.networkId))
     .orderBy(asc(network.name), asc(ministry.name));
 
-  if (rows.length === 0) return [];
-
   const ministryIds = rows.map((r) => r.ministryId);
-  const heads = await db
-    .select({
-      ministryId: ministry.ministryId,
-      firstName: person.firstName,
-      lastName: person.lastName,
-    })
-    .from(ministryMembership)
-    .innerJoin(
-      ministryChapter,
-      eq(ministryMembership.chapterId, ministryChapter.chapterId)
-    )
-    .innerJoin(ministry, eq(ministryChapter.ministryId, ministry.ministryId))
-    .innerJoin(member, eq(ministryMembership.memberId, member.memberId))
-    .innerJoin(person, eq(member.personId, person.personId))
-    .where(
-      and(
-        inArray(ministry.ministryId, ministryIds),
-        eq(ministryMembership.isLeader, true),
-        eq(ministryMembership.leaderRole, "HEAD"),
-        isNull(ministryMembership.endedAt)
-      )
-    )
-;
+  const heads =
+    ministryIds.length === 0
+      ? []
+      : await db
+          .select({
+            ministryId: ministry.ministryId,
+            firstName: person.firstName,
+            lastName: person.lastName,
+          })
+          .from(ministryMembership)
+          .innerJoin(
+            ministryChapter,
+            eq(ministryMembership.chapterId, ministryChapter.chapterId)
+          )
+          .innerJoin(
+            ministry,
+            eq(ministryChapter.ministryId, ministry.ministryId)
+          )
+          .innerJoin(member, eq(ministryMembership.memberId, member.memberId))
+          .innerJoin(person, eq(member.personId, person.personId))
+          .where(
+            and(
+              inArray(ministry.ministryId, ministryIds),
+              eq(ministryMembership.isLeader, true),
+              eq(ministryMembership.leaderRole, "HEAD"),
+              isNull(ministryMembership.endedAt)
+            )
+          );
 
   const headMap = new Map(
     heads.map((h) => [h.ministryId, `${h.lastName}, ${h.firstName}`])
   );
 
-  const grouped = new Map<
-    number,
-    { networkName: string; ministries: NetworkGroup["ministries"] }
-  >();
-
+  const ministriesByNetwork = new Map<number, NetworkGroup["ministries"]>();
   for (const row of rows) {
-    const nid = row.networkId;
-    if (!grouped.has(nid)) {
-      grouped.set(nid, { networkName: row.networkName, ministries: [] });
+    if (!ministriesByNetwork.has(row.networkId)) {
+      ministriesByNetwork.set(row.networkId, []);
     }
-    grouped.get(nid)!.ministries.push({
+    ministriesByNetwork.get(row.networkId)!.push({
       ministryId: row.ministryId,
       name: row.name,
       code: row.code,
@@ -147,10 +154,10 @@ export async function getMinistries(): Promise<NetworkGroup[]> {
     });
   }
 
-  return Array.from(grouped.entries()).map(([networkId, g]) => ({
-    networkId,
-    networkName: g.networkName,
-    ministries: g.ministries,
+  return nets.map((n) => ({
+    networkId: n.networkId,
+    networkName: n.networkName,
+    ministries: ministriesByNetwork.get(n.networkId) ?? [],
   }));
 }
 

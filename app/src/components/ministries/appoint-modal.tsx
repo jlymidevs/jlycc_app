@@ -34,11 +34,6 @@ export function AppointModal({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (query.trim().length < 2) {
-      setResults([]);
-      setSelected(null);
-      return;
-    }
     setSearching(true);
     const timer = setTimeout(async () => {
       try {
@@ -47,7 +42,7 @@ export function AppointModal({
       } finally {
         setSearching(false);
       }
-    }, 300);
+    }, query.trim() ? 300 : 0);
     return () => clearTimeout(timer);
   }, [query, type, chapterId]);
 
@@ -126,8 +121,8 @@ export function AppointModal({
           </ul>
         )}
 
-        {query.length >= 2 && !searching && results.length === 0 && (
-          <p className="text-xs text-gray-400 text-center">No eligible members found.</p>
+        {!searching && results.length === 0 && (
+          <p className="text-xs text-gray-400 text-center">No members found.</p>
         )}
 
         {error && (
