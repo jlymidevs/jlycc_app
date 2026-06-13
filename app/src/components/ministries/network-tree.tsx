@@ -2,7 +2,9 @@
 import Link from "next/link";
 import { NetworkGroup } from "@/actions/ministries";
 import { AddMinistryForm } from "./add-ministry-form";
+import { EditMinistryButton } from "./edit-ministry-button";
 import { DeleteMinistryButton } from "./delete-ministry-button";
+import { EditNetworkButton } from "./edit-network-button";
 import { DeleteNetworkButton } from "./delete-network-button";
 
 export function NetworkTree({ groups }: { groups: NetworkGroup[] }) {
@@ -32,6 +34,10 @@ export function NetworkTree({ groups }: { groups: NetworkGroup[] }) {
             </div>
             <div className="flex items-center gap-2">
               <AddMinistryForm networkId={group.networkId} />
+              <EditNetworkButton
+                networkId={group.networkId}
+                networkName={group.networkName}
+              />
               <DeleteNetworkButton
                 networkId={group.networkId}
                 networkName={group.networkName}
@@ -49,7 +55,7 @@ export function NetworkTree({ groups }: { groups: NetworkGroup[] }) {
               group.ministries.map((m) => (
                 <div
                   key={m.ministryId}
-                  className="group grid gap-3 px-4 py-3 transition-colors hover:bg-lime-50/40 sm:grid-cols-[minmax(0,1fr)_220px_36px] sm:items-center"
+                  className="group grid gap-3 px-4 py-3 transition-colors hover:bg-lime-50/40 sm:grid-cols-[minmax(0,1fr)_220px_64px] sm:items-center"
                 >
                   <div className="min-w-0">
                     <Link
@@ -76,7 +82,11 @@ export function NetworkTree({ groups }: { groups: NetworkGroup[] }) {
                     )}
                   </div>
 
-                  <div className="flex justify-end sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100">
+                  <div className="flex justify-end gap-1 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100">
+                    <EditMinistryButton
+                      ministryId={m.ministryId}
+                      ministryName={m.name}
+                    />
                     <DeleteMinistryButton
                       ministryId={m.ministryId}
                       ministryName={m.name}
