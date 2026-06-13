@@ -29,7 +29,7 @@ export function NetworkTree({ groups }: { groups: NetworkGroup[] }) {
                 {group.networkName}
               </h2>
               <p className="text-xs text-gray-500">
-                {group.ministries.length} ministries
+                Network
               </p>
             </div>
             <div className="flex items-center gap-2">
@@ -64,7 +64,7 @@ export function NetworkTree({ groups }: { groups: NetworkGroup[] }) {
                     >
                       {m.name}
                     </Link>
-                    <p className="mt-1 text-xs text-gray-500">Main chapter</p>
+                    <p className="mt-1 text-xs text-gray-500">Ministry</p>
                   </div>
 
                   <div>
