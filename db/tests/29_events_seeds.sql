@@ -17,16 +17,16 @@ SELECT is(
   (SELECT n.code FROM events.event_type et
    JOIN ministries.network n ON n.network_id = et.network_id
    WHERE et.code = 'LT_CONNECT'),
-  'LEAD_TAKERS',
-  'LT_CONNECT linked to Lead Takers network'
+  'EAGLES',
+  'LT_CONNECT linked to Eagles network'
 );
 
 SELECT is(
   (SELECT m.code FROM events.event_type et
    JOIN ministries.ministry m ON m.ministry_id = et.ministry_id
-   WHERE et.code = 'KINGDOM_KIDS'),
-  'KINGDOM_KIDS',
-  'KINGDOM_KIDS event type linked to Kingdom Kids ministry'
+   WHERE et.code = 'LT_PRO'),
+  'LT_PROWORX',
+  'LT_PRO event type linked to Lt ProWorx ministry'
 );
 
 SELECT * FROM finish();
