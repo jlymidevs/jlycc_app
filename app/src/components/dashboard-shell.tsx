@@ -91,7 +91,7 @@ export default function DashboardShell({
             <Link
               key={`${item.href}-${i}`}
               href={item.href}
-              className="group relative flex h-10 items-center gap-3 rounded-xl px-3 text-sm font-medium"
+              className="group relative flex h-10 items-center rounded-xl px-3 text-sm font-medium"
               style={{
                 color: isActive ? "var(--sidebar-icon-active)" : "var(--sidebar-icon)",
                 fontWeight: isActive ? 700 : 500,
@@ -115,9 +115,6 @@ export default function DashboardShell({
                   style={{ background: "var(--bg-card-hover)" }}
                 />
               )}
-              <span className="relative shrink-0 transition-transform duration-200 group-hover:scale-110">
-                {item.icon}
-              </span>
               <span className="relative truncate">{item.label}</span>
             </Link>
           );

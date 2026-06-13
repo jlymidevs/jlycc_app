@@ -35,6 +35,7 @@ export type NetworkGroup = {
     code: string;
     targetDemographic: string | null;
     headName: string | null;
+    innerCoreCount: number;
   }[];
 };
 
@@ -128,6 +129,33 @@ export async function getMinistries(): Promise<NetworkGroup[]> {
     heads.map((h) => [h.ministryId, `${h.lastName}, ${h.firstName}`])
   );
 
+  const innerCoreCounts = await db
+    .select({
+      ministryId: ministry.ministryId,
+      innerCoreCount: count(),
+    })
+    .from(ministryMembership)
+    .innerJoin(
+      ministryChapter,
+      eq(ministryMembership.chapterId, ministryChapter.chapterId)
+    )
+    .innerJoin(ministry, eq(ministryChapter.ministryId, ministry.ministryId))
+    .where(
+      and(
+        inArray(ministry.ministryId, ministryIds),
+        eq(ministryMembership.isInnerCore, true),
+        isNull(ministryMembership.endedAt)
+      )
+    )
+    .groupBy(ministry.ministryId);
+
+  const innerCoreCountMap = new Map(
+    innerCoreCounts.map((row) => [
+      row.ministryId,
+      Number(row.innerCoreCount),
+    ])
+  );
+
   const grouped = new Map<
     number,
     { networkName: string; ministries: NetworkGroup["ministries"] }
@@ -144,6 +172,7 @@ export async function getMinistries(): Promise<NetworkGroup[]> {
       code: row.code,
       targetDemographic: row.targetDemographic,
       headName: headMap.get(row.ministryId) ?? null,
+      innerCoreCount: innerCoreCountMap.get(row.ministryId) ?? 0,
     });
   }
 

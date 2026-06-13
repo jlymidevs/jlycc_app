@@ -34,15 +34,15 @@ export function AddNetworkForm() {
       <button
         type="button"
         onClick={handleOpen}
-        className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 border border-dashed border-blue-300 rounded-lg px-3 py-2 w-full hover:bg-blue-50 transition-colors"
+        className="flex h-12 w-full items-center justify-center rounded-xl border border-dashed border-blue-300 text-sm font-semibold text-blue-600 transition-colors hover:bg-blue-50"
       >
-        <span className="text-base leading-none font-medium">+</span> Add network
+        + Add Network
       </button>
     );
   }
 
   return (
-    <div className="flex items-center gap-2 border border-dashed border-blue-300 rounded-lg px-3 py-2">
+    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-blue-300 bg-white px-3 py-2">
       <input
         ref={inputRef}
         type="text"
@@ -53,21 +53,21 @@ export function AddNetworkForm() {
           if (e.key === "Escape") { setOpen(false); setName(""); }
         }}
         placeholder="Network name…"
-        className="rounded-md border border-gray-300 px-2 py-1 text-sm w-40 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        className="h-10 w-48 rounded-xl border border-gray-300 px-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
         disabled={pending}
       />
       <button
         type="button"
         onClick={handleSubmit}
         disabled={pending || !name.trim()}
-        className="rounded-md bg-blue-600 px-2 py-1 text-xs font-medium text-white disabled:opacity-40"
+        className="h-10 rounded-xl bg-blue-600 px-4 text-xs font-bold text-white disabled:opacity-40"
       >
         {pending ? "…" : "Add"}
       </button>
       <button
         type="button"
         onClick={() => { setOpen(false); setName(""); }}
-        className="text-xs text-gray-400 hover:text-gray-600"
+        className="h-10 rounded-xl px-2 text-xs text-gray-500 hover:text-gray-700"
       >
         Cancel
       </button>

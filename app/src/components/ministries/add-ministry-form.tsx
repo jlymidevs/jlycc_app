@@ -4,7 +4,13 @@
 import { useState, useTransition, useRef } from "react";
 import { addMinistry } from "@/actions/ministry-leaders";
 
-export function AddMinistryForm({ networkId }: { networkId: number }) {
+export function AddMinistryForm({
+  networkId,
+  variant = "inline",
+}: {
+  networkId: number;
+  variant?: "inline" | "primary";
+}) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -35,15 +41,19 @@ export function AddMinistryForm({ networkId }: { networkId: number }) {
       <button
         type="button"
         onClick={handleOpen}
-        className="mt-2 flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700"
+        className={
+          variant === "primary"
+            ? "inline-flex h-10 items-center justify-center rounded-xl bg-lime-300 px-4 text-sm font-bold text-gray-950 shadow-sm transition-colors hover:bg-lime-200"
+            : "inline-flex items-center gap-1 text-xs font-medium text-blue-500 hover:text-blue-700"
+        }
       >
-        <span className="text-base leading-none font-medium">+</span> Add ministry
+        + Add Ministry
       </button>
     );
   }
 
   return (
-    <div className="mt-2 flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       <input
         ref={inputRef}
         type="text"
@@ -54,21 +64,21 @@ export function AddMinistryForm({ networkId }: { networkId: number }) {
           if (e.key === "Escape") { setOpen(false); setName(""); }
         }}
         placeholder="Ministry name…"
-        className="rounded-md border border-gray-300 px-2 py-1 text-sm w-40 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        className="h-10 w-48 rounded-xl border border-gray-300 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-lime-200"
         disabled={pending}
       />
       <button
         type="button"
         onClick={handleSubmit}
         disabled={pending || !name.trim()}
-        className="rounded-md bg-blue-600 px-2 py-1 text-xs font-medium text-white disabled:opacity-40"
+        className="h-10 rounded-xl bg-gray-950 px-4 text-xs font-bold text-white disabled:opacity-40"
       >
         {pending ? "…" : "Add"}
       </button>
       <button
         type="button"
         onClick={() => { setOpen(false); setName(""); }}
-        className="text-xs text-gray-400 hover:text-gray-600"
+        className="h-10 rounded-xl px-2 text-xs text-gray-500 hover:text-gray-700"
       >
         Cancel
       </button>

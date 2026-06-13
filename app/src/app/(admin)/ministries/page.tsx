@@ -2,32 +2,29 @@
 export const dynamic = "force-dynamic";
 
 import { getMinistries } from "@/actions/ministries";
-import { getLeadersSidebarData } from "@/actions/ministry-leaders";
-import { NetworkTree } from "@/components/ministries/network-tree";
-import { LeadersSidebar } from "@/components/ministries/leaders-sidebar";
+import { AddMinistryForm } from "@/components/ministries/add-ministry-form";
 import { AddNetworkForm } from "@/components/ministries/add-network-form";
+import { NetworkTree } from "@/components/ministries/network-tree";
 
 export default async function MinistriesPage() {
-  const [groups, leadersData] = await Promise.all([
-    getMinistries(),
-    getLeadersSidebarData(),
-  ]);
+  const groups = await getMinistries();
+  const primaryNetworkId =
+    groups.find((group) => group.networkName === "Eagles")?.networkId ??
+    groups[0]?.networkId;
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold text-gray-900">Ministries</h1>
+    <div className="mx-auto max-w-7xl space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-3xl font-bold text-gray-950">Ministries</h1>
 
-      <div className="flex gap-8 items-start">
-        {/* Left: Network + ministry tree */}
-        <div className="flex-1 min-w-0 space-y-4">
-          <NetworkTree groups={groups} />
-          <AddNetworkForm />
-        </div>
+        {primaryNetworkId ? (
+          <AddMinistryForm networkId={primaryNetworkId} variant="primary" />
+        ) : null}
+      </div>
 
-        {/* Right: Sticky leaders panel */}
-        <div className="w-72 flex-shrink-0 sticky top-6 rounded-xl border border-gray-200 bg-gray-50 p-4">
-          <LeadersSidebar data={leadersData} />
-        </div>
+      <div className="space-y-4">
+        <NetworkTree groups={groups} />
+        <AddNetworkForm />
       </div>
     </div>
   );
