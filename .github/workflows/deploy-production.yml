@@ -1,0 +1,39 @@
+name: Deploy to Vercel (Production)
+
+# Reliable production deploy on every push to master, independent of the
+# Vercel<->GitHub native git integration (which was not triggering builds).
+# Deploys the Next.js app in app/ to the linked Vercel project.
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch: {}
+
+concurrency:
+  group: vercel-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      # Uploads app/ as the deployment root and builds remotely — the exact
+      # flow proven to work manually (`cd app && vercel --prod`). Avoids the
+      # prebuilt path, which mis-resolves against the project Root Directory.
+      - name: Deploy to production
+        working-directory: app
+        run: vercel --prod --yes --token="${{ secrets.VERCEL_TOKEN }}"
