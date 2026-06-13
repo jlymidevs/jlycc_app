@@ -23,3 +23,4 @@ backups/
 # GCP service-account keys — never commit
 *-key.json
 jlycc-cloudsql-key.json
+.vercel
